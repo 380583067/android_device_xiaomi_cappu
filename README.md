@@ -9,7 +9,7 @@ Basic        | Spec Sheet
 CPU          | Cortex-A72 & Cortex-A53 | Hexa-Core | MT8176
 GPU          | PowerVR GX6250
 Memory       | 4GB RAM
-Shipped Android Version | 7.1
+Shipped Android Version | 7.0
 Storage      | 64GB
 Battery      | 6600 mAh Li-Po
 Display      | 7.9
