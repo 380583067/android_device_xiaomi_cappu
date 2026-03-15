@@ -99,4 +99,3 @@ debug.sf.enable_hwc_vds=1
 ro.control_privapp_permissions=log
 ro.mtk_config_max_dram_size=0x100000000
 ro.mtk_f2fs_enable=0
-ro.crypto.state=unencrypted

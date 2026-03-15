@@ -34,7 +34,7 @@ TARGET_CPU_SMP := true
 ARCH_ARM_HAVE_TLS_REGISTER := true
 
 # Kernel
-BOARD_KERNEL_CMDLINE := bootopt=64S3,32N2,64N2 console=ttyMT0,921600n1 earlycon=mtk8250,mmio32,0x11002000,921600n1 androidboot.selinux=permissive
+BOARD_KERNEL_CMDLINE := bootopt=64S3,32N2,64N2 console=ttyMT0,921600n1 androidboot.selinux=permissive
 BOARD_KERNEL_PAGESIZE := 2048
 BOARD_NAME := 1479347649
 BOARD_KERNEL_BASE := 0x40078000
@@ -143,6 +143,8 @@ WIFI_DRIVER_FW_PATH_PARAM := "/sys/module/bcmdhd/parameters/firmware_path"
 WIFI_DRIVER_FW_PATH_STA := "/system/firmware/fw_bcmdhd.bin"
 WIFI_DRIVER_FW_PATH_AP := "/system/firmware/fw_bcmdhd_apsta.bin"
 WIFI_DRIVER_FW_PATH_P2P := "/system/firmware/fw_bcmdhd.bin"
+
+BOARD_USE_SOFT_GATEKEEPER := true
 
 # Inherit from the proprietary version
 -include vendor/xiaomi/cappu/BoardConfigVendor.mk

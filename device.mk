@@ -42,7 +42,6 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.camera.autofocus.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.autofocus.xml \
     frameworks/native/data/etc/android.hardware.camera.front.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.front.xml \
     frameworks/native/data/etc/android.hardware.faketouch.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.faketouch.xml \
-    frameworks/native/data/etc/android.hardware.fingerprint.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.fingerprint.xml \
     frameworks/native/data/etc/android.hardware.opengles.aep.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.opengles.aep.xml \
     frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.accelerometer.xml \
     frameworks/native/data/etc/android.hardware.sensor.light.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.light.xml \
@@ -118,7 +117,7 @@ PRODUCT_PACKAGES += \
     android.hardware.graphics.composer@2.1-impl \
     android.hardware.graphics.composer@2.1-service \
     android.hardware.memtrack@1.0-impl \
-    android.hardware.memtrack@1.0-service \
+    android.hardware.memtrack@1.0-service
 
 # DRM
 PRODUCT_PACKAGES += \
@@ -127,35 +126,32 @@ PRODUCT_PACKAGES += \
     android.hardware.drm@1.0-impl \
     android.hardware.drm@1.0-service
 
-# Fingerprint
-PRODUCT_PACKAGES += \
-    android.hardware.biometrics.fingerprint@2.1-service
-
 # FM
 PRODUCT_PACKAGES += \
     android.hardware.broadcastradio@1.1-impl \
     android.hardware.broadcastradio@1.1-service
 
-# Gatekeeper
-PRODUCT_PACKAGES += \
-    android.hardware.gatekeeper@1.0-impl \
-    android.hardware.gatekeeper@1.0-service
-
 # HIDL
 PRODUCT_PACKAGES += \
     android.hidl.base@1.0 \
-    android.hidl.manager@1.0
+    android.hidl.manager@1.0 \
+    android.hidl.manager@1.0 \
+    android.hidl.manager@1.0-java
 
-# Keymaster
+# Binder
 PRODUCT_PACKAGES += \
-    android.hardware.keymaster@3.0-impl \
-    android.hardware.keymaster@3.0-service
+    libhidltransport \
+    libhwbinder
 
 # Light
 PRODUCT_PACKAGES += \
-    lights.mt8173 \
-    android.hardware.light@2.0-impl-mediatek \
-    android.hardware.light@2.0-service-mediatek
+    lights.default \
+    android.hardware.light@2.0-service
+
+# Keymaster
+PRODUCT_PACKAGES += \
+    keymaster.default \
+    android.hardware.keymaster@3.0-service
 
 # Media
 PRODUCT_COPY_FILES += \
@@ -191,9 +187,13 @@ PRODUCT_PACKAGES += \
 
 # Sensor
 PRODUCT_PACKAGES += \
-    libsensorndkbridge \
-    android.hardware.sensors@1.0-impl-mediatek \
-    android.hardware.sensors@1.0-service-mediatek
+    libsensorndkbridge
+
+# Gatekeeper
+PRODUCT_PACKAGES += \
+    libSoftGatekeeper \
+    gatekeeper.default \
+    android.hardware.gatekeeper@1.0-service
 
 # VNDK
 #PRODUCT_COPY_FILES += \
@@ -214,13 +214,14 @@ PRODUCT_PACKAGES += \
     libwpa_client \
     hostapd \
     hostapd_cli \
-    libwifi-hal-mt66xx \
     wpa_supplicant \
     android.hardware.wifi@1.0-service
 
-# Remove unwanted packages
+#power
 PRODUCT_PACKAGES += \
-    RemovePackages
+    power.default \
+    android.hardware.power@1.0-service
+
 
 $(call inherit-product-if-exists, vendor/xiaomi/cappu/cappu-vendor.mk)
 
