@@ -1,38 +1,21 @@
-# Copyright (C) 2018 The LineageOS Project
+# Copyright (C) 2014 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+ifneq ($(filter cappu,$(TARGET_DEVICE)),)
 
 LOCAL_PATH := $(call my-dir)
 
-ifeq ($(TARGET_DEVICE),cappu)
-
 include $(call all-makefiles-under,$(LOCAL_PATH))
-
-include $(CLEAR_VARS)
-
-NVDATA_MOUNT_POINT := $(TARGET_OUT_VENDOR)/nvdata
-PROTECT_F_MOUNT_POINT  := $(TARGET_OUT_VENDOR)/protect_f
-PROTECT_S_MOUNT_POINT := $(TARGET_OUT_VENDOR)/protect_s
-
-$(NVDATA_MOUNT_POINT):
-	@echo "Creating $(NVDATA_MOUNT_POINT)"
-	@mkdir -p $(NVDATA_MOUNT_POINT)
-
-$(PROTECT_F_MOUNT_POINT):
-	@echo "Creating $(PROTECT_F_MOUNT_POINT)"
-	@mkdir -p $(PROTECT_F_MOUNT_POINT)
-
-$(PROTECT_S_MOUNT_POINT):
-	@echo "Creating $(PROTECT_S_MOUNT_POINT)"
-	@mkdir -p $(PROTECT_S_MOUNT_POINT)
-
-ALL_DEFAULT_INSTALLED_MODULES += \
-	$(NVDATA_MOUNT_POINT) \
-	$(PROTECT_F_MOUNT_POINT) $(PROTECT_S_MOUNT_POINT) \
-
-KERNEL_OUT := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ
-
-$(KERNEL_OUT):
-	mkdir -p $(KERNEL_OUT)
-
-INSTALLED_KERNEL_HEADERS: $(KERNEL_OUT)
 
 endif
