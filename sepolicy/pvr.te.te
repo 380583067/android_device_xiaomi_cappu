@@ -1,0 +1,14 @@
+# PowerVR GPU驱动设备节点权限
+allow vendor_shell pvr_device:chr_file rw_file_perms;
+allow hal_graphics_allocator_default pvr_device:chr_file rw_file_perms;
+allow surfaceflinger pvr_device:chr_file rw_file_perms;
+allow zygote pvr_device:chr_file rw_file_perms;
+allow system_server pvr_device:chr_file rw_file_perms;
+
+# Gralloc/Framebuffer设备权限
+allow hal_graphics_allocator_default graphics_device:chr_file rw_file_perms;
+allow surfaceflinger graphics_device:chr_file rw_file_perms;
+
+# 允许vendor驱动执行system库
+allow vendor_init rootfs:file execute_no_trans;
+allow vendor_shell system_file:file execute_no_trans;

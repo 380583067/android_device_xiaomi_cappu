@@ -1,0 +1,15 @@
+dir.vendor = /vendor/lib64
+dir.system = /system/lib64
+
+[vendor]
+namespace.default.isolated = false
+namespace.default.search.paths = /vendor/lib64:/system/lib64
+namespace.default.permitted.paths = /vendor/lib64:/system/lib64:/odm/lib64
+namespace.default.asan.search.paths = /data/asan/vendor/lib64:/data/asan/system/lib64
+namespace.default.asan.permitted.paths = /data/asan/vendor/lib64:/data/asan/system/lib64
+
+# 给EGL驱动单独放开命名空间权限
+[vendor/lib64/egl]
+namespace.default.isolated = false
+namespace.default.search.paths = /vendor/lib64:/system/lib64
+namespace.default.permitted.paths = /vendor/lib64:/system/lib64

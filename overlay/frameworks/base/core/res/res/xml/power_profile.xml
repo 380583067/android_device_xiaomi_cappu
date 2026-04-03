@@ -1,15 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+**
+** Copyright 2016, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License")
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**     http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+*/
+-->
+
 <device name="Android">
     <item name="none">0</item>
-    <item name="screen.on">0.1</item>
-    <item name="screen.full">0.1</item>
-    <item name="bluetooth.active">0.1</item>
-    <item name="bluetooth.on">0.1</item>
-    <item name="wifi.on">0.1</item>
-    <item name="wifi.active">0.1</item>
-    <item name="wifi.scan">0.1</item>
-    <item name="dsp.audio">0.1</item>
-    <item name="dsp.video">0.1</item>
+    <item name="screen.on">124</item>
+    <item name="screen.full">398</item>
+    <item name="bluetooth.active">37.2</item>
+    <item name="bluetooth.on">0.6</item>
+    <item name="wifi.on">0.7</item>
+    <item name="wifi.active">327</item>
+    <item name="wifi.scan">58</item>
+    <item name="dsp.audio">37</item>
+    <item name="dsp.video">133</item>
     <item name="camera.flashlight">0.1</item>
     <item name="camera.avg">0.1</item>
     <item name="gps.on">0.1</item>
@@ -24,19 +42,51 @@
     <item name="modem.controller.tx">0</item>
     <item name="modem.controller.voltage">0</item>
     <array name="cpu.clusters.cores">
-        <value>1</value>
+        <value>4</value>
+        <value>2</value>
     </array>
     <array name="cpu.speeds.cluster0">
-        <value>400000</value>
+        <value>507000</value>
+        <value>702000</value>
+        <value>1001000</value>
+        <value>1105000</value>
+        <value>1300000</value>
+        <value>1508000</value>
+        <value>1690000</value>
+        <value>1703000</value>
+    </array>
+    <array name="cpu.speeds.cluster1">
+        <value>507000</value>
+        <value>702000</value>
+        <value>1001000</value>
+        <value>1209000</value>
+        <value>1404000</value>
+        <value>1612000</value>
+        <value>1807000</value>
+        <value>2106000</value>
     </array>
     <array name="cpu.active.cluster0">
-        <value>0.1</value>
+        <value>51</value>
+        <value>51</value>
+        <value>51</value>
+        <value>54</value>
+        <value>71</value>
+        <value>107</value>
+        <value>109</value>
+        <value>109</value>
     </array>
-    <item name="cpu.idle">0.1</item>
-    <array name="memory.bandwidths">
-        <value>22.7</value>
+    <array name="cpu.active.cluster1">
+        <value>62</value>
+        <value>79</value>
+        <value>107</value>
+        <value>113</value>
+        <value>123</value>
+        <value>126</value>
+        <value>130</value>
+        <value>136</value>
     </array>
-    <item name="battery.capacity">8000</item>
+    <item name="cpu.idle">5</item>
+    <item name="battery.capacity">6600</item>
     <item name="wifi.controller.idle">0</item>
     <item name="wifi.controller.rx">0</item>
     <item name="wifi.controller.tx">0</item>
