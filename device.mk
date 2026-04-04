@@ -29,28 +29,24 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # API
 PRODUCT_PACKAGES += $(PRODUCT_PACKAGES_SHIPPING_API_LEVEL_29)
 
-# Vendor product configurations
-$(call inherit-product, vendor/xiaomi/cappu/cappu-vendor.mk)
+# APEX
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/ld.config.txt:$(TARGET_COPY_OUT_SYSTEM)/etc/swcodec/ld.config.txt
 
-# Recovery allowed devices
-TARGET_OTA_ASSERT_DEVICE := cappu
-
-# Audio
+# Audio HAL
 PRODUCT_PACKAGES += \
-    android.hardware.audio@2.0 \
     android.hardware.audio@2.0-impl \
+    android.hardware.audio@2.0-service \
     android.hardware.audio.effect@2.0-impl \
-    audio_policy.default \
-    audio.r_submix.default \
+    android.hardware.audio.common@2.0-util \
     audio.a2dp.default \
     audio.usb.default \
+    audio.r_submix.default \
+    audio_policy.default \
+    audio.primary.mt8173 \
     libaudioroute \
-    libtinyalsa \
-    libtinycompress \
-    libtinymix \
-    libtinyxml \
-    libalsautils \
-    xaplay
+    libaudiospdif \
+    libtinyalsa
 
 PRODUCT_COPY_FILES += \
     frameworks/av/services/audiopolicy/config/a2dp_audio_policy_configuration.xml:system/vendor/etc/a2dp_audio_policy_configuration.xml \
@@ -71,13 +67,11 @@ PRODUCT_COPY_FILES += \
     frameworks/av/services/audiopolicy/enginedefault/config/example/phone/audio_policy_engine_product_strategies.xml:system/vendor/etc/audio_policy_engine_product_strategies.xml \
     frameworks/av/services/audiopolicy/enginedefault/config/example/phone/audio_policy_engine_stream_volumes.xml:system/vendor/etc/audio_policy_engine_stream_volumes.xml
 
-
 # Bluetooth
 PRODUCT_PACKAGES += \
     libbt-vendor \
     android.hardware.bluetooth@1.0-impl \
     android.hardware.bluetooth@1.0-service
-
 
 # Charger
 PRODUCT_PACKAGES += \
@@ -99,9 +93,28 @@ PRODUCT_COPY_FILES += \
     prebuilts/vndk/v27/arm/arch-arm-armv7-a-neon/shared/vndk-core/libprotobuf-cpp-lite.so:$(TARGET_COPY_OUT_VENDOR)/lib/libprotobuf-cpp-lite.so \
     prebuilts/vndk/v27/arm64/arch-arm-armv7-a-neon/shared/vndk-core/libprotobuf-cpp-lite.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libprotobuf-cpp-lite.so
 
+# Dalvik
+PRODUCT_PROPERTY_OVERRIDES += \
+    dalvik.vm.heapstartsize=16m \
+    dalvik.vm.heapgrowthlimit=256m \
+    dalvik.vm.heapsize=512m \
+    dalvik.vm.heaptargetutilization=0.75 \
+    dalvik.vm.heapminfree=4m \
+    dalvik.vm.heapmaxfree=8m
+
+# Default.prop
+PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+    ro.oem_unlock_supported=1 \
+    ro.mount.fs=EXT4 \
+    camera.disable_zsl_mode=1
+
 # Display
 PRODUCT_PACKAGES += \
     libion
+
+# fastbootd
+PRODUCT_PACKAGES += \
+    fastbootd
 
 # FMRadio
 #MTK_FM_SUPPORT := true
@@ -111,17 +124,18 @@ PRODUCT_PACKAGES += \
     e2fsck \
     fsck.f2fs \
     mkfs.f2fs \
-    make_ext4fs
-
-# exFAT
-PRODUCT_PACKAGES += \
+    make_ext4fs \
     mount.exfat \
     fsck.exfat \
-    mkfs.exfat
+    mkfs.exfat \
+    fsck.ntfs \
+    mkfs.ntfs \
+    mount.ntfs
 
 # Graphics
 PRODUCT_AAPT_CONFIG := normal
 PRODUCT_AAPT_PREF_CONFIG := xxhdpi
+PRODUCT_CHARACTERISTICS := tablet
 PRODUCT_AAPT_PREBUILT_DPI := xxhdpi xhdpi 280dpi hdpi tvdpi mdpi ldpi
 PRODUCT_PACKAGES += \
     android.hardware.graphics.allocator@2.0-impl \
@@ -130,16 +144,7 @@ PRODUCT_PACKAGES += \
     android.hardware.graphics.mapper@2.0-impl
 
 # EGL Shims
-PRODUCT_COPY_FILES += \
-    prebuilts/vndk/v28/arm/arch-arm-armv7-a-neon/shared/vndk-sp/libutilscallstack.so:$(TARGET_COPY_OUT_VENDOR)/lib/libutilscallstack.so \
-    prebuilts/vndk/v28/arm64/arch-arm-armv8-a/shared/vndk-sp/libutilscallstack.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libutilscallstack.so \
-    $(LOCAL_PATH)/configs/ld.config.txt:$(TARGET_COPY_OUT_VENDOR)/etc/ld.config.txt
-
-# NTFS
-PRODUCT_PACKAGES += \
-    fsck.ntfs \
-    mkfs.ntfs \
-    mount.ntfs
+PRODUCT_PACKAGES += libutilscallstack
 
 # Health
 PRODUCT_PACKAGES += \
@@ -158,18 +163,40 @@ PRODUCT_PACKAGES += \
     libhidltransport \
     libhwbinder
 
+# Gatekeeper HAL
+PRODUCT_PACKAGES += \
+    libSoftGatekeeper \
+    gatekeeper.default \
+    android.hardware.gatekeeper@1.0-impl \
+    android.hardware.gatekeeper@1.0-service
+
 # HIDL Manifest
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/manifest.xml:system/vendor/manifest.xml
+
+# Init
+PRODUCT_PACKAGES += \
+    fstab.mt8173 \
+    init.aee.rc \
+    init.common_svc.rc \
+    init.connectivity.rc \
+    init.fon.rc \
+    init.modem.rc \
+    init.mt8173.rc \
+    init.mt8173.usb.rc \
+    init.project.rc \
+    init.protect.rc \
+    ueventd.mt8173.rc
 
 # Keymaster
 PRODUCT_PACKAGES += \
     android.hardware.keymaster@3.0-impl \
     android.hardware.keymaster@3.0-service
 
-# Light
+# Light HAL
 PRODUCT_PACKAGES += \
-	android.hardware.light@2.0-impl
+    lights.mt8173 \
+    android.hardware.light@2.0-impl
 
 # Media_omx config
 PRODUCT_PACKAGES += \
@@ -203,7 +230,8 @@ PRODUCT_PACKAGES += \
 
 # Overlay
 DEVICE_PACKAGE_OVERLAYS += \
-    $(LOCAL_PATH)/overlay 
+    $(LOCAL_PATH)/overlay \
+    $(LOCAL_PATH)/overlay-lineage
 
 # Permissions
 PRODUCT_COPY_FILES += \
@@ -229,54 +257,74 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.audio.low_latency.xml:system/etc/permissions/android.hardware.audio.low_latency.xml \
     frameworks/native/data/etc/android.hardware.bluetooth.xml:system/etc/permissions/android.hardware.bluetooth.xml \
     frameworks/native/data/etc/android.hardware.bluetooth_le.xml:system/etc/permissions/android.hardware.bluetooth_le.xml \
+    frameworks/native/data/etc/android.hardware.telephony.cdma.xml:system/etc/permissions/android.hardware.telephony.cdma.xml \
+    frameworks/native/data/etc/android.hardware.telephony.gsm.xml:system/etc/permissions/android.hardware.telephony.gsm.xml \
     frameworks/native/data/etc/android.hardware.usb.host.xml:system/etc/permissions/android.hardware.usb.host.xml \
     frameworks/native/data/etc/android.hardware.wifi.xml:system/etc/permissions/android.hardware.wifi.xml \
     frameworks/native/data/etc/android.hardware.wifi.direct.xml:system/etc/permissions/android.hardware.wifi.direct.xml \
 
-
 # Product
 PRODUCT_CHARACTERISTICS := tablet
 
-# Power
+# Power HAL
 PRODUCT_PACKAGES += \
+    power.mt8173 \
     android.hardware.power@1.0-impl \
     android.hardware.power@1.0-service \
-    vendor.lineage.power@1.0
+    android.hardware.power.stats@1.0-impl \
+    android.hardware.power.stats@1.0-service
+
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.power.stats.disable=1
+
+# Recovery allowed devices
+TARGET_OTA_ASSERT_DEVICE := cappu
 
 # Renderscript
 PRODUCT_PACKAGES += \
     android.hardware.renderscript@1.0-impl
 
-# Sensors
-PRODUCT_PACKAGES += \
-    android.hardware.sensors@1.0-impl
-
-# Init
-PRODUCT_PACKAGES += \
-    fstab.mt8173 \
-    init.aee.rc \
-    init.common_svc.rc \
-    init.connectivity.rc \
-    init.fon.rc \
-    init.modem.rc \
-    init.mt8173.rc \
-    init.mt8173.usb.rc \
-    init.project.rc \
-    init.protect.rc \
-    ueventd.mt8173.rc
-
 # Sensor Calibration
 PRODUCT_PACKAGES += \
     libem_sensor_jni
+
+# Sensors
+PRODUCT_PACKAGES += \
+    libsensorndkbridge
+
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.hardware.sensors=none
 
 # SECCOMP Configuration
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/seccomp/mediacodec-seccomp.policy:system/vendor/etc/seccomp_policy/mediacodec-seccomp.policy
 
+# Shim Libraries
+PRODUCT_PACKAGES += \
+    libshim_ui \
+    libcamera_shim \
+    libshim_showlogo \
+    libmtk_symbols \
+    libinstalld_shim
+
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.ld.preload=libshim_ui.so \
+    vendor.debug.ld.preload=libmtk_symbols.so \
+    vendor.debug.ld.preload=libbase.so:libcutils.so:libutils.so
+
+# Tethering
+PRODUCT_PROPERTY_OVERRIDES += \
+    net.tethering.noprovisioning=true
+
 # Thermal
 PRODUCT_PACKAGES += \
     android.hardware.thermal@1.0-impl \
     android.hardware.thermal@1.0-service
+
+# TimeKeep
+PRODUCT_PACKAGES += \
+    timekeep \
+    TimeKeep
 
 # Trust
 PRODUCT_PACKAGES += \
@@ -284,19 +332,31 @@ PRODUCT_PACKAGES += \
 
 # USB HAL
 PRODUCT_PACKAGES += \
-    android.hardware.usb@1.0-service.basic
+    android.hardware.usb@1.0-service
+
+# Use legacy ADB USB support
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.adb.nonblocking_ffs=false \
+    persist.sys.usb.config=mtp,adb \
+    ro.debuggable=1
 
 PRODUCT_PACKAGES += \
     librs_jni \
     com.android.future.usb.accessory
 
-# Vibrator
+# Vibrator HAL
 PRODUCT_PACKAGES += \
-	android.hardware.vibrator@1.0-service.lineage
+    android.hardware.vibrator@1.0-impl \
+    android.hardware.vibrator@1.0-service.lineage
 
 # VNDK-SP:
 PRODUCT_PACKAGES += \
     vndk-sp
+
+# VNDK
+PRODUCT_COPY_FILES += \
+    prebuilts/vndk/v28/arm64/arch-arm-armv8-a/shared/vndk-core/libui.so:$(TARGET_COPY_OUT_VENDOR)/lib/libui-v28.so \
+    prebuilts/vndk/v28/arm64/arch-arm64-armv8-a/shared/vndk-core/libui.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libui-v28.so
 
 # WiFi
 PRODUCT_PACKAGES += \
@@ -306,4 +366,13 @@ PRODUCT_PACKAGES += \
     hostapd \
     wpa_supplicant \
     wpa_supplicant.conf
+
+# Zygote
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.zygote=zygote64 \
+    ro.product.cpu.abilist=arm64-v8a \
+    ro.product.cpu.abilist32= \
+    ro.product.cpu.abilist64=arm64-v8a
+
+$(call inherit-product-if-exists, vendor/xiaomi/cappu/cappu-vendor.mk)
 

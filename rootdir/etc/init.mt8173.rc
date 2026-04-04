@@ -1529,3 +1529,15 @@ on property:sys.boot_completed=1
     # Stop the logger service
     stop logger
 
+on property:apexd.status=ready
+    mount none /system/etc/swcodec/ld.config.txt /apex/com.android.media.swcodec/etc/ld.config.txt bind
+
+on early-fs
+    start installd
+
+service installd /system/bin/installd
+    class main
+    socket installd stream 600 system system
+    critical
+    onrestart restart zygote
+    disabled

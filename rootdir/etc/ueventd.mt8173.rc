@@ -71,8 +71,8 @@
 /dev/eemcs_aud            0660   audio      audio
 
 # SGX device node
-/dev/pvrsrvkm             0666   system     graphics
-/dev/pvr_sync             0666   system     graphics
+/dev/pvrsrvkm             0666   root       root
+/dev/pvr_sync             0666   root       root
 
 
 /sys/devices/platform/leds-mt65xx/leds/green   delay_on      0664  system   system

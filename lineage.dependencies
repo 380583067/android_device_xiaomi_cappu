@@ -1,0 +1,13 @@
+ 
+[ 
+ { 
+   "repository":  "android_kernel_xiaomi_cappu", 
+   "target_path": "kernel/xiaomi/cappu", 
+   "branch":      "lineage-17.1" 
+ }, 
+ { 
+   "repository":  "android_vendor_xiaomi_cappu", 
+   "target_path": "vendor/xiaomi/cappu", 
+   "branch":      "lineage-17.1" 
+ } 
+] 

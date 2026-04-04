@@ -20,18 +20,38 @@ LOCAL_DONT_CHECK_LIBRARIES := true
 # Path
 LOCAL_PATH := device/xiaomi/cappu
 
+# Architecture Extensions
+ARCH_ARM_HAVE_TLS_REGISTER := true
+
 # Audio
 BOARD_USES_MTK_AUDIO := true
 USE_XML_AUDIO_POLICY_CONF := 1
 
+# Architecture
+TARGET_ARCH := arm64
+TARGET_ARCH_VARIANT := armv8-a
+TARGET_CPU_VARIANT := generic
+TARGET_CPU_ABI := arm64-v8a
+
+TARGET_CPU_SMP := true
+
+TARGET_2ND_ARCH := arm
+TARGET_2ND_ARCH_VARIANT := armv7-a-neon
+TARGET_2ND_CPU_VARIANT := cortex-a15
+TARGET_2ND_CPU_ABI := armeabi-v7a
+TARGET_2ND_CPU_ABI2 := armeabi
+TARGET_USES_64_BIT_BINDER := true
+
 # Binder API
 TARGET_USES_64_BIT_BINDER := true
-BOARD_USES_BPF := false
+
+# Bootloader
+TARGET_BOOTLOADER_BOARD_NAME := cappu
+TARGET_NO_BOOTLOADER := true
 
 # Bluetooth
-MTK_BT_SUPPORT := yes
 BOARD_HAVE_BLUETOOTH := true
-BOARD_BLUETOOTH_DOES_NOT_USE_RFKILL := true
+BOARD_HAVE_BLUETOOTH_BCM := true
 BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := $(LOCAL_PATH)/bluetooth
 
 # Boot animation
@@ -43,24 +63,32 @@ TARGET_BOOTANIMATION_MULTITHREAD_DECODE := true
 # Camera
 USE_CAMERA_STUB := true
 
+# dexpre-opt
+ifeq ($(HOST_OS),linux)
+  ifneq ($(TARGET_BUILD_VARIANT),eng)
+      WITH_DEXPREOPT := true
+      WITH_DEXPREOPT_DEBUG_INFO := false
+      USE_DEX2OAT_DEBUG := false
+  else
+      WITH_DEXPREOPT := true
+  endif
+endif
+
+WITH_DEXPREOPT_BOOT_IMG_AND_SYSTEM_SERVER_ONLY := false
+
 # ELF
-BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
 BUILD_BROKEN_PREBUILT_ELF_FILES := true
 LOCAL_CHECK_ELF_FILES := false
 
-# los hardware
-BOARD_HARDWARE_CLASS := $(LOCAL_PATH)/lineagehw
-
-# MTK Hardware
+# Hardware
 BOARD_HAS_MTK_HARDWARE := true
 BOARD_USES_MTK_HARDWARE := true
 MTK_HARDWARE := true
 
+JAVA_SOURCE_OVERLAYS := org.lineageos.hardware|$(LOCAL_PATH)/lineagehw|**/*.java
+
 # Legacy blobs
 TARGET_NEEDS_PLATFORM_TEXT_RELOCATIONS := true
-
-# Architecture Extensions
-ARCH_ARM_HAVE_TLS_REGISTER := true
 
 # Disable memcpy opt (for audio libraries)
 TARGET_CPU_MEMCPY_OPT_DISABLE := true
@@ -76,57 +104,25 @@ EXTENDED_FONT_FOOTPRINT := true
 TARGET_BOARD_PLATFORM := mt8173
 TARGET_NO_BOOTLOADER := true
 TARGET_NO_FACTORYIMAGE := true
-
-# CPU
-TARGET_ARCH := arm64
-TARGET_ARCH_VARIANT := armv8-a
-TARGET_CPU_VARIANT := generic
-TARGET_CPU_ABI := arm64-v8a
-TARGET_CPU_SMP := true
-TARGET_2ND_ARCH := arm
-TARGET_2ND_ARCH_VARIANT := armv7-a-neon
-TARGET_2ND_CPU_VARIANT := cortex-a15
-TARGET_2ND_CPU_ABI := armeabi-v7a
-TARGET_2ND_CPU_ABI2 := armeabi
-ENABLE_CPUSETS := true
-
-# --- 平台与架构定义 ---
-TARGET_BOARD_PLATFORM := mt8173
 TARGET_BOOTLOADER_BOARD_NAME := mt8173
 
-# GPU核心配置
-BOARD_GPU_DRIVER := powervr
-TARGET_BOARD_GPU := G6200
-TARGET_USES_POWERVR_GPU := true
-
-# Gralloc配置（强制gralloc 1.0，兼容老驱动）
-BOARD_USES_GENERIC_GRALLOC := false
-BOARD_USES_MTK_GRALLOC := true
-BOARD_USES_GRALLOC1 := true
-TARGET_USES_GRALLOC1 := true
-BOARD_GRALLOC_VERSION := 1
-
-# HWC配置（强制HWC 1.4，完全禁用HWC2）
-TARGET_USES_HWC2 := false
-TARGET_USES_HWC1 := true
-BOARD_HAS_HWC := true
+#  Display
+TARGET_BOARD_PLATFORM := mt8173
+TARGET_SCREEN_DENSITY := 320
+TARGET_SCREEN_WIDTH := 2048
+TARGET_SCREEN_HEIGHT := 1536
+BOARD_HAVE_MTK_FRAMEBUFFER := true
+BOARD_USES_MTKFB := true
 BOARD_USES_MTK_HWC := true
-
-# 显示缓冲区配置
+BOARD_HAS_HWC := true
+TARGET_USES_HWC1 := true
+TARGET_USES_HWC2 := false
+TARGET_REQUIRES_SYNCHRONOUS_SETSURFACE := true
 NUM_FRAMEBUFFER_SURFACE_BUFFERS := 3
-TARGET_DISABLE_TRIPLE_BUFFERING := false
-TARGET_FORCE_HWC_FOR_VIRTUAL_DISPLAYS := true
-
-# 关闭Android 10不兼容的高级特性
-TARGET_USES_COLOR_METADATA := false
-TARGET_USES_HDR10 := false
-TARGET_USES_HDR10_PLUS := false
-
-# 针对 PowerVR GPU 节点添加 Zygote 白名单 添加 PowerVR 核心节点
-ZYGOTE_WHITELIST_PATH_EXTRA := "/dev/pvr_sync","/dev/pvrsrvkm"
+TARGET_RUNNING_WITHOUT_SYNC_FRAMEWORK := true
 
 # Kernel
-BOARD_KERNEL_CMDLINE := bootopt=64S3,32N2,64N2 console=ttyMT0,921600n1 androidboot.selinux=permissive
+BOARD_KERNEL_CMDLINE := bootopt=64S3,32N2,64N2 androidboot.selinux=permissive
 BOARD_KERNEL_PAGESIZE := 2048
 BOARD_NAME := 1479347649
 BOARD_KERNEL_BASE := 0x40078000
@@ -146,12 +142,24 @@ MTK_APPENDED_DTB_SUPPORT := yes
 # FS
 BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
 BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE := ext4
-TARGET_EXFAT_DRIVER := sdfat
 TARGET_USERIMAGES_USE_EXT4 := true
-TARGET_USES_MKE2FS := true
 
-# Enable MALLOC
-MALLOC_SVELTE := true
+# Offmode Charging
+HEALTHD_ENABLE_TRICOLOR_LED := true
+BOARD_CHARGER_ENABLE_SUSPEND := true
+BOARD_CHARGER_SHOW_PERCENTAGE := true
+BOARD_CHARGER_DISABLE_INIT_BLANK := true
+BACKLIGHT_PATH := /sys/devices/platform/leds-mt65xx/leds/lcd-backlight/brightness
+RED_LED_PATH := /sys/class/leds/red/brightness
+GREEN_LED_PATH := /sys/class/leds/green/brightness
+BLUE_LED_PATH := /sys/class/leds/blue/brightness
+
+# Panel vsync offsets
+PRESENT_TIME_OFFSET_FROM_VSYNC_NS := 0
+
+# Per-application sizes for shader cache
+MAX_EGL_CACHE_SIZE := 4194304
+MAX_EGL_CACHE_ENTRY_SIZE := 262144
 
 # Partitions
 BOARD_BOOTIMAGE_PARTITION_SIZE := 67108864
@@ -167,17 +175,25 @@ TARGET_USERIMAGES_USE_EXT4 := true
 # LightHAL
 TARGET_PROVIDES_LIBLIGHT := true
 
+# Netd
+BOARD_DISABLE_NETD_ADVANCED_RULES := true
+
 # Sensors
 TARGET_NO_SENSOR_PERMISSION_CHECK := true
 
 # Recovery
-BOARD_HAS_LARGE_FILESYSTEM := true
+BOARD_HAS_NO_SELECT_BUTTON := true
 TARGET_RECOVERY_FSTAB := $(LOCAL_PATH)/rootdir/etc/fstab.mt8173
 
 # Include
 TARGET_SPECIFIC_HEADER_PATH += $(LOCAL_PATH)/include
 
 TARGET_SYSTEM_PROP := $(LOCAL_PATH)/system.prop
+
+# RenderScript
+#BOARD_DISABLE_RENDERSCRIPT_GPU := true
+#BOARD_OVERRIDE_RS_CPU_VARIANT_32 := cortex-a53
+#BOARD_OVERRIDE_RS_CPU_VARIANT_64 := cortex-a72
 
 # SELinux
 SELINUX_IGNORE_NEVERALLOWS := true
@@ -199,12 +215,19 @@ BOARD_PLAT_PRIVATE_SEPOLICY_DIR += \
 # Seccomp filter
 BOARD_SECCOMP_POLICY := $(LOCAL_PATH)/seccomp
 
-#Disable block system OTA package
-BLOCK_BASED_OTA := false
+# Shim Libraries
+TARGET_LD_SHIM_LIBS := \
+	/system/vendor/lib/libui_ext.so|libshim_ui.so \
+	/system/vendor/lib64/libui_ext.so|libshim_ui.so \
+	/system/vendor/lib/libui_ext.so|libcamera_shim.so \
+	/system/vendor/lib64/libui_ext.so|libcamera_shim.so \
+	/system/vendor/lib/libui_ext.so|libshim_showlogo.so \
+	/system/vendor/lib64/libui_ext.so|libshim_showlogo.so \
+	/system/vendor/lib/libui_ext.so|libmtk_symbols.so \
+	/system/vendor/lib64/libui_ext.so|libmtk_symbols.so \
 
-# Treble
-BOARD_VNDK_VERSION := current
-BOARD_VNDK_RUNTIME_DISABLE := true
+# Disable block system OTA package
+BLOCK_BASED_OTA := false
 
 # Wifi
 BOARD_WLAN_DEVICE := MediaTek
@@ -226,6 +249,12 @@ WIFI_DRIVER_FW_PATH_P2P:=P2P
 WIFI_DRIVER_STATE_CTRL_PARAM := /dev/wmtWifi
 WIFI_DRIVER_STATE_ON := 1
 WIFI_DRIVER_STATE_OFF := 0
+
+# Zygote whitelist extra paths
+ZYGOTE_WHITELIST_PATH_EXTRA := "/dev/pvr_sync","/dev/pvrsrvkm"
+
+# Security patch level
+VENDOR_SECURITY_PATCH := 2026-04-04
 
 # Inherit from the proprietary version
 -include vendor/xiaomi/cappu/BoardConfigVendor.mk

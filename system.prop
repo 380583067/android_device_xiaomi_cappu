@@ -9,6 +9,12 @@ rild.libargs=-d /dev/ttyC0
 ro.camera.sound.forced=0
 ro.audio.silent=0
 
+# BPF
+ro.kernel.ebpf.supported=false
+
+# Charger
+persist.sys.chgdisabled=0
+
 # MTK, Infinity, 20090720 {
 wifi.interface=wlan0
 # MTK, Infinity, 20090720 }
@@ -25,28 +31,44 @@ mediatek.wlan.ctia=0
 wifi.tethering.interface=ap0
 wifi.direct.interface=p2p0
 
-# --- 核心图形驱动加载 ---
+# hardware
 ro.hardware.egl=mtk
-ro.hardware.gralloc=mt8173
+ro.hardware.gralloc=mt8173.img
 ro.hardware.hwcomposer=mt8173
 ro.board.platform=mt8173
-ro.mediatek.platform=MT8173
 
-# --- HWC2 与 渲染器设置 ---
-ro.surfaceflinger.use_hwc2=true
+# Graphics
 ro.opengles.version=196610
-debug.hwui.renderer=opengl
-ro.zygote.disable_gl_preload=true
-
-# --- 屏幕与性能优化 ---
 ro.sf.lcd_density=320
-debug.sf.disable_backpressure=1
-debug.sf.latch_unsignaled=1
-debug.sf.hwc_hotplug_error_check=1
 
-# --- 兼容性补丁 ---
-ro.kernel.ebpf.supported=false
-ro.config.avoid_gfx_accel=false
+# HWC
+ro.sf.hwc1.enable=true
+ro.sf.disable_hwc=false
+debug.hwc.force_gpu=0
+
+ro.surface_flinger.use_frame_rate_api=false
+debug.sf.latch_unsignaled=1
+debug.sf.disable_backpressure=1
+ro.input.noresample=1
+ro.zygote.disable_gl_preload=false
+persist.sys.ui.hw=true
+debug.hwui.use_buffer_age=false
+debug.hwui.renderer=opengl
+ro.surface_flinger.max_frame_buffer_acquired_buffers=3
+
+# PowerVR
+ro.pvr.platform=mt8173
+ro.pvr.gpu=G6200
+ro.pvr.enable=1
+ro.pvr.fixed_sync=1
+ro.pvr.no_hw_vsync=0
+ro.rog.enable=0
+
+drm.service.enabled=true
+
+ro.display.screen=2048x1536
+ro.product.display=2048x1536
+ro.lcm.driver=1
 
 # USB MTP WHQL
 ro.sys.usb.mtp.whql.enable=0
@@ -70,6 +92,7 @@ qemu.hw.mainkeys=1
 # Kernel Selinux
 ro.kernel.zio=38,108,105,16
 ro.boot.selinux=disable
+ro.lmk.psi_monitor=false
 
 # performance
 ro.mtk_perf_simple_start_win=1
@@ -160,6 +183,7 @@ ro.mtk_bg_power_saving_ui=1
 ro.have_aee_feature=1
 ro.sim_me_lock_mode=0
 ro.mtk_dual_mic_support=0
+ro.mtk_is_tablet=0
 persist.mtk_vilte_support=0
 ro.mtk_vilte_ut_support=0
 wfd.dummy.enable=0
@@ -196,18 +220,16 @@ persist.sys.watchdog_enhanced=true
 persist.power.useautobrightadj=true
 persist.radio.apm_sim_not_pwdn=1
 
-# A10
-sys.boot_completed=0
-dev.bootcomplete=0
-service.nvram_init=0
-persist.sys.strictmode.disable=1
+# Fastbootd
+ro.fastbootd.available=true
 
-# Default.prop
-ro.oem_unlock_supported=1
-ro.mount.fs=EXT4
-camera.disable_zsl_mode=1
-
-# Tethering
-net.tethering.noprovisioning=true
+# OMX
+persist.media.treble_omx=false
+media.stagefright.less-secure=true
+media.stagefright.legacyencoder=true
 
 ro.crypto.state=unencrypted
+
+# VNDK
+ro.vndk.version=current
+
