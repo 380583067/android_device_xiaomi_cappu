@@ -9,9 +9,6 @@ rild.libargs=-d /dev/ttyC0
 ro.camera.sound.forced=0
 ro.audio.silent=0
 
-# BPF
-ro.kernel.ebpf.supported=false
-
 # Charger
 persist.sys.chgdisabled=0
 
@@ -36,39 +33,32 @@ ro.hardware.egl=mtk
 ro.hardware.gralloc=mt8173.img
 ro.hardware.hwcomposer=mt8173
 ro.board.platform=mt8173
+ro.hardware=mt8173
+ro.product.hardware=mt8173
 
 # Graphics
 ro.opengles.version=196610
 ro.sf.lcd_density=320
-
-# HWC
-ro.sf.hwc1.enable=true
-ro.sf.disable_hwc=false
-debug.hwc.force_gpu=0
-
 ro.surface_flinger.use_frame_rate_api=false
 debug.sf.latch_unsignaled=1
 debug.sf.disable_backpressure=1
 ro.input.noresample=1
 ro.zygote.disable_gl_preload=false
-persist.sys.ui.hw=true
 debug.hwui.use_buffer_age=false
-debug.hwui.renderer=opengl
 ro.surface_flinger.max_frame_buffer_acquired_buffers=3
+debug.hwui.renderer=opengl
+debug.hwui.use_partial_updates=false
+persist.sys.display.clearMotion=1
 
 # PowerVR
 ro.pvr.platform=mt8173
-ro.pvr.gpu=G6200
+ro.pvr.gpu=GX6250
 ro.pvr.enable=1
 ro.pvr.fixed_sync=1
 ro.pvr.no_hw_vsync=0
 ro.rog.enable=0
 
 drm.service.enabled=true
-
-ro.display.screen=2048x1536
-ro.product.display=2048x1536
-ro.lcm.driver=1
 
 # USB MTP WHQL
 ro.sys.usb.mtp.whql.enable=0
@@ -92,7 +82,6 @@ qemu.hw.mainkeys=1
 # Kernel Selinux
 ro.kernel.zio=38,108,105,16
 ro.boot.selinux=disable
-ro.lmk.psi_monitor=false
 
 # performance
 ro.mtk_perf_simple_start_win=1
@@ -230,6 +219,8 @@ media.stagefright.legacyencoder=true
 
 ro.crypto.state=unencrypted
 
-# VNDK
-ro.vndk.version=current
+persist.device_config.runtime_native.usap_pool_enabled=false
+ro.zygote.usap_pool_enabled=false
+ro.zygote.usap_supported=false
 
+ro.config.use_zygote_preload=false

@@ -27,7 +27,7 @@ PRODUCT_RELEASE_NAME := cappu
 
 PRODUCT_GMS_CLIENTID_BASE := android-xiaomi
 
-PRODUCT_BUILD_PROP_OVERRIDES += \
-    PRIVATE_BUILD_DESC="lineage_cappu-userdebug-8.1.0-OPM7.181205.001-9fec313e91-test-keys"
+#PRODUCT_BUILD_PROP_OVERRIDES += \
+#    PRIVATE_BUILD_DESC="lineage_cappu-userdebug-8.1.0-OPM7.181205.001-9fec313e91-test-keys"
 
-BUILD_FINGERPRINT := Xiaomi/lineage_cappu/cappu:8.1.0/OPM7.181205.001/9fec313e91:userdebug/test-keys
+#BUILD_FINGERPRINT := Xiaomi/lineage_cappu/cappu:8.1.0/OPM7.181205.001/9fec313e91:userdebug/test-keys

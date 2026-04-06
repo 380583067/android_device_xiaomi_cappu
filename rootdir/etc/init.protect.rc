@@ -1,13 +1,21 @@
 #init.protect.rc
 
-on early-init
-#create mount point for protect partition
+on post-fs-data
+    start installd
 
+on early-init
+    chmod 0755 /system/bin/installd
+    chown root shell /system/bin/installd
+
+	# create mount point for protect partition
     mkdir /protect_f 0771 system system
     mkdir /protect_s 0771 system system
 
-# mount protected partitions
+    mkdir /persist   0771 system system
+    mkdir /nvdata    0771 system system
+    mkdir /custom    0771 system system
 
+# mount protected partitions
 on fs_property:ro.mount.fs=EXT4
     write /proc/bootprof "INIT:PROTECT:Mount_START"
     exec /sbin/e2fsck -pfD /emmc@protect_f
@@ -29,8 +37,17 @@ on fs_property:ro.mount.fs=YAFFS
     mount yaffs2 mtd@protect_f /protect_f nosuid nodev
     mount yaffs2 mtd@protect_s /protect_s nosuid nodev
     write /proc/bootprof "INIT:PROTECT:Mount_END"
-
 #end of mount protected partitions
+
+# persist/nvdata
+on fs
+    mount ext4 /dev/block/by-name/persist /persist noatime nosuid nodev wait
+    mount ext4 /dev/block/by-name/nvdata /nvdata noatime nosuid nodev wait
+
+    chmod 0771 /persist
+    chown system system /persist
+    chmod 0771 /nvdata
+    chown system system /nvdata
 
 on post-fs-data
     # We chown/chmod /protect_f and /protect_s again so because mount is run as root + defaults

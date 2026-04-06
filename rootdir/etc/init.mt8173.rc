@@ -1,13 +1,12 @@
 # MTK platform .rc configure
 
-import /system/vendor/etc/init/hw/init.odm.rc
-import /system/vendor/etc/init/hw/init.connectivity.rc
-import /system/vendor/etc/init/hw/init.project.rc
-import /system/vendor/etc/init/hw/init.aee.rc
-import /system/vendor/etc/init/hw/init.fon.rc
-import /system/vendor/etc/init/hw/init.common_svc.rc
-import /system/vendor/etc/init/hw/init.mt8173.usb.rc
-import /system/vendor/etc/init/hw/init.modem.rc
+import /vendor/etc/init/hw/init.connectivity.rc
+import /vendor/etc/init/hw/init.project.rc
+import /vendor/etc/init/hw/init.protect.rc
+import /vendor/etc/init/hw/init.fon.rc
+import /vendor/etc/init/hw/init.sensor_1_0.rc
+import /vendor/etc/init/hw/init.modem.rc
+import /vendor/etc/init/hw/init.mt8173.usb.rc
 
 # *** DO NOT import the new rc file after this line ***
 
@@ -53,7 +52,7 @@ service charger /sbin/healthd -c
 on fs
     write /proc/bootprof "INIT:Mount_START"
     mkdir /dev/block/platform/mtk-msdc.0
-    symlink ../soc/11230000.mmc /dev/block/platform/mtk-msdc.0/11230000.MSDC0
+    symlink /dev/block/platform/soc/11230000.mmc /dev/block/platform/mtk-msdc.0/11230000.MSDC0
 
     mount_all /system/vendor/etc/fstab.mt8173
     swapon_all /system/vendor/etc/fstab.mt8173
@@ -1394,8 +1393,8 @@ service MtkCodecService /system/vendor/bin/MtkCodecService
     group audio media sdcard_r
 
 # IMG GPU init
-service pvrsrvctl /system/vendor/bin/pvrsrvctl --no-module --start
-    class core
+service pvrsrvctl /system/vendor/bin/pvrsrvctl --start
+    class main
     user root
     group root
     oneshot
@@ -1531,13 +1530,3 @@ on property:sys.boot_completed=1
 
 on property:apexd.status=ready
     mount none /system/etc/swcodec/ld.config.txt /apex/com.android.media.swcodec/etc/ld.config.txt bind
-
-on early-fs
-    start installd
-
-service installd /system/bin/installd
-    class main
-    socket installd stream 600 system system
-    critical
-    onrestart restart zygote
-    disabled

@@ -1,10 +1,8 @@
 # MTK project .rc configure
 
 import /system/vendor/etc/init/hw/init.mt8173.usb.rc
-
 on post-fs-data
-
-#Camera
+# Camera
     chmod 0660 /dev/MAINAF
     chown system camera /dev/MAINAF
 
@@ -26,7 +24,7 @@ on post-fs-data
     chmod 0660 /dev/BU64745GWZAF
     chown system camera /dev/BU64745GWZAF
 
-#SMB
+# SMB
     chown system system /proc/smb/ScreenComm
     chmod 0660 /proc/smb/ScreenComm
 
@@ -37,7 +35,7 @@ on post-fs-data
     chmod 0660 /sys/class/rfkill/rfkill0/state
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/state    
 
-#Define device for ATCID
+# Define device for ATCID
     chmod 660 /dev/ttyGS0
     chown system /dev/ttyGS0
     chmod 660 /dev/ttyGS1
@@ -46,11 +44,11 @@ on post-fs-data
 
     chmod 0666 /dev/exm0
 
-#Audio
+# Audio
     mkdir /persist/audio 0700 system system
     chmod 0666 /dev/i2c-9
 
-#Sensor
+# Sensor
     chown system /persist/als_cal_data.txt
 #    chgrp system /persist/als_cal_data.txt
     chown system /persist/accel_cal_data.txt
@@ -75,8 +73,9 @@ service atci_service /system/vendor/bin/atci_service
 	socket atci-service stream 660 radio system
 	socket atci-serv-fw stream 660 radio system
 	user root
-        disabled
+    disabled
 	group radio system
+
 service atcid-daemon-u /system/vendor/bin/atcid
 	user system
 	group radio system media
@@ -107,6 +106,13 @@ service tfa_cold_boot /system/bin/sh /system/bin/playback_audio.sh /etc/silence_
     disabled
     oneshot
     seclabel u:r:shell:s0
+
+# installd
+service installd /system/bin/installd
+    class core
+    user root
+    group root system
+    oneshot
 
 on property:service.bootanim.exit=0
     start tfa_cold_boot
