@@ -1,0 +1,16 @@
+diff --git a/clang-3289846/lib64/libncurses.so.5 b/clang-3289846/lib64/libncurses.so.5
+new file mode 120000
+index 0000000000000000000000000000000000000000..fa571744c46e7f63297007a1cc22444dad87c5b9
+--- /dev/null
++++ b/clang-3289846/lib64/libncurses.so.5
+@@ -0,0 +1 @@
++/run/media/root/a066e667-55e3-41ac-8a31-df98c52973d7/los19.1/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.17-4.8/sysroot/usr/lib/libncurses.so.5.9
+\ No newline at end of file
+diff --git a/clang-3289846/lib64/libtinfo.so.5 b/clang-3289846/lib64/libtinfo.so.5
+new file mode 120000
+index 0000000000000000000000000000000000000000..727476f4a0b142c74681ead63dd03dcd6e2b5471
+--- /dev/null
++++ b/clang-3289846/lib64/libtinfo.so.5
+@@ -0,0 +1 @@
++/run/media/root/a066e667-55e3-41ac-8a31-df98c52973d7/los19.1/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.17-4.8/sysroot/usr/lib/libtinfo.so.5.9
+\ No newline at end of file

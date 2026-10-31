@@ -38,5 +38,6 @@ allow sysenv_daemon sysfs:file { open read };
 # Date : WK17.43
 # Operation : Migration
 # Purpose : to access mtd device
-allow sysenv_daemon mtd_device:blk_file { open read write };
+# cappu Android 12: AOSP removed the generic mtd_device type; use this exported board type for legacy rules and labels.
+allow sysenv_daemon cappu_mtd_device:blk_file { open read write };
 

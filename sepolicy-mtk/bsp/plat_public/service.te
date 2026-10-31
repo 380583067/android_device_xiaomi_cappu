@@ -28,7 +28,8 @@ type mtk_duraspeed_service, app_api_service, system_server_service, service_mana
 type guiext-server_service, service_manager_type;
 type ota_agent_service, service_manager_type;
 type gas_srv_service, service_manager_type;
-type fpspolicy-server_service, service_manager_type;
+# Android 12 Treble: FpsPolicy is registered by SurfaceFlinger and queried by app GL clients.
+type fpspolicy-server_service, app_api_service, service_manager_type;
 type mtk_appdetection_service, app_api_service, system_server_service, service_manager_type;
 type mtk_carrierexpress_service, app_api_service, service_manager_type;
 type vtservice_service, service_manager_type;

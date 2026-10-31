@@ -1,3 +1,4 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 # ==============================================
 # MTK Policy Rule
 # ==============================================
@@ -150,8 +151,9 @@ allow mediacodec surfaceflinger:fifo_file rw_file_perms;
 # Operator: Whitney SQC
 # Purpose: mediacodec use gpu
 allow mediacodec gpu_device:dir search;
-allow mediacodec debug_prop:property_service set;
-allow mediacodec system_prop:property_service set;
+# Android 12 property ownership keeps debug_prop/system_prop writes in the
+# system side. Vendor codec behavior uses the typed codec/HAL interfaces; do
+# not give this vendor policy domain write access to the global core namespaces.
 
 # Date : W18.01
 # Add for turn on SElinux in enforcing mode
@@ -173,7 +175,7 @@ allow mediacodec mtk_cmdq_device:chr_file { read ioctl open };
 # Date : WK17.28
 # Operation : MT6757 SQC
 # Purpose : Change thermal config
-allow mediacodec mtk_thermal_config_prop:file { getattr open read };
+get_prop(mediacodec, mtk_thermal_config_prop)
 allow mediacodec mtk_thermal_config_prop:property_service set;
 
 
@@ -187,7 +189,7 @@ allow mediacodec mtk_hal_power:unix_stream_socket connectto;
 # Date : WK17.12
 # Operation : MT6799 SQC
 # Purpose : Change thermal config
-allow mediacodec mtk_thermal_config_prop:file { getattr open read };
+get_prop(mediacodec, mtk_thermal_config_prop)
 allow mediacodec mtk_thermal_config_prop:property_service set;
 
 # Date : WK17.43

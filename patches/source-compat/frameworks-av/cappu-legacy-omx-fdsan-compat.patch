@@ -1,0 +1,44 @@
+diff --git a/services/mediacodec/main_codecservice.cpp b/services/mediacodec/main_codecservice.cpp
+index 6a82b1b..2c709e6 100644
+--- a/services/mediacodec/main_codecservice.cpp
++++ b/services/mediacodec/main_codecservice.cpp
+@@ -16,6 +16,7 @@
+ */
+ 
+ #include <android-base/logging.h>
++#include <android/fdsan.h>
+ 
+ // from LOCAL_C_INCLUDES
+ #include "minijail.h"
+@@ -27,6 +28,7 @@
+ #include <media/stagefright/omx/1.0/OmxStore.h>
+ 
+ #include <dlfcn.h>
++#include <string.h>
+ 
+ using namespace android;
+ 
+@@ -40,6 +42,23 @@ int main(int argc __unused, char** argv)
+ {
+     strcpy(argv[0], "media.codec");
+     LOG(INFO) << "mediacodecservice starting";
++
++    // cappu's Android 7 MT8173 OMX decoder closes fence descriptors with raw
++    // close(), while Android 12's media stack tracks those descriptors with
++    // fdsan unique_fd ownership tags. A fatal ownership warning therefore
++    // aborts the isolated media.codec process before AVC playback can proceed.
++    // Keep the compatibility exception local to this device and process: report
++    // the first mismatch, then let the legacy decoder continue without turning
++    // off fdsan checks for unrelated system processes.
++    char product[PROPERTY_VALUE_MAX] = {};
++    char platform[PROPERTY_VALUE_MAX] = {};
++    property_get("ro.product.device", product, "");
++    property_get("ro.board.platform", platform, "");
++    if (strcmp(product, "cappu") == 0 && strcmp(platform, "mt8173") == 0) {
++        android_fdsan_set_error_level(ANDROID_FDSAN_ERROR_LEVEL_WARN_ONCE);
++        LOG(WARNING) << "Using warn-once fdsan mode for cappu's legacy MT8173 OMX decoder";
++    }
++
+     signal(SIGPIPE, SIG_IGN);
+     SetUpMinijail(kSystemSeccompPolicyPath, kVendorSeccompPolicyPath);
+ 

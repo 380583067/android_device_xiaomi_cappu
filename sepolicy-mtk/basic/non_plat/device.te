@@ -38,7 +38,7 @@ type MJC_device, dev_type;
 type smartpa_device, dev_type;
 type smartpa1_device, dev_type;
 type uio0_device, dev_type;
-type xt_qtaguid_device, dev_type;
+# Android 12 already declares and labels /dev/xt_qtaguid as qtaguid_device.
 type rfkill_device, dev_type;
 type sw_sync_device, dev_type, mlstrustedobject;
 type sec_device, dev_type;

@@ -3,7 +3,8 @@
 # ==============================================
 # Type Declaration
 # ==============================================
-type mtk_advcamserver_exec , exec_type, file_type;
+# Android 12 Treble: matching file_contexts labels a /system path; mark this executable as system_file_type so coredomain entrypoints remain in the system partition.
+type mtk_advcamserver_exec , system_file_type, exec_type, file_type;
 # New added for move to /system
 typeattribute mtk_advcamserver coredomain;
 
@@ -22,6 +23,6 @@ binder_call(mtk_advcamserver, binderservicedomain)
 binder_call(mtk_advcamserver, appdomain)
 
 allow mtk_advcamserver mtk_advcamserver_service:service_manager { add find };
-allow mtk_advcamserver hal_camera_hwservice:hwservice_manager { find };
-allow mtk_advcamserver hwservicemanager_prop:file r_file_perms;
+# Android 12 reserves camera HIDL discovery and hwservicemanager internals for
+# platform camera clients; this legacy system helper is not shipped by cappu.
 

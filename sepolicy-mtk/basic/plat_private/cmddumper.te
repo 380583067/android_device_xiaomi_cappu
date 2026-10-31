@@ -3,7 +3,8 @@
 # ==============================================
 
 # New added for move to /system
-type cmddumper_exec, exec_type, file_type;
+# Android 12 Treble: matching file_contexts labels a /system path; mark this executable as system_file_type so coredomain entrypoints remain in the system partition.
+type cmddumper_exec, system_file_type, exec_type, file_type;
 typeattribute cmddumper coredomain;
 
 init_daemon_domain(cmddumper)
@@ -38,4 +39,5 @@ allow cmddumper media_rw_data_file:dir { create_dir_perms };
 allow cmddumper file_contexts_file:file { read getattr open };
 
 # purpose: access /sys/devices/virtual/BOOT/BOOT/boot/boot_mode
-allow cmddumper sysfs:file { read open };
+# Android 12 forbids generic sysfs reads from coredomains; use a specific label
+# only after confirming the corresponding cmddumper input path.

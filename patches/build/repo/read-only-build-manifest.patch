@@ -1,0 +1,16 @@
+diff --git a/config/Android.mk b/config/Android.mk
+index 90ce783..35aca8e 100644
+--- a/config/Android.mk
++++ b/config/Android.mk
+@@ -26,8 +26,10 @@ LOCAL_PRODUCT_MODULE := true
+ _build-manifest_intermediates := $(call intermediates-dir-for,$(LOCAL_MODULE_CLASS),$(LOCAL_MODULE))
+ _build-manifest_xml := $(_build-manifest_intermediates)/$(LOCAL_MODULE)$(LOCAL_MODULE_SUFFIX)
+ 
++# cappu Android 12 root build: repo manifest only reads repository metadata.
++# Disable repo's default trace writer inside nsjail rather than making .repo writable.
+ $(_build-manifest_xml):
+ 	mkdir -p $(dir $@)
+-	python3 .repo/repo/repo manifest -o - -r | grep -Ev "proprietary_$(MANIFEST_EXCLUDES)" > $@
++	REPO_TRACE=0 python3 .repo/repo/repo manifest -o - -r | grep -Ev "proprietary_$(MANIFEST_EXCLUDES)" > $@
+ 
+ include $(BUILD_SYSTEM)/base_rules.mk

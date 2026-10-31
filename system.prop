@@ -59,3 +59,7 @@ ro.mtk_hdmi_4k_support=1
 
 ro.product.board=cappu
 
+# S Bringup
+ro.kernel.ebpf.supported=false
+debug.renderengine.backend=threaded
+persist.sys.binary_xml=false

@@ -1,0 +1,29 @@
+--- a/drivers/misc/mediatek/imgsensor/inc/kd_imgsensor.h
++++ b/drivers/misc/mediatek/imgsensor/inc/kd_imgsensor.h
+@@ -91,6 +91,8 @@
+ #define KDIMGSENSORIOC_X_SET_SHUTTER_GAIN_WAIT_DONE _IOWR(IMGSENSORMAGIC, 55, u32)
+ /* set mclk */
+ #define KDIMGSENSORIOC_X_SET_MCLK_PLL               _IOWR(IMGSENSORMAGIC, 60, ACDK_SENSOR_MCLK_STRUCT)
++/* Some 32-bit cappu camera HAL blobs encode the 12-byte MCLK ABI. */
++#define KDIMGSENSORIOC_X_SET_MCLK_PLL_12BYTE        _IOC(_IOC_READ | _IOC_WRITE, IMGSENSORMAGIC, 60, 12)
+ #define KDIMGSENSORIOC_X_GETINFO2                   _IOWR(IMGSENSORMAGIC, 65, IMAGESENSOR_GETINFO_STRUCT)
+ /* set open/close sensor index */
+ #define KDIMGSENSORIOC_X_SET_CURRENT_SENSOR         _IOWR(IMGSENSORMAGIC, 70, u32)
+--- a/drivers/misc/mediatek/imgsensor/src/mt8173/kd_sensorlist.c
++++ b/drivers/misc/mediatek/imgsensor/src/mt8173/kd_sensorlist.c
+@@ -3483,6 +3483,7 @@
+ 	case KDIMGSENSORIOC_X_RELEASE_I2C_TRIGGER_LOCK:
+ 	case KDIMGSENSORIOC_X_SET_SHUTTER_GAIN_WAIT_DONE:
+ 	case KDIMGSENSORIOC_X_SET_MCLK_PLL:
++	case KDIMGSENSORIOC_X_SET_MCLK_PLL_12BYTE:
+ 	case KDIMGSENSORIOC_X_SET_CURRENT_SENSOR:
+ 	case KDIMGSENSORIOC_X_SET_GPIO:
+ 	case KDIMGSENSORIOC_X_GET_ISP_CLK:
+@@ -3592,6 +3593,7 @@
+ 		break;
+ 
+ 	case KDIMGSENSORIOC_X_SET_MCLK_PLL:
++	case KDIMGSENSORIOC_X_SET_MCLK_PLL_12BYTE:
+ 		i4RetValue = kdSetSensorMclk(pBuff);
+ 		break;
+ 

@@ -16,12 +16,14 @@ init_daemon_domain(gsm0710muxd)
 allow gsm0710muxd self:capability { chown fowner setuid };
 
 # Property service
-# Set ctl.ril-daemon property
-set_prop(gsm0710muxd, ctl_rildaemon_prop)
+# Android 12 keeps ctl.rildaemon under init ownership. The mux helper retains
+# only its device-owned MTK control properties; init remains responsible for
+# starting/stopping the system RIL service.
 set_prop(gsm0710muxd, ctl_ril-daemon-mtk_prop)
 set_prop(gsm0710muxd, ctl_fusion_ril_mtk_prop)
 set_prop(gsm0710muxd, gsm0710muxd_prop)
-set_prop(gsm0710muxd, radio_prop)
+# Android 12 reserves radio_prop writes for the telephony HAL server. The
+# mux daemon reports transport state through its device-owned MTK properties.
 # allow set muxreport control properties
 set_prop(gsm0710muxd, ril_mux_report_case_prop)
 

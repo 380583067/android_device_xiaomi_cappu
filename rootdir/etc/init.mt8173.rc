@@ -1,21 +1,9 @@
-# MTK platform .rc configure
-
-import ${ro.mtkrc.path}init.odm.rc
-import ${ro.mtkrc.path}init.connectivity.rc
-import ${ro.mtkrc.path}init.project.rc
-import /FWUpgradeInit.rc
-import /vendor/etc/init/hw/init.aee.rc
-import ${ro.mtkrc.path}init.volte.rc
-import ${ro.mtkrc.path}init.mal.rc
-import ${ro.mtkrc.path}init.trustonic.rc
-import ${ro.mtkrc.path}init.common_svc.rc
-import ${ro.mtkrc.path}init.mt8173.usb.rc
-import ${ro.mtkrc.path}init.sensor_1_0.rc
-# add usb .rc here
-
-# init.modem.rc must be the LAST rc file because vold.post_fs_data_done is set in it
-import ${ro.mtkrc.path}init.modem.rc
-# *** DO NOT import the new rc file after this line ***
+# cappu Android 12：平台 init.rc 按 ro.hardware 导入本文件。
+# 子脚本仅使用本产品实际安装的绝对路径，不依赖可能尚未加载的 ro.mtkrc.path；
+# /vendor/etc/init 下的 HAL 服务由 init 自动扫描，不在此重复 import。
+import /vendor/etc/init/hw/init.connectivity.rc
+import /vendor/etc/init/hw/init.mt8173.usb.rc
+import /vendor/etc/init/hw/init.sensor_1_0.rc
 
 on early-init
     mount debugfs debugfs /sys/kernel/debug
@@ -70,14 +58,22 @@ on fs
     write /proc/bootprof "INIT:Mount_START"
     mkdir /dev/block/platform/mtk-msdc.0
     symlink ../soc/11230000.mmc /dev/block/platform/mtk-msdc.0/11230000.MSDC0
-    mount_all /vendor/etc/fstab.mt8173
-    exec /system/bin/tune2fs -O has_journal -u 10010 -r 4096 /dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/userdata
+    # Android 12 第一阶段已挂载 system/vendor；此处只挂载 data/cache 等普通分区。
+    mount_all /vendor/etc/fstab.mt8173 --early
+    # 不在每次启动后对已经挂载的数据分区执行 tune2fs；由 fs_mgr 按 fstab 检查。
 
     symlink /dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/kb /dev/kb
     symlink /dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/dkb /dev/dkb
     write /proc/bootprof "INIT:Mount_END"
     write /proc/sys/vm/page-cluster 0
     swapon_all /vendor/etc/fstab.enableswap
+
+on late-fs
+    # Android 12 的 mount_all --early 会挂载普通分区，但刻意不派发 fs_mgr 加密状态事件。
+    # cappu 当前 fstab 没有 latemount 分区，late 阶段仍需处理 fstab，令 fs_mgr 返回
+    # NOT_ENCRYPTABLE 并触发 nonencrypted；否则 ro.crypto.state 为空，zygote-start 条件
+    # 不匹配，zygote/system_server 不会启动，设备会一直显示开机动画。
+    mount_all /vendor/etc/fstab.mt8173 --late
 
 on post-fs
     # Support legacy paths
@@ -180,8 +176,11 @@ on post-fs-data
 
     chmod 0666 /dev/pmem_multimedia
 
-    # watch dog kicker
-    write /proc/wdk "0 20 30"
+    # cappu MT8176：大核偶发漏过 20 秒的 watchdog kicker 周期；将间隔收紧到
+    # 10 秒，在 30 秒硬件超时内保留额外重试窗口，避免单次延迟直接触发 AEE 复位。
+    # 驱动 wd_common_drv.c 按 5 个字段解析并总是写入 enable；显式提供
+    # mode、interval、timeout、debug_sleep、enable，避免未初始化的 enable 值。
+    write /proc/wdk "0 10 30 0 1"
 
     # set ptmx group to non-root
     chown root radio /dev/ptmx
@@ -210,17 +209,12 @@ on post-fs-data
     #Accdet
     chown root radio /sys/devices/platform/Accdet_Driver/driver/accdet_call_state
 
-    #VideoCodec
-    #insmod /vendor/lib/modules/vcodec_kernel_driver.ko
-    mknod /dev/Vcodec c 160 0
-    chmod 0660 /dev/Vcodec
-    chown system camera /dev/Vcodec
+    # Android 12 init does not implement mknod. The Vcodec driver calls
+    # device_create(), so its kernel uevent creates /dev/Vcodec and the matching
+    # ownership/mode are applied by rootdir/etc/ueventd.mt8173.rc.
 
-    #MJC
-    #insmod /vendor/lib/modules/mjc_kernel_driver.ko
-    #mknod /dev/MJC c 168 0
-    chmod 0660 /dev/MJC
-    chown system media /dev/MJC
+    # The cappu boot configuration does not load an MJC driver. Keep the old
+    # node permissions disabled instead of issuing chmod/chown for a missing node.
 
     #kpd
     chown radio radio /sys/devices/platform/mtk-kpd/driver/kpd_call_state
@@ -323,17 +317,12 @@ on post-fs-data
     chmod 0660 /dev/sec
     chown root system /dev/sec
 
-    # FM Radio device node
-    mknod /dev/fm     c 193 0;
-    chmod 0660 /dev/fm
-    chown media media /dev/fm
+    # The FM driver creates /dev/fm with device_create(); ueventd owns its mode.
 
     # device apc settings
 
-    # device info /proc interface
-    mknod /dev/devmap c 196 0;
-    chmod 0440 /dev/devmap
-    chown root system /dev/devmap
+    # The MTK devinfo driver creates /dev/devmap with device_create(); ueventd
+    # sets its access mode before userspace clients open the device.
 
     # bluetooth
     mkdir /data/@btmtk 0770 bluetooth net_bt
@@ -701,6 +690,23 @@ service pvrsrvctl /vendor/bin/pvrsrvctl --no-module  --start
 	user root
 	group root
 	oneshot
+
+# Logcat in cache folder while is in bootanimation
+service logger /system/bin/logcat -b all -D -f /cache/boot_log.txt
+    class main
+    user root
+    group root system
+    disabled
+    oneshot
+
+on post-fs-data
+    # Clear existing log and start the service
+    rm /cache/boot_log.txt
+    start logger
+
+on property:sys.boot_completed=1
+    # Stop the logger service
+    stop logger
 
 # WiFi && BT(UART1) permission
 on post-fs-data

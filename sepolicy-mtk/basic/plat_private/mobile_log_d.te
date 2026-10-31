@@ -1,9 +1,11 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 # ==============================================
 # MTK Policy Rule
 # ==============================================
 
 # New added for moving to /system
-type mobile_log_d_exec , exec_type, file_type;
+# Android 12 Treble: matching file_contexts labels a /system path; mark this executable as system_file_type so coredomain entrypoints remain in the system partition.
+type mobile_log_d_exec , system_file_type, exec_type, file_type;
 typeattribute mobile_log_d coredomain;
 
 init_daemon_domain(mobile_log_d)
@@ -22,7 +24,9 @@ set_prop(mobile_log_d, debug_prop)
 unix_socket_connect(mobile_log_d, logdr, logd);
 
 #capability
-allow mobile_log_d self:capability { setuid setgid chown dac_read_search dac_override fowner fsetid };
+# Android 12 neverallows filesystem DAC override; file ownership is granted only
+# on the specific log and storage paths below.
+allow mobile_log_d self:capability { setuid setgid chown fowner fsetid };
 allow mobile_log_d self:capability2 syslog;
 
 #aee mode switch
@@ -55,22 +59,17 @@ allow mobile_log_d toolbox_exec:file rx_file_perms;
 allow mobile_log_d rootfs:file r_file_perms;
 
 #dev/__properties__ access
-allow mobile_log_d device_logging_prop:file { getattr open };
-allow mobile_log_d mmc_prop:file { getattr open };
-allow mobile_log_d safemode_prop:file { getattr open };
+get_prop(mobile_log_d, device_logging_prop)
+get_prop(mobile_log_d, mmc_prop)
+get_prop(mobile_log_d, safemode_prop)
 
-#proc/ access
-allow mobile_log_d proc:file r_file_perms;
+# Android 12 Treble forbids whole-tree proc/sysfs access from coredomains; use
+# dedicated proc and sysfs types when a verified log input requires them.
 
-# boot_mdoe file access
-allow mobile_log_d sysfs:file { open read };
 
 # purpose: allow MobileLog to access storage in N version
 allow mobile_log_d media_rw_data_file:file  create_file_perms;
 allow mobile_log_d media_rw_data_file:dir create_dir_perms;
 
-# access debugfs/tracing/instances/
-allow mobile_log_d debugfs_tracing:dir create_dir_perms;
-allow mobile_log_d debugfs_tracing:file create_file_perms;
-allow mobile_log_d debugfs_tracing_instances:dir create_dir_perms;
-allow mobile_log_d debugfs_tracing_instances:file create_file_perms;
+# Android 12 keeps tracefs/debugfs private to approved tracing services; mobile
+# logging uses logd and the user storage paths above instead.

@@ -1,0 +1,34 @@
+diff --git a/Android.bp b/Android.bp
+index b74b91b02244e2a8d7c8445e97b3018089f11bb2..e4d1611ca2940a6b7552f5bb8f5dabda3be0c973 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -166,27 +166,11 @@ cc_defaults {
+ cc_library{
+     name: "libdng_sdk",
+     host_supported: true,
+-    sdk_version: "current",
++
+     defaults: ["libdng_sdk-defaults"],
+     vendor_available: true,
+ 
+-    sanitize: {
+-        // For now we want to disable the ubsan_minimal runtime so that we can
+-        // inject our own that converts ubsan errors into C++ exceptions.
+-        // Soong doesn't have a flag for that specifically, but setting
+-        // 'never' in combination with `-fsanitize=` cflags works for
+-        never: true,
+-    },
+-
+-    cflags: [
+-        "-DqDNGValidate=0",
+-        "-fsanitize=signed-integer-overflow,unsigned-integer-overflow",
+-        "-fno-sanitize-link-runtime",
+-    ],
+-
+-    srcs: [
+-        "ubsan-replacement/ubsan_throwing_runtime.cpp"
+-    ],
++    cflags: ["-DqDNGValidate=0"],
+ 
+     shared_libs: [
+         "libz",

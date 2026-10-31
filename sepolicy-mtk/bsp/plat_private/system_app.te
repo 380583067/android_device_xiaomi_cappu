@@ -9,25 +9,18 @@
 allow system_app atci_serv_fw_socket:sock_file write;
 allow system_app atci_service:unix_stream_socket connectto;
 
-# Date : 2016/02/26
-# Operation: BSP C2K test case support
-# Purpose: allow atci to use NSIOT firewall
-# Package: com.mediatek.atci.service
-allow system_app netd_socket:sock_file write;
+# cappu Android 12: the platform no longer creates /dev/socket/netd; the
+# retired MTK ATCI NSIOT path used that pre-Binder endpoint, so drop its grant.
 
-# Date : WK17.29
-# Operation : Migration
-# Purpose: Allow to get DNS system properties
-set_prop(system_app, net_dns_prop);
+# Android 12 reserves net_dns_prop writes for the platform network stack; the
+# legacy ATCI system app no longer receives broad DNS property access.
 
-# Date: 2016/11/10
-# Purpose: [MDM] Modem monitor config
-# Package Name: com.mediatek.mdmconfig
-set_prop(system_app, mdmmonitor_prop);
+# The Android 7 MDM app/property path is not shipped by this cappu vendor tree.
 
 # Date : 2016.02.20
 # Operation: MID_ShiYouHui
 # Purpose: for gsensor calibration
 # Package: com.mid.gsensorcali
 allow system_app em_svr:unix_stream_socket connectto;
-allow system_app sysfs:file {open read};
+# Android 12 forbids generic sysfs access from system_app; use a specific HAL or
+# exported sysfs type if the calibration app is reintroduced.

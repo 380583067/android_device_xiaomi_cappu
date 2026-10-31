@@ -1,8 +1,9 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 # Operation : O Migration
 # Purpose: Allow to access data in recovery mode for A/B update
 allow recovery sysfs_therm:dir {search getattr} ;
 allow recovery sysfs_therm:file {open read write getattr};
 allow recovery sysfs:dir getattr ;
-allow recovery graphics_config_prop:file {read open getattr};
+get_prop(recovery, graphics_config_prop)
 allow recovery dri_device:chr_file {read write open};
 allow recovery recovery:capability sys_rawio;

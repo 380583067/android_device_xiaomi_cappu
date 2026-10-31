@@ -90,7 +90,8 @@ allow cameraserver dri_device:chr_file { read write open ioctl };
 allow cameraserver fuse:dir { create_dir_perms };
 allow cameraserver fuse:file { create_file_perms };
 allow cameraserver property_socket:sock_file write;
-allow cameraserver sysfs:file getattr;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow cameraserver sysfs:file getattr;
 allow cameraserver init:unix_stream_socket connectto;
 allow cameraserver debug_prop:property_service set;
 allow cameraserver system_prop:property_service set;

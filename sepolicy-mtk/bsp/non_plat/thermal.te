@@ -28,7 +28,9 @@ allow thermal mtkrild:unix_stream_socket connectto;
 allow thermal proc_thermal:dir search;
 allow thermal proc_thermal:file { read write open };
 allow thermal rild_oem_socket:sock_file write;
-allow thermal netd_socket:sock_file write;
+# Android 12 removed the legacy /dev/socket/netd netd_socket label. Keep the
+# separate netd stream permission below for this vendor daemon, but drop this
+# obsolete socket-file grant from the Android 7-era policy.
 allow thermal netd:unix_stream_socket connectto;
 allow thermal self:udp_socket create;
 allow thermal self:udp_socket ioctl;

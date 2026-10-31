@@ -1,0 +1,15 @@
+--- a/device.mk
++++ b/device.mk
+@@ -129,7 +129,12 @@
+     $(TOPDIR)frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/r_submix_audio_policy_configuration.xml \
+     $(TOPDIR)frameworks/av/services/audiopolicy/config/usb_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/usb_audio_policy_configuration.xml
+ 
++# Use the Android 12 AOSP Audio HAL 2.0 passthrough adapter for the legacy
++# MT8173 C audio module. The shipped MTK HIDL adapter aborts in
++# Device::openOutputStream on this platform build; the 2.0 interface remains
++# the one declared by cappu's vendor service and audio policy.
+ PRODUCT_PACKAGES += \
++    android.hardware.audio@2.0-impl \
+     android.hardware.audio.effect@2.0-impl
+ 
+ # Bluetooth

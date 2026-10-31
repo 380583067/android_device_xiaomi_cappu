@@ -8,9 +8,9 @@ allow rild cdma_prop:property_service set;
 allow rild ril_cdma_report_prop:property_service set;
 allow rild rild_vsim_socket:sock_file write;
 
-# Allow the socket read/write of netd for rilproxy
-allow rild netd_socket:sock_file write;
-allow rild netd_socket:sock_file read;
+# Android 12 no longer labels /dev/socket/netd as netd_socket; netd's current
+# control API is Binder-based. Remove the obsolete Android 7-era raw socket
+# grants retained by this legacy rilproxy policy.
 
 #Dat: 2017/02/14
 #Purpose: allow set telephony Sensitive property

@@ -1,0 +1,74 @@
+diff --git a/device.mk b/device.mk
+--- a/device.mk
++++ b/device.mk
+@@ -23,6 +23,11 @@
+ DEVICE_PACKAGE_OVERLAYS += \
+     $(LOCAL_PATH)/overlay \
+     $(LOCAL_PATH)/overlay-lineage
++
++# cappu 所在网络环境下实测 Google 默认 HTTPS 探测超时，会导致 NetworkMonitor
++# 将 Wi-Fi 标记为 PARTIAL_CONNECTIVITY，并让 Wi-Fi 自动加入跳过该保存网络。
++# 使用设备专属的 NetworkStack RRO 调整探测地址，保留 Android 原生门户检测。
++PRODUCT_PACKAGES += CappuNetworkStackOverlay
+ 
+ # Device uses high-density artwork where available
+ PRODUCT_CHARACTERISTICS := tablet
+diff --git a/overlay/NetworkStackOverlay/Android.bp b/overlay/NetworkStackOverlay/Android.bp
+new file mode 100644
+index 0000000..f15c6e4
+--- /dev/null
++++ b/overlay/NetworkStackOverlay/Android.bp
+@@ -0,0 +1,5 @@
++// cappu 专用 NetworkStack 资源覆盖层；实际 URL 配置位于 res/values/config.xml。
++runtime_resource_overlay {
++    name: "CappuNetworkStackOverlay",
++    product_specific: true,
++}
+diff --git a/overlay/NetworkStackOverlay/AndroidManifest.xml b/overlay/NetworkStackOverlay/AndroidManifest.xml
+new file mode 100644
+index 0000000..23b8d7f
+--- /dev/null
++++ b/overlay/NetworkStackOverlay/AndroidManifest.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++    cappu 的 NetworkStack 运行时资源覆盖层。
++    限定 overlayable 为 NetworkStackConfig，避免覆盖其他 NetworkStack 资源。
++-->
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.android.networkstack.cappu.overlay">
++
++    <overlay
++        android:isStatic="true"
++        android:priority="110"
++        android:targetPackage="com.android.networkstack"
++        android:targetName="NetworkStackConfig" />
++</manifest>
+diff --git a/overlay/NetworkStackOverlay/res/values/config.xml b/overlay/NetworkStackOverlay/res/values/config.xml
+new file mode 100644
+index 0000000..a3f166e
+--- /dev/null
++++ b/overlay/NetworkStackOverlay/res/values/config.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <!--
++        cappu 当前网络的实测结果：默认 https://www.google.com/generate_204 在
++        NetworkMonitor 中超时；https://connectivitycheck.gstatic.com/generate_204
++        可在同一网络返回 HTTP 204 且 TLS 校验通过。原来的验证失败会产生
++        PARTIAL_CONNECTIVITY / “网络受限”提示，并导致保存网络被标记为
++        NO_INTERNET_PERMANENT，后续自动连接因此跳过它。
++
++        这里只替换 NetworkStack 提供的 OEM 配置资源，不关闭验证、不伪造验证成功，
++        也不改动 Android 的 HTTP 门户检测和用户门户登录流程。
++    -->
++    <string name="config_captive_portal_https_url" translatable="false">https://connectivitycheck.gstatic.com/generate_204</string>
++
++    <!--
++        仅在主 HTTP/HTTPS 探测无法判定时用于回退门户检测。
++        此 URL 已在 cappu 当前网络实测可达并返回 204。
++    -->
++    <string-array name="config_captive_portal_fallback_urls" translatable="false">
++        <item>http://connect.rom.miui.com/generate_204</item>
++    </string-array>
++</resources>

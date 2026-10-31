@@ -1,3 +1,5 @@
+# Android 12 Treble forbids vendor RIL helpers from executing system files in place.
+# Android 12 does not allow vendor status services to search every process domain; retain only typed status/property access.
 # ==============================================
 # Policy File of /vendor/bin/viarild Executable File
 
@@ -7,7 +9,10 @@
 # ==============================================
 
 type viarild_exec , exec_type, file_type, vendor_file_type;
+# Treble compatibility: this legacy vendor RIL still consumes framework radio
+# state under /data/misc/radio; preserve only its existing narrow path grants.
 type viarild ,domain;
+typeattribute viarild data_between_core_and_vendor_violators;
 
 # ==============================================
 # MTK C2K Policy Rule
@@ -18,11 +23,12 @@ net_domain(viarild)
 allow viarild self:netlink_route_socket nlmsg_write;
 allow viarild kernel:system module_request;
 allow viarild self:capability { setuid net_admin net_raw };
-allow viarild alarm_device:chr_file rw_file_perms;
+# Android 12's cappu kernel has no legacy /dev/alarm character device.
 allow viarild cgroup:dir create_dir_perms;
 allow viarild radio_device:chr_file rw_file_perms;
 allow viarild radio_device:blk_file r_file_perms;
-allow viarild mtd_device:dir search;
+# cappu Android 12: the old MTK mtd_device type was removed; use the exported board type for legacy rules and labels.
+allow viarild cappu_mtd_device:dir search;
 allow viarild efs_file:dir create_dir_perms;
 allow viarild efs_file:file create_file_perms;
 
@@ -33,20 +39,19 @@ allow viarild radio_data_file:file create_file_perms;
 allow viarild sdcard_type:dir r_dir_perms;
 allow viarild system_data_file:dir r_dir_perms;
 allow viarild system_data_file:file r_file_perms;
-allow viarild system_file:file x_file_perms;
 allow viarild proc:file write;
 
 # property service
-set_prop(statusd, system_prop)
-set_prop(viarild, radio_prop)
-set_prop(viarild, net_radio_prop)
-set_prop(viarild, system_radio_prop)
+# Android 12 keeps net_radio_prop and system_prop system-owned. The legacy
+# vendor RIL helper retains only device-owned MTK state properties; core radio
+# state crosses the telephony HIDL boundary and is owned by the AOSP rild HAL.
 set_prop(viarild, persist_ril_prop)
 set_prop(viarild, cdma_prop)
 set_prop(viarild, ril_cdma_report_prop)
 set_prop(viarild, ril_mux_report_case_prop)
-auditallow viarild system_radio_prop:property_service set;
-auditallow viarild net_radio_prop:property_service set;
+# Android 12 removed system_radio_prop and maps supported RIL properties to
+# radio_prop/net_radio_prop. Keep only those explicit current labels rather
+# than restoring a generic grant to a property class that no longer exists.
 
 #Dat: 2017/02/14
 #Purpose: allow set telephony Sensitive property
@@ -67,8 +72,7 @@ allow viarild self:socket create_socket_perms_no_ioctl;
 allow viarild Vcodec_device:chr_file { read write open };
 allow viarild devmap_device:chr_file { read ioctl open };
 allow viarild devpts:chr_file { read write open };
-allow viarild self:capability dac_override;
-
+# Android 12 forbids DAC-bypass capabilities for these legacy device domains; keep access controlled by the specific SELinux file and device labels.
 allow viarild ccci_device:chr_file { read write ioctl open };
 allow viarild devpts:chr_file ioctl;
 allow viarild misc_device:chr_file { read write open };
@@ -78,7 +82,6 @@ allow viarild sysfs_vcorefs_pwrctrl:file { open write };
 allow viarild ril_active_md_prop:property_service set;
 
 #Search permission for findPidByName
-allow statusd domain:dir search;
 
 #set for mux
 allow viarild devpts:chr_file setattr;

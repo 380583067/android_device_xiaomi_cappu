@@ -1,3 +1,4 @@
+# Android 12 keeps vendor thermal binaries in their init-managed service domain instead of letting Engineering Mode execute them in place.
 # Date: W14.38 2014/09/17
 # Operation : Migration
 # Purpose : for em_svr
@@ -15,7 +16,6 @@ allow em_svr nvdata_file:lnk_file read;
 allow em_svr nvdata_file:dir { write read open add_name search };
 allow em_svr nvdata_file:file { write getattr setattr read create open };
 allow em_svr nvram_device:chr_file { open read write ioctl };
-allow em_svr thermal_manager_exec:file { getattr execute read open execute_no_trans };
 allow em_svr proc_mtkcooler:dir search;
 allow em_svr proc_mtkcooler:file { read getattr open write };
 allow em_svr proc_thermal:dir search;

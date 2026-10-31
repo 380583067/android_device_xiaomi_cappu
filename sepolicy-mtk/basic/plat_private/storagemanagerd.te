@@ -5,7 +5,8 @@
 # Type Declaration
 # ==============================================
 type storagemanagerd, domain;
-type storagemanagerd_exec, exec_type, file_type;
+# Android 12 Treble: matching file_contexts labels a /system path; mark this executable as system_file_type so coredomain entrypoints remain in the system partition.
+type storagemanagerd_exec, system_file_type, exec_type, file_type;
 typeattribute storagemanagerd coredomain;
 
 # ==============================================
@@ -14,7 +15,9 @@ typeattribute storagemanagerd coredomain;
 
 init_daemon_domain(storagemanagerd)
 
-unix_socket_connect(storagemanagerd, vold, vold)
+# cappu Android 12: the old vold Unix socket was removed in favor of IVold
+# Binder, and this device tree ships no storagemanagerd client binary. Do not
+# generate a socket grant for an endpoint the platform no longer creates.
 
 # storagemanagerd sends information back to dumpstate when "adb bugreport" is used
 allow storagemanagerd dumpstate:fd use;

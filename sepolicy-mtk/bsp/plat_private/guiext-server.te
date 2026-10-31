@@ -6,7 +6,9 @@
 # ==============================================
 # Type Declaration
 # ==============================================
-type guiext-server_exec, exec_type, file_type, vendor_file_type;
+# Android 12 Treble: matching file_contexts points at /system/bin, so this
+# entrypoint must be a system file and must not carry vendor_file_type.
+type guiext-server_exec, system_file_type, exec_type, file_type;
 
 typeattribute guiext-server coredomain;
 

@@ -1,0 +1,317 @@
+diff --git a/libcutils/Android.bp b/libcutils/Android.bp
+index 68b21c6..4a7f5a7 100644
+--- a/libcutils/Android.bp
++++ b/libcutils/Android.bp
+@@ -195,6 +195,7 @@ cc_library {
+                 "ashmem-dev.cpp",
+                 "fs_config.cpp",
+                 "klog.cpp",
++                "legacy_utf16_compat.cpp",
+                 "partition_utils.cpp",
+                 "qtaguid.cpp",
+                 "trace-dev.cpp",
+diff --git a/libutils/Android.bp b/libutils/Android.bp
+index 13e4c02..7e32ad8 100644
+--- a/libutils/Android.bp
++++ b/libutils/Android.bp
+@@ -136,8 +136,18 @@ cc_library {
+     name: "libutils",
+     defaults: ["libutils_defaults"],
+     native_bridge_supported: true,
++    include_dirs: [
++        "frameworks/native/include",
++        // PropertyMap.h includes libbase Result headers whose public templates
++        // include fmt headers; libbase_headers does not export fmtlib's path.
++        "external/fmtlib/include",
++    ],
+ 
+     srcs: [
++        // Preserve the Android 8 libutils ABI used by legacy MTK vendor blobs.
++        // PropertyMap was moved to libinput, but old blobs still request its
++        // methods through their existing DT_NEEDED dependency on libutils.so.
++        ":input_propertymap_compat_srcs",
+         "Errors.cpp",
+         "FileMap.cpp",
+         "JenkinsHash.cpp",
+@@ -162,6 +172,8 @@ cc_library {
+     target: {
+         android: {
+             srcs: [
++                "LegacyCallStackCompat.cpp",
++                "ProcessCallStack.cpp",
+                 "Trace.cpp",
+             ],
+         },
+diff --git a/libcutils/include/cutils/jstring.h b/libcutils/include/cutils/jstring.h
+new file mode 100644
+index 0000000..7355fce
+--- /dev/null
++++ b/libcutils/include/cutils/jstring.h
+@@ -0,0 +1,30 @@
++/*
++ * Copyright (C) 2026 The Android Open Source Project
++ * Licensed under the Apache License, Version 2.0
++ */
++
++#ifndef ANDROID_CUTILS_JSTRING_COMPAT_H
++#define ANDROID_CUTILS_JSTRING_COMPAT_H
++
++#include <stddef.h>
++#include <stdint.h>
++
++#ifndef __cplusplus
++typedef uint16_t char16_t;
++#endif
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++// Retained Android 8 libcutils ABI used by the cappu MTK RIL prebuilt.
++char16_t* strdup8to16(const char* s, size_t* out_len);
++char* strncpy16to8(char* dest, const char16_t* s, size_t n);
++char* strndup16to8(const char16_t* s, size_t n);
++size_t strnlen16to8(const char16_t* s, size_t n);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif  // ANDROID_CUTILS_JSTRING_COMPAT_H
+diff --git a/libcutils/legacy_utf16_compat.cpp b/libcutils/legacy_utf16_compat.cpp
+new file mode 100644
+index 0000000..2fd75e7
+--- /dev/null
++++ b/libcutils/legacy_utf16_compat.cpp
+@@ -0,0 +1,139 @@
++/*
++ * Copyright (C) 2026 The Android Open Source Project
++ * Licensed under the Apache License, Version 2.0
++ */
++
++// libcutils dropped these Android 8 UTF conversion entry points. The cappu
++// MTK RIL still has their C symbols in DT_NEEDED imports, so preserve that ABI
++// here. UTF-16-to-8 follows the historical modified-UTF-8 code-unit rules.
++#include <cutils/jstring.h>
++
++#include <limits.h>
++#include <stdlib.h>
++
++namespace {
++
++constexpr uint32_t kReplacementCharacter = 0xfffd;
++constexpr uint32_t kMaximumUnicode = 0x10fffd;
++
++uint32_t nextUtf32(const unsigned char** cursor) {
++    const unsigned char* p = *cursor;
++    const unsigned char lead = *p;
++    if ((lead & 0xc0) == 0x80) {
++        *cursor = p + 1;
++        return kReplacementCharacter;
++    }
++
++    size_t length = 1;
++    uint32_t value = lead;
++    if ((lead & 0xe0) == 0xc0) {
++        length = 2;
++        value = lead & 0x1f;
++    } else if ((lead & 0xf0) == 0xe0) {
++        length = 3;
++        value = lead & 0x0f;
++    } else if ((lead & 0xf8) == 0xf0) {
++        length = 4;
++        value = lead & 0x07;
++    }
++
++    if (length == 1) {
++        *cursor = p + 1;
++        return value;
++    }
++
++    ++p;
++    for (size_t i = 1; i < length; ++i, ++p) {
++        if (*p == '\0' || (*p & 0xc0) != 0x80) {
++            *cursor = p;
++            return kReplacementCharacter;
++        }
++        value = (value << 6) | (*p & 0x3f);
++    }
++    *cursor = p;
++    return value;
++}
++
++size_t utf16UnitUtf8Length(uint16_t value) {
++    if (value > 0x07ff) return 3;
++    if (value > 0x7f || value == 0) return 2;
++    return 1;
++}
++
++}  // namespace
++
++extern "C" char16_t* strdup8to16(const char* s, size_t* out_len) {
++    if (s == nullptr || out_len == nullptr) return nullptr;
++
++    size_t units = 0;
++    const auto* cursor = reinterpret_cast<const unsigned char*>(s);
++    while (*cursor != '\0') {
++        uint32_t value = nextUtf32(&cursor);
++        if (value > kMaximumUnicode) value = kReplacementCharacter;
++        const size_t needed = value > 0xffff ? 2 : 1;
++        if (units > SIZE_MAX - needed) return nullptr;
++        units += needed;
++    }
++    if (units > SIZE_MAX / sizeof(char16_t)) return nullptr;
++
++    auto* result = static_cast<char16_t*>(malloc((units == 0 ? 1 : units) * sizeof(char16_t)));
++    if (result == nullptr) return nullptr;
++
++    size_t written = 0;
++    cursor = reinterpret_cast<const unsigned char*>(s);
++    while (*cursor != '\0') {
++        uint32_t value = nextUtf32(&cursor);
++        if (value > kMaximumUnicode) value = kReplacementCharacter;
++        if (value <= 0xffff) {
++            result[written++] = static_cast<char16_t>(value);
++        } else {
++            value -= 0x10000;
++            result[written++] = static_cast<char16_t>(0xd800 | (value >> 10));
++            result[written++] = static_cast<char16_t>(0xdc00 | (value & 0x3ff));
++        }
++    }
++    *out_len = written;
++    return result;
++}
++
++extern "C" size_t strnlen16to8(const char16_t* s, size_t n) {
++    if (s == nullptr) return 0;
++    size_t bytes = 0;
++    for (size_t i = 0; i < n; ++i) {
++        const size_t next = utf16UnitUtf8Length(static_cast<uint16_t>(s[i]));
++        if (bytes > SIZE_MAX - next) return SIZE_MAX - 1;
++        bytes += next;
++    }
++    return bytes;
++}
++
++extern "C" char* strncpy16to8(char* dest, const char16_t* s, size_t n) {
++    if (dest == nullptr) return nullptr;
++    char* out = dest;
++    if (s != nullptr) {
++        for (size_t i = 0; i < n; ++i) {
++            const uint16_t value = static_cast<uint16_t>(s[i]);
++            if (value > 0x07ff) {
++                *out++ = static_cast<char>((value >> 12) | 0xe0);
++                *out++ = static_cast<char>(((value >> 6) & 0x3f) | 0x80);
++                *out++ = static_cast<char>((value & 0x3f) | 0x80);
++            } else if (value > 0x7f || value == 0) {
++                *out++ = static_cast<char>((value >> 6) | 0xc0);
++                *out++ = static_cast<char>((value & 0x3f) | 0x80);
++            } else {
++                *out++ = static_cast<char>(value);
++            }
++        }
++    }
++    *out = '\0';
++    return dest;
++}
++
++extern "C" char* strndup16to8(const char16_t* s, size_t n) {
++    if (s == nullptr) return nullptr;
++    const size_t bytes = strnlen16to8(s, n);
++    if (bytes >= SIZE_MAX - 1) return nullptr;
++    auto* result = static_cast<char*>(malloc(bytes + 1));
++    if (result == nullptr) return nullptr;
++    return strncpy16to8(result, s, n);
++}
+diff --git a/libutils/LegacyCallStackCompat.cpp b/libutils/LegacyCallStackCompat.cpp
+new file mode 100644
+index 0000000..17ddc5a
+--- /dev/null
++++ b/libutils/LegacyCallStackCompat.cpp
+@@ -0,0 +1,86 @@
++/*
++ * Copyright (C) 2026 The Android Open Source Project
++ * Licensed under the Apache License, Version 2.0
++ */
++
++// Android 12 moved stack unwinding out of libutils. A few cappu-era MTK blobs
++// still resolve these Android 8 ABI symbols from libutils.so. Keep the ABI
++// surface here without adding libbacktrace to libutils: that dependency would
++// make every libutils APEX variant inherit libbacktrace's private dependencies.
++// Stack capture therefore remains available through libutilscallstack; this
++// compatibility copy preserves call sites and formatting for legacy clients.
++
++#define LOG_TAG "CallStackCompat"
++#include <utils/Printer.h>
++#include <utils/Errors.h>
++#include <utils/Log.h>
++
++// Do not emit weak definitions: this file is the compatibility provider in
++// libutils.so, matching the strong definitions used by the Android 8 ABI.
++#define CALLSTACK_WEAK
++#include <utils/CallStack.h>
++
++namespace android {
++
++CallStack::CallStack() = default;
++
++CallStack::CallStack(const char* logtag, int32_t ignoreDepth) {
++    update(ignoreDepth + 1);
++    log(logtag);
++}
++
++CallStack::~CallStack() = default;
++
++void CallStack::update(int32_t /*ignoreDepth*/, pid_t /*tid*/) {
++    // Deliberately leave the frame list empty. Stack unwinding belongs to
++    // libutilscallstack on Android 12 and must not pull its backtrace/APEX
++    // dependency graph into the VNDK-facing libutils shared by cappu blobs.
++    mFrameLines.clear();
++}
++
++void CallStack::log(const char* logtag, android_LogPriority priority,
++                    const char* prefix) const {
++    LogPrinter printer(logtag, priority, prefix, /*ignoreBlankLines*/ false);
++    print(printer);
++}
++
++void CallStack::dump(int fd, int indent, const char* prefix) const {
++    FdPrinter printer(fd, indent, prefix);
++    print(printer);
++}
++
++String8 CallStack::toString(const char* prefix) const {
++    String8 result;
++    String8Printer printer(&result, prefix);
++    print(printer);
++    return result;
++}
++
++void CallStack::print(Printer& printer) const {
++    for (size_t i = 0; i < mFrameLines.size(); ++i) {
++        printer.printLine(mFrameLines[i]);
++    }
++}
++
++#ifdef WEAKS_AVAILABLE
++CallStack::CallStackUPtr CallStack::getCurrentInternal(int ignoreDepth) {
++    CallStack::CallStackUPtr stack(new CallStack());
++    stack->update(ignoreDepth + 1);
++    return stack;
++}
++
++void CallStack::logStackInternal(const char* logtag, const CallStack* stack,
++                                 android_LogPriority priority) {
++    stack->log(logtag, priority);
++}
++
++String8 CallStack::stackToStringInternal(const char* prefix, const CallStack* stack) {
++    return stack->toString(prefix);
++}
++
++void CallStack::deleteStack(CallStack* stack) {
++    delete stack;
++}
++#endif
++
++}  // namespace android

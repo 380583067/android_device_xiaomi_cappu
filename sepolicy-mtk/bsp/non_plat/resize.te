@@ -1,3 +1,4 @@
+# Android 12 Treble keeps vendor recovery helpers in vendor domains; do not execute a system_file from this vendor daemon.
 # ==============================================
 # Policy File of /vendor/bin/resize_xxx Executable File
 
@@ -35,6 +36,5 @@ allow resize property_socket:sock_file write;
 
 allow resize init:unix_stream_socket connectto;
 
-allow resize system_prop:property_service set;
-
-allow resize system_file:file execute_no_trans;
+# Android 12 keeps system_prop system-owned. The one-shot vendor resize helper
+# must report through init/device-owned state rather than changing core props.

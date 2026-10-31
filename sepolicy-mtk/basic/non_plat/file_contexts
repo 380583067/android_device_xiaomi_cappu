@@ -258,7 +258,7 @@
 /dev/socket/mnld(/.*)? u:object_r:mnld_socket:s0
 /dev/socket/MPED(/.*)? u:object_r:MPED_socket:s0
 /dev/socket/netdiag(/.*)? u:object_r:netdiag_socket:s0
-/dev/socket/netd(/.*)? u:object_r:netd_socket:s0
+# Android 12 has no /dev/socket/netd endpoint; netd control is provided through Binder.
 /dev/socket/rild2-md2(/.*)? u:object_r:rild2_md2_socket:s0
 /dev/socket/rild2(/.*)? u:object_r:rild2_socket:s0
 /dev/socket/rild3(/.*)? u:object_r:rild3_socket:s0
@@ -292,7 +292,7 @@
 /dev/socket/soc_vt_svc(/.*)? u:object_r:soc_vt_svc_socket:s0
 /dev/socket/soc_vt_tcv(/.*)? u:object_r:soc_vt_tcv_socket:s0
 /dev/socket/sysctl(/.*)? u:object_r:sysctl_socket:s0
-/dev/socket/vold(/.*)? u:object_r:vold_socket:s0
+# Android 12 exposes vold through IVold Binder; there is no legacy vold socket to label.
 /dev/socket/volte_vt(/.*)? u:object_r:volte_vt_socket:s0
 /dev/socket/wpa_wlan0(/.*)? u:object_r:wpa_wlan0_socket:s0
 /dev/stpant(/.*)? u:object_r:stpant_device:s0
@@ -318,8 +318,9 @@
 /dev/ttyUSB3         u:object_r:tty_device:s0
 /dev/ttyUSB4         u:object_r:tty_device:s0
 /dev/TV-out(/.*)? u:object_r:TV_out_device:s0
-/dev/ubi_ctrl u:object_r:mtd_device:s0
-/dev/ubi[_0-9]* u:object_r:mtd_device:s0
+# cappu Android 12: the old MTK mtd_device type was removed; use the exported board type for legacy rules and labels.
+/dev/ubi_ctrl u:object_r:cappu_mtd_device:s0
+/dev/ubi[_0-9]* u:object_r:cappu_mtd_device:s0
 /dev/uboot(/.*)? u:object_r:uboot_device:s0
 /dev/uibc(/.*)? u:object_r:uibc_device:s0
 /dev/uinput(/.*)? u:object_r:uinput_device:s0
@@ -335,7 +336,7 @@
 /dev/audio_ipi(/.*)? u:object_r:audio_ipi_device:s0
 /dev/irtx u:object_r:irtx_device:s0
 /dev/spm(/.*)? u:object_r:spm_device:s0
-/dev/xt_qtaguid(/.*)? u:object_r:xt_qtaguid_device:s0
+# Android 12's platform file_contexts supplies the canonical qtaguid_device label.
 /dev/pmic_ftm(/.*)? u:object_r:pmic_ftm_device:s0
 /dev/charger_ftm(/.*)? u:object_r:charger_ftm_device:s0
 /dev/shf  u:object_r:shf_device:s0
@@ -384,8 +385,8 @@
 /dev/block/sdc u:object_r:bootdevice_block_device:s0
 /dev/block/mmcblk1 u:object_r:mmcblk1_block_device:s0
 /dev/block/mmcblk1p1 u:object_r:mmcblk1p1_block_device:s0
-/dev/block/mtd(.*)?     u:object_r:mtd_device:s0
-/dev/block/mntlblk(.*)?     u:object_r:mtd_device:s0
+/dev/block/mtd(.*)?     u:object_r:cappu_mtd_device:s0
+/dev/block/mntlblk(.*)?     u:object_r:cappu_mtd_device:s0
 /dev/block/platform/mtk-\b(msdc|ufs)\b\.0/[0-9]+\.\b(msdc0|ufs0)\b/by-name/proinfo     u:object_r:nvram_device:s0
 /dev/block/platform/mtk-\b(msdc|ufs)\b\.0/[0-9]+\.\b(msdc0|ufs0)\b/by-name/nvram       u:object_r:nvram_device:s0
 /dev/block/platform/mtk-\b(msdc|ufs)\b\.0/[0-9]+\.\b(msdc0|ufs0)\b/by-name/nvdata      u:object_r:nvdata_device:s0
@@ -573,3 +574,9 @@
 
 #hidl process merging
 /(system\/vendor|vendor)/bin/hw/merged_hal_service          u:object_r:merged_hal_service_exec:s0
+# Software Gatekeeper uses a suffix not covered by the platform's generic HAL rule.
+/(vendor|system/vendor)/bin/hw/android\\.hardware\\.gatekeeper@1\\.0-service\\.software u:object_r:hal_gatekeeper_default_exec:s0
+
+# MTK EGL same-process HAL and its exact vendor-library dependency closure.
+/(vendor|system/vendor)/lib(64)?/(libIMGegl|libsrv_um|libusc|libgpu_aux|libgralloc_extra|libglslcompiler|libged|libdrm|libdpframework|libion_mtk|libion_ulit|libm4u|libpq_prot)\\.so u:object_r:same_process_hal_file:s0
+/(vendor|system/vendor)/lib(64)?/vendor\\.mediatek\\.hardware\\.pq@2\\.0_vendor\\.so u:object_r:same_process_hal_file:s0

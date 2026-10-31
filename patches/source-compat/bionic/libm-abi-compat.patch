@@ -1,0 +1,13 @@
+diff --git a/libm/libm.map.txt b/libm/libm.map.txt
+index a931b933b7fc44219a00d3aebe64eabc5b44b339..1b9675c54b838c076ea4ac6be266d6e43c6de6c7 100644
+--- a/libm/libm.map.txt
++++ b/libm/libm.map.txt
+@@ -294,7 +294,7 @@ LIBC_O { # introduced=O
+     ctanl;
+ } LIBC;
+ 
+-LIBC_DEPRECATED { # arm platform-only
++LIBC_DEPRECATED { # arm 
+   global: # arm
+     __aeabi_d2lz; # arm
+     __aeabi_d2ulz; # arm

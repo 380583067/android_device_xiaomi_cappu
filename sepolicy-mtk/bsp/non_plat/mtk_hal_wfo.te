@@ -1,3 +1,4 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 # ==============================================================================
 # Type Declaration
 # ==============================================================================
@@ -20,5 +21,5 @@ binder_call(mtk_hal_wfo, system_server)
 # Purpose: WifiOffloadService HIDL Migration
 allow mtk_hal_wfo mal_mfi_socket:sock_file write;
 #allow mtk_hal_wfo mtkmal:unix_stream_socket connectto;
-allow mtk_hal_wfo hwservicemanager_prop:file { read getattr open };
+get_prop(mtk_hal_wfo, hwservicemanager_prop)
 allow mtk_hal_wfo debugfs_tracing:file { write open };

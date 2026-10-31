@@ -3,4 +3,5 @@
 # ======================
 
 # =======drmserver======
-allow drmserver sysfs:file { read open };
+# Android 12 forbids generic sysfs reads from coredomains; DRM uses its HAL and
+# labelled device interfaces instead.

@@ -1,3 +1,5 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
+# Android 12 restricts process metadata to explicit labels; do not grant this forwarder access to every domain directory and file.
 # ==============================================
 # Policy File of /vendor/bin/aee_core_forwarder Executable File
 
@@ -26,14 +28,11 @@ allow aee_core_forwarder aee_exp_data_file:dir create_dir_perms;
 allow aee_core_forwarder aee_exp_data_file:file create_file_perms;
 
 #mkdir(path, mode)
-allow aee_core_forwarder self:capability dac_override;
-
+# Android 12 forbids DAC-bypass capabilities for these legacy device domains; keep access controlled by the specific SELinux file and device labels.
 #read STDIN_FILENO
 allow aee_core_forwarder kernel:fifo_file read;
 
 #read /proc/<pid>/cmdline
-allow aee_core_forwarder domain:dir r_dir_perms;
-allow aee_core_forwarder domain:file r_file_perms;
 
 #get wake_lock to avoid system suspend when coredump is generating
 allow aee_core_forwarder sysfs_wake_lock:file rw_file_perms;
@@ -63,7 +62,7 @@ dontaudit aee_core_forwarder untrusted_app:dir search;
 # Purpose : access for pipefs
 allow aee_core_forwarder kernel:fd use;
 # Purpose : read AEE persist property
-allow aee_core_forwarder persist_aee_prop:file r_file_perms;
+get_prop(aee_core_forwarder, persist_aee_prop)
 # Purpose: search root dir "/"
 allow aee_core_forwarder tmpfs:dir search;
 # Purpose : read /selinux_version

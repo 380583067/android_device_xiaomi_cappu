@@ -1,0 +1,5 @@
+# cappu Android 12 compatibility type: AOSP 12 no longer exports the generic
+# MTK mtd_device label. Export a board-owned device type so the retained MTK
+# system_ext and vendor rules can describe legacy MTD/UBI nodes without
+# depending on a removed platform type. This does not create an MTD node.
+type cappu_mtd_device, dev_type;

@@ -1,0 +1,100 @@
+diff --git a/fs/sdcardfs/derived_perm.c b/fs/sdcardfs/derived_perm.c
+index 88f50265..a9bcff6f 100644
+--- a/fs/sdcardfs/derived_perm.c
++++ b/fs/sdcardfs/derived_perm.c
+@@ -356,7 +356,10 @@ int need_graft_path(struct dentry *dentry)
+ 	struct sdcardfs_sb_info *sbi = SDCARDFS_SB(dentry->d_sb);
+ 	struct qstr obb = QSTR_LITERAL("obb");
+ 
+-	if (parent_info->data->perm == PERM_ANDROID &&
++	/* Android 12 requests unshared_obb so one user's OBB path is never grafted
++	 * into another user's tree; preserve the legacy graft only on old mounts. */
++	if (!sbi->options.unshared_obb &&
++			parent_info->data->perm == PERM_ANDROID &&
+ 			qstr_case_eq(&dentry->d_name, &obb)) {
+ 
+ 		/* /Android/obb is the base obbpath of DERIVED_UNIFIED */
+diff --git a/fs/sdcardfs/main.c b/fs/sdcardfs/main.c
+index 1e819f58..5ac6e8d9 100644
+--- a/fs/sdcardfs/main.c
++++ b/fs/sdcardfs/main.c
+@@ -34,6 +34,7 @@ enum {
+ 	Opt_reserved_mb,
+ 	Opt_gid_derivation,
+ 	Opt_default_normal,
++	Opt_unshared_obb,
+ 	Opt_err,
+ };
+ 
+@@ -47,6 +48,7 @@ static const match_table_t sdcardfs_tokens = {
+ 	{Opt_multiuser, "multiuser"},
+ 	{Opt_gid_derivation, "derive_gid"},
+ 	{Opt_default_normal, "default_normal"},
++	{Opt_unshared_obb, "unshared_obb"},
+ 	{Opt_reserved_mb, "reserved_mb=%u"},
+ 	{Opt_err, NULL}
+ };
+@@ -71,6 +73,8 @@ static int parse_options(struct super_block *sb, char *options, int silent,
+ 	/* by default, gid derivation is off */
+ 	opts->gid_derivation = false;
+ 	opts->default_normal = false;
++	/* Keep the pre-Android-12 OBB graft behavior unless the mount opts out. */
++	opts->unshared_obb = false;
+ 
+ 	*debug = 0;
+ 
+@@ -128,6 +132,10 @@ static int parse_options(struct super_block *sb, char *options, int silent,
+ 		case Opt_default_normal:
+ 			opts->default_normal = true;
+ 			break;
++		case Opt_unshared_obb:
++			/* Android 12 sdcard uses this to isolate each user's OBB tree. */
++			opts->unshared_obb = true;
++			break;
+ 		/* unknown option */
+ 		default:
+ 			if (!silent)
+@@ -181,13 +189,15 @@ int parse_options_remount(struct super_block *sb, char *options, int silent,
+ 				return 0;
+ 			vfsopts->mask = option;
+ 			break;
++		case Opt_unshared_obb:
+ 		case Opt_default_normal:
+ 		case Opt_multiuser:
+ 		case Opt_userid:
+ 		case Opt_fsuid:
+ 		case Opt_fsgid:
+ 		case Opt_reserved_mb:
+-			pr_warn("Option \"%s\" can't be changed during remount\n", p);
++			if (!silent)
++				pr_warn("Option \"%s\" can't be changed during remount\n", p);
+ 			break;
+ 		/* unknown option */
+ 		default:
+@@ -495,4 +505,4 @@ MODULE_DESCRIPTION("Sdcardfs " SDCARDFS_VERSION);
+ MODULE_LICENSE("GPL");
+ 
+ module_init(init_sdcardfs_fs);
+-module_exit(exit_sdcardfs_fs);
+\ No newline at end of file
++module_exit(exit_sdcardfs_fs);
+diff --git a/fs/sdcardfs/sdcardfs.h b/fs/sdcardfs/sdcardfs.h
+index d5a906c7..9fdd2da5 100644
+--- a/fs/sdcardfs/sdcardfs.h
++++ b/fs/sdcardfs/sdcardfs.h
+@@ -224,6 +224,8 @@ struct sdcardfs_mount_options {
+ 	bool multiuser;
+ 	bool gid_derivation;
+ 	bool default_normal;
++	/* Android 12 sdcardfs mount policy: do not graft OBB paths across users. */
++	bool unshared_obb;
+ 	unsigned int reserved_mb;
+ };
+ 
+@@ -678,4 +680,4 @@ static inline bool qstr_case_eq(const struct qstr *q1, const struct qstr *q2)
+ /* */
+ #define QSTR_LITERAL(string) QSTR_INIT(string, sizeof(string)-1)
+ 
+-#endif	/* not _SDCARDFS_H_ */
+\ No newline at end of file
++#endif	/* not _SDCARDFS_H_ */

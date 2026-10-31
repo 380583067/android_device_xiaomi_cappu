@@ -59,7 +59,8 @@ allow platform_app mtk_advcamserver_service:service_manager find;
 # Stage: Migration
 # Purpose: Allow to use lomo effect
 # Package: com.mediatek.camera
-allow platform_app hal_camera_hwservice:hwservice_manager find;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/public/hal_camera.te:5; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow platform_app hal_camera_hwservice:hwservice_manager find;
 allow platform_app mtk_hal_camera:binder call;
 
 # Date: 2017/06/29

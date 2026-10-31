@@ -1,3 +1,4 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 # ==============================================================================
 # Policy File of /system/bin/cameraserver Executable File
 
@@ -28,7 +29,7 @@ allow cameraserver self:process { ptrace };
 # -----------------------------------
 # Purpose: property access
 # -----------------------------------
-allow cameraserver mtkcam_prop:file { open read getattr };
+get_prop(cameraserver, mtkcam_prop)
 
 
 # Date : WK14.31
@@ -52,9 +53,11 @@ allow cameraserver nvram_data_file:dir w_dir_perms;
 allow cameraserver nvram_data_file:file create_file_perms;
 allow cameraserver nvram_data_file:lnk_file read;
 allow cameraserver nvdata_file:lnk_file read;
-allow cameraserver proc:file { read ioctl open };
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow cameraserver proc:file { read ioctl open };
 allow cameraserver proc_meminfo:file { read getattr open };
-allow cameraserver sysfs:file { read write open };
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow cameraserver sysfs:file { read write open };
 
 # Date : WK14.34
 # Operation : Migration
@@ -314,10 +317,13 @@ allow cameraserver gpu_device:dir search;
 # Operation : Migration
 # Purpose :  Use file_type_auto_trans to specify label to avoid violated(never allow)
 allow cameraserver property_socket:sock_file write;
-allow cameraserver proc:file getattr;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow cameraserver proc:file getattr;
 allow cameraserver shell_exec:file { execute read getattr open};
-domain_auto_trans(cameraserver, thermal_manager_exec, thermal_manager)
-allow cameraserver thermal_manager_exec:file { read getattr open execute};
+# Android 12 Treble: init.thermal_manager.rc owns the vendor daemon transition; a core media domain must not launch it.
+
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/domain.te:457, system/sepolicy/public/domain.te:977; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow cameraserver thermal_manager_exec:file { read getattr open execute};
 allow cameraserver init:unix_stream_socket connectto;
 
 # Date : WK16.32
@@ -367,7 +373,8 @@ allow cameraserver camera_owe_device:chr_file rw_file_perms;
 
 # Date : WK17.25
 # Operation : Migration
-allow cameraserver debugfs_tracing:file { write open };
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow cameraserver debugfs_tracing:file { write open };
 allow cameraserver nvram_data_file:dir { add_name write create};
 allow cameraserver nvram_data_file:file { write getattr setattr read create open };
 allow cameraserver debugfs_ion:dir search;
@@ -380,7 +387,7 @@ allow cameraserver mtk_cmdq_device:chr_file { read ioctl open };
 # Date : WK17.28
 # Operation : MT6757 SQC
 # Purpose : Change thermal config
-allow cameraserver mtk_thermal_config_prop:file { getattr open read };
+get_prop(cameraserver, mtk_thermal_config_prop)
 allow cameraserver mtk_thermal_config_prop:property_service set;
 
 

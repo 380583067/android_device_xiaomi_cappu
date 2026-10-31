@@ -1,7 +1,8 @@
 #===============================================
 # Policy File of /system/bin/audiocmdservice_atci Executable File
 
-type audiocmdservice_atci_exec , exec_type, file_type;
+# Android 12 Treble: matching file_contexts labels a /system path; mark this executable as system_file_type so coredomain entrypoints remain in the system partition.
+type audiocmdservice_atci_exec , system_file_type, exec_type, file_type;
 
 # New added for move to /system
 typeattribute audiocmdservice_atci coredomain;
@@ -39,7 +40,9 @@ allow audiocmdservice_atci media_rw_data_file:file create_file_perms;
 allow audiocmdservice_atci kmsg_device:chr_file w_file_perms;
 
 userdebug_or_eng(`
-  allow audiocmdservice_atci self:capability { dac_override sys_nice fowner chown fsetid setuid ipc_lock net_admin};
+  # Android 12 neverallows DAC override for this system service; retain only
+  # the capabilities needed by the legacy audio diagnostic helper.
+  allow audiocmdservice_atci self:capability { sys_nice fowner chown fsetid setuid ipc_lock net_admin};
 ')
 
 #audio-daemon needs to controlled from adb shell by AudioTuningTool
@@ -48,4 +51,5 @@ allow radio audiocmdservice_atci_exec:file getattr;
 #Android O porting
 hwbinder_use(audiocmdservice_atci)
 get_prop(audiocmdservice_atci, hwservicemanager_prop);
-allow audiocmdservice_atci debugfs_tracing:file rw_file_perms;
+# Android 12 forbids system services from accessing tracefs/debugfs directly;
+# audio diagnostics must use the supported tracing service interface.

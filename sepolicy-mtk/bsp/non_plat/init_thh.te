@@ -14,7 +14,7 @@ allow init_thh_service teei_client_device:chr_file { create setattr unlink rw_fi
 allow init_thh_service teei_data_file:dir create_dir_perms;
 allow init_thh_service teei_data_file:file rw_file_perms;
 allow init_thh_service teei_data_file:file create_file_perms;
-allow init_thh_service self:capability dac_override;
+# Android 12 forbids DAC-bypass capabilities for these legacy device domains; keep access controlled by the specific SELinux file and device labels.
 allow init_thh_service device:dir rw_dir_perms;
 
 #enable access android property

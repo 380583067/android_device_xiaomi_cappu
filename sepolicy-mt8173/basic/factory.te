@@ -1,2 +1,3 @@
 #Purpose: For gps test
-allow factory mnld_exec:file rx_file_perms;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/domain.te:457, system/sepolicy/public/domain.te:977, system/sepolicy/public/domain.te:996; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow factory mnld_exec:file rx_file_perms;

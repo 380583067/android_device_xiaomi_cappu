@@ -44,7 +44,13 @@
     -->
     <modules>
         <!-- Primary Audio HAL -->
-        <module name="primary" halVersion="3.0">
+        <!--
+            cappu uses the legacy MT8173 vendor audio service, which registers
+            android.hardware.audio@2.0::IDevicesFactory/default. Keep the
+            policy declaration at HAL 2.0 so AudioPolicyManager selects the
+            interface that this vendor implementation actually provides.
+        -->
+        <module name="primary" halVersion="2.0">
             <attachedDevices>
                 <item>Speaker</item>
                 <item>Built-In Mic</item>

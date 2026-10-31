@@ -1,4 +1,9 @@
-<manifest version="1.0" type="device">
+<!-- cappu Android 12 VINTF 迁移：保留真实 Android 8.1 MTK vendor 的 FCM 2。
+     Wi-Fi/supplicant/hostapd、软件 Gatekeeper、health 由源码模块各自的 fragment 声明，
+     此处不重复列出。移除没有配套服务的 fingerprint、CAS、蜂窝 IMS/WFO 等占位项。
+     SELinux 版本由 assemble_vintf 注入当前构建版本，不硬编码 27.0。
+     audio 2.0、camera 2.4、MTK power 保留 vendor 实现，不并行打包源码同名服务。 -->
+<manifest version="1.0" type="device" target-level="2">
     <hal format="hidl">
         <name>android.hardware.audio</name>
         <transport>hwbinder</transport>
@@ -14,15 +19,6 @@
         <version>2.0</version>
         <interface>
             <name>IEffectsFactory</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl">
-        <name>android.hardware.biometrics.fingerprint</name>
-        <transport>hwbinder</transport>
-        <version>2.1</version>
-        <interface>
-            <name>IBiometricsFingerprint</name>
             <instance>default</instance>
         </interface>
     </hal>
@@ -45,18 +41,9 @@
         </interface>
     </hal>
     <hal format="hidl">
-        <name>android.hardware.cas</name>
-        <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>IMediaCasService</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl">
         <name>android.hardware.configstore</name>
         <transport>hwbinder</transport>
-        <version>1.0</version>
+        <version>1.1</version>
         <interface>
             <name>ISurfaceFlingerConfigs</name>
             <instance>default</instance>
@@ -75,15 +62,6 @@
             <name>IDrmFactory</name>
             <instance>default</instance>
             <instance>widevine</instance>
-        </interface>
-    </hal>
-    <hal format="hidl">
-        <name>android.hardware.gatekeeper</name>
-        <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>IGatekeeper</name>
-            <instance>default</instance>
         </interface>
     </hal>
     <hal format="hidl">
@@ -181,24 +159,6 @@
         </interface>
     </hal>
     <hal format="hidl">
-        <name>android.hardware.wifi</name>
-        <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>IWifi</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl">
-        <name>android.hardware.wifi.supplicant</name>
-        <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>ISupplicant</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl">
         <name>vendor.mediatek.hardware.camera.advcam</name>
         <transport>hwbinder</transport>
         <version>1.0</version>
@@ -236,33 +196,6 @@
         <interface>
             <name>ILomoEffect</name>
             <instance>internal/0</instance>
-        </interface>
-    </hal>
-    <hal format="hidl">
-        <name>vendor.mediatek.hardware.imsa</name>
-        <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>IImsa</name>
-            <instance>imsa</instance>
-        </interface>
-    </hal>
-    <hal format="hidl">
-        <name>vendor.mediatek.hardware.keymanage</name>
-        <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>IKeymanage</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl">
-        <name>vendor.mediatek.hardware.keymaster_attestation</name>
-        <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>IKeymasterDevice</name>
-            <instance>default</instance>
         </interface>
     </hal>
     <hal format="hidl">
@@ -310,34 +243,4 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <hal format="hidl">
-        <name>vendor.mediatek.hardware.wfo</name>
-        <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>IWifiOffload</name>
-            <instance>wfo_hidl_service</instance>
-        </interface>
-    </hal>
-    <hal format="hidl">
-        <name>vendor.mediatek.hardware.wifi.hostapd</name>
-        <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>IHostapd</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl">
-        <name>vendor.mediatek.hardware.wifi.supplicant</name>
-        <transport>hwbinder</transport>
-        <version>1.1</version>
-        <interface>
-            <name>ISupplicant</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <sepolicy>
-        <version>27.0</version>
-    </sepolicy>
 </manifest>

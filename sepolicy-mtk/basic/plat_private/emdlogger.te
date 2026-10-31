@@ -3,7 +3,8 @@
 # ==============================================
 
 # New added for move to /system
-type emdlogger_exec , exec_type, file_type;
+# Android 12 Treble: matching file_contexts labels a /system path; mark this executable as system_file_type so coredomain entrypoints remain in the system partition.
+type emdlogger_exec , system_file_type, exec_type, file_type;
 typeattribute emdlogger coredomain;
 
 init_daemon_domain(emdlogger)
@@ -49,7 +50,8 @@ allow emdlogger storage_file:file { create_file_perms };
 
 #permission for read boot mode
 #avc: denied { open }  path="/sys/devices/virtual/BOOT/BOOT/boot/boot_mode" dev="sysfs"
-allow emdlogger sysfs:file { read open };
+# Android 12 forbids generic sysfs reads from coredomains; logging should use
+# logd and explicitly labelled diagnostic nodes.
 
 # Allow read avc: denied { read } for name="mddb" dev="mmcblk0p25" ino=681 
 # scontext=u:r:emdlogger:s0 tcontext=u:object_r:system_file:s0 tclass=dir permissive=0

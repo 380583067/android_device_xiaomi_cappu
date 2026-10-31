@@ -1,0 +1,14 @@
+diff --git a/drivers/misc/mediatek/imgsensor/src/mt8173/s5k3l8_mipi_raw/s5k3l8mipiraw_Sensor.c b/drivers/misc/mediatek/imgsensor/src/mt8173/s5k3l8_mipi_raw/s5k3l8mipiraw_Sensor.c
+index 441abb54..4f41d2cd 100644
+--- a/drivers/misc/mediatek/imgsensor/src/mt8173/s5k3l8_mipi_raw/s5k3l8mipiraw_Sensor.c
++++ b/drivers/misc/mediatek/imgsensor/src/mt8173/s5k3l8_mipi_raw/s5k3l8mipiraw_Sensor.c
+@@ -2300,7 +2300,8 @@ static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
+ 		get_default_framerate_by_scenario((MSDK_SCENARIO_ID_ENUM)*(feature_data), (MUINT32 *)(uintptr_t)(*(feature_data+1)));
+ 		break;
+ 	case SENSOR_FEATURE_SET_TEST_PATTERN:
+-		set_test_pattern_mode((BOOL)*feature_data);
++		/* The cappu camera HAL persistently requests a test pattern at preview start. */
++		set_test_pattern_mode(FALSE);
+ 		break;
+ 	case SENSOR_FEATURE_GET_TEST_PATTERN_CHECKSUM_VALUE:
+ 		*feature_return_para_32 = imgsensor_info.checksum_value;

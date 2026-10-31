@@ -25,5 +25,6 @@ allow cmddumper media_rw_data_file:dir { create_dir_perms };
 allow cmddumper file_contexts_file:file { read getattr open };
 
 # purpose: access /sys/devices/virtual/BOOT/BOOT/boot/boot_mode
-allow cmddumper sysfs:file { read open };
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow cmddumper sysfs:file { read open };
 

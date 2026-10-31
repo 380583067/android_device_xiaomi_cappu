@@ -3,7 +3,8 @@
 # =============================================================================
 
 # New added for move to /system
-type thermalindicator_exec, exec_type, file_type;
+# Android 12 Treble: matching file_contexts labels a /system path; mark this executable as system_file_type so coredomain entrypoints remain in the system partition.
+type thermalindicator_exec, system_file_type, exec_type, file_type;
 typeattribute thermalindicator coredomain;
 
 init_daemon_domain(thermalindicator)
@@ -30,8 +31,8 @@ allow servicemanager thermalindicator:process { getattr };
 # For /proc/[pid]/cmdline accessing
 typeattribute thermalindicator mlstrustedsubject;
 
-allow thermalindicator proc:dir           {search getattr};
-allow thermalindicator proc:file          read;
+# Android 12 forbids generic proc traversal from coredomains; thermal data is
+# provided by the thermal HAL instead of these legacy raw proc reads.
 allow thermalindicator shell:dir          search;
 allow thermalindicator platform_app:dir   search;
 allow thermalindicator platform_app:file  {open read getattr};

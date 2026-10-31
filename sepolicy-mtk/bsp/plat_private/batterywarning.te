@@ -6,7 +6,8 @@
 # Type Declaration
 # ==============================================
 
-type batterywarning_exec , exec_type, file_type;
+# Android 12 Treble: matching file_contexts labels a /system path; mark this executable as system_file_type so coredomain entrypoints remain in the system partition.
+type batterywarning_exec , system_file_type, exec_type, file_type;
 type batterywarning ,domain;
 # New added for move to /system
 typeattribute batterywarning coredomain;
@@ -43,4 +44,5 @@ allow batterywarning activity_service:service_manager find;
 # Date : 2017/07/03
 # Operation : Migration
 # Purpose : allow battery warning read file
-allow batterywarning sysfs:file { open read getattr };
+# Android 12 forbids generic sysfs access from coredomains; battery state must
+# be read through the health service or a specifically labelled sysfs node.

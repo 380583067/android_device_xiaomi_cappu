@@ -1,0 +1,59 @@
+diff --git a/drivers/misc/mediatek/cameraisp/src/mt8173/camera_isp.c b/drivers/misc/mediatek/cameraisp/src/mt8173/camera_isp.c
+index 33fb5c67..d2f7ffb9 100644
+--- a/drivers/misc/mediatek/cameraisp/src/mt8173/camera_isp.c
++++ b/drivers/misc/mediatek/cameraisp/src/mt8173/camera_isp.c
+@@ -1466,6 +1466,45 @@ static MUINT32 ISP_DumpDmaDeepDbg(void)
+ 	return 0;
+ }
+ 
++static void ISP_RepairAaoSizeOnError(void)
++{
++	MUINT32 awb_win_num;
++	MUINT32 ae_hst_ctl;
++	MUINT32 aao_xsize;
++	MUINT32 aao_ysize;
++	MUINT32 hnum;
++	MUINT32 vnum;
++	MUINT32 hist_num = 0;
++	MUINT32 expected_size;
++	MUINT32 i;
++
++	awb_win_num = ISP_RD32(ISP_ADDR + 0x5BC);
++	ae_hst_ctl = ISP_RD32(ISP_ADDR + 0x650);
++	aao_xsize = ISP_RD32(ISP_ADDR + 0x3390);
++	aao_ysize = ISP_RD32(ISP_ADDR + 0x3394);
++	hnum = awb_win_num & 0xff;
++	vnum = (awb_win_num >> 16) & 0xff;
++
++	for (i = 0; i < 4; i++) {
++		if ((ae_hst_ctl >> i) & 0x1)
++			hist_num++;
++	}
++
++	expected_size = hnum * vnum * 5 + (hist_num << 8);
++	if (aao_ysize != 0 || expected_size == 0 || expected_size > 0x20000)
++		return;
++
++	if (((aao_xsize & 0x1ffff) + 1) == expected_size)
++		return;
++
++	ISP_WR32(ISP_ADDR + 0x3390,
++		 (aao_xsize & ~0x1ffff) | ((expected_size - 1) & 0x1ffff));
++	if (((ISP_RD32(ISP_ADDR + 0x3390) & 0x1ffff) + 1) == expected_size)
++		pr_err_ratelimited(MyTag "[%s] recovered primary AAO XSIZE 0x%08x -> 0x%08x (AWB %ux%u, histogram %u)\n",
++				   __func__, aao_xsize, ISP_RD32(ISP_ADDR + 0x3390),
++				   hnum, vnum, hist_num);
++}
++
+ #define	RegDump(start, end)	{\
+ 	MUINT32	i;\
+ 	for	(i = start;	i <= end; i	+= 0x10) {\
+@@ -9102,6 +9141,8 @@ static __tcmfunc irqreturn_t ISP_Irq_CAM(MINT32 Irq, void *DeviceId)
+ 	    (ISP_RD32(ISP_REG_ADDR_INT_STATUS3X) &
+ 	     (IspInfo.IrqInfo.Mask[ISP_IRQ_TYPE_INT_STATUS3X] | IspInfo.IrqInfo.
+ 	      ErrMask[ISP_IRQ_TYPE_INT_STATUS3X]));
++	if (IrqStatus[ISP_IRQ_TYPE_INT_P1_ST] & ISP_IRQ_P1_STATUS_AAO_ERR_ST)
++		ISP_RepairAaoSizeOnError();
+ 	/* spin_unlock(&(IspInfo.SpinLockIrq[_IRQ])); */
+ 	/* IrqStatus_fbc_int = ISP_RD32(ISP_ADDR + 0xFC); */
+ 

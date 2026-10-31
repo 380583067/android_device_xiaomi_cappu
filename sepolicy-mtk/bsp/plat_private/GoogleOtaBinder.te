@@ -6,7 +6,8 @@
 # Type Declaration
 # ==============================================
 
-type GoogleOtaBinder_exec , exec_type, file_type;
+# Android 12 Treble: matching file_contexts labels a /system path; mark this executable as system_file_type so coredomain entrypoints remain in the system partition.
+type GoogleOtaBinder_exec , system_file_type, exec_type, file_type;
 typeattribute GoogleOtaBinder coredomain;
 
 # ==============================================
@@ -35,12 +36,12 @@ allow GoogleOtaBinder block_device:dir search;
 #for kmsg
 allow GoogleOtaBinder kmsg_device:chr_file { write read open ioctl};
 #for nand
-allow GoogleOtaBinder mtd_device:dir search;
-allow GoogleOtaBinder mtd_device:chr_file { read write open rw_file_perms};
+# cappu Android 12: the old MTK mtd_device type was removed; use the exported board type for legacy rules and labels.
+allow GoogleOtaBinder cappu_mtd_device:dir search;
+allow GoogleOtaBinder cappu_mtd_device:chr_file { read write open rw_file_perms};
 #to get offset
 allow GoogleOtaBinder ota_package_file:dir search;
 allow GoogleOtaBinder ota_package_file:file { getattr open read write };
-allow GoogleOtaBinder self:capability { dac_override dac_read_search };
-allow GoogleOtaBinder proc:file read;
-allow GoogleOtaBinder sysfs:file read;
+# Android 12 neverallows DAC-bypass capabilities and broad coredomain proc/sysfs
+# access. This legacy OTA helper must use explicit exported labels if reinstated.
 

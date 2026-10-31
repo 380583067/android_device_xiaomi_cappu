@@ -5,4 +5,7 @@
 # System Server Services
 
 # Other Services
-type nvram_agent_service, service_manager_type;
+# NvRAMAgent is a vendor-owned service implemented by the shipped MTK daemon.
+# Android 12 permits vendor registration only when the service type identifies
+# the vendor ownership explicitly.
+type nvram_agent_service, vendor_service, service_manager_type;

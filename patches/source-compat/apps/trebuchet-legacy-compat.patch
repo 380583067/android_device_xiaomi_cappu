@@ -1,0 +1,363 @@
+diff --git a/quickstep/res/values/config.xml b/quickstep/res/values/config.xml
+index 3483fce4fe4634b8c69e56de72290666b6798368..31c0f5f2ab7e0361069cb3b43a356dbfc186f2dc 100644
+--- a/quickstep/res/values/config.xml
++++ b/quickstep/res/values/config.xml
+@@ -39,21 +39,4 @@
+     <string name="wellbeing_provider_pkg" translatable="false"/>
+ 
+     <integer name="max_depth_blur_radius">23</integer>
+-
+-    <!-- The max memory usage of a single image for the Launcher process in MB -->
+-    <integer name="max_launcher_memory_mb">300</integer>
+-
+-    <!-- The list of mime types that are allowed to be decoded for the Launcher process. -->
+-    <string-array name="allowed_image_mime_types" translatable="false">
+-        <item>image/png</item>
+-        <item>image/jpeg</item>
+-        <item>image/webp</item>
+-        <item>image/gif</item>
+-        <item>image/bmp</item>
+-        <item>image/x-ico</item>
+-        <item>image/vnd.wap.wbmp</item>
+-        <item>image/heif</item>
+-        <item>image/heic</item>
+-        <item>image/avif</item>
+-    </string-array>
+ </resources>
+diff --git a/quickstep/src/com/android/quickstep/LauncherProcessImageListener.kt b/quickstep/src/com/android/quickstep/LauncherProcessImageListener.kt
+deleted file mode 100644
+index ef9b936a6d8c3feb1d29df8b310da5b3d47ed262..0000000000000000000000000000000000000000
+--- a/quickstep/src/com/android/quickstep/LauncherProcessImageListener.kt
++++ /dev/null
+@@ -1,136 +0,0 @@
+-/*
+- * Copyright (C) 2025 The Android Open Source Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package com.android.quickstep
+-
+-import android.graphics.ImageDecoder
+-import android.graphics.ImageDecoder.ImageInfo
+-import android.graphics.ImageDecoder.Source
+-import android.util.Size
+-import androidx.annotation.VisibleForTesting
+-import java.io.IOException
+-import java.util.Locale
+-import kotlin.math.max
+-import kotlin.math.sqrt
+-
+-/**
+- * The default image decoder listener for the Launcher process.
+- *
+- * This listener is used to downscale images that are larger than a certain memory limit.
+- */
+-class LauncherProcessImageListener(
+-    /*
+-     * The maximum size in bytes of an image that will be decoded. If the image is
+-     * larger than this, it will be downscaled, retaining the aspect ratio, until its size
+-     * is no larger than this value.
+-     */
+-    val maxMemoryBytes: Long,
+-
+-    /*
+-     * The set of mime types that are allowed to be decoded. If the image's mime type is
+-     * not in this set, a RuntimeException will be thrown.
+-     */
+-    val allowedMimeTypes: Set<String>,
+-) : ImageDecoder.OnHeaderDecodedListener {
+-
+-    override fun onHeaderDecoded(decoder: ImageDecoder, info: ImageInfo, source: Source) {
+-        onHeaderDecoded(AndroidImageDecoderWrapper(decoder, info))
+-    }
+-
+-    @VisibleForTesting
+-    fun onHeaderDecoded(decoder: ImageDecoderWrapper) {
+-        // First check that the image is a supported type based on our allowlist.
+-        val mimeType = decoder.mimeType
+-        if (mimeType == null || !allowedMimeTypes.contains(mimeType.toLowerCase(Locale.US))) {
+-            throw IOException("Image mime type ($mimeType) is not allowed.")
+-        }
+-
+-        // Remote size may have returned a giant image, so we need to defensively limit it
+-        // to something reasonable.
+-        val size = getPreferredSize(decoder.size.width, decoder.size.height, maxMemoryBytes)
+-        if (size != null) {
+-            decoder.setTargetSize(size.width, size.height)
+-        }
+-    }
+-
+-    /** Abstraction for [ImageDecoder] to allow testing. */
+-    interface ImageDecoderWrapper {
+-        /** The size of the image in pixels. */
+-        val size: Size
+-
+-        /** The mime type of the image. */
+-        val mimeType: String?
+-
+-        /** Sets the target size for the image. */
+-        fun setTargetSize(width: Int, height: Int)
+-    }
+-
+-    /**
+-     * A wrapper around [ImageDecoder] that implements [ImageDecoderWrapper].
+-     *
+-     * @param decoder The [ImageDecoder] to wrap.
+-     * @param info The [ImageInfo] of the image to decode.
+-     */
+-    private class AndroidImageDecoderWrapper(
+-        private val decoder: ImageDecoder,
+-        private val info: ImageInfo,
+-    ) : ImageDecoderWrapper {
+-        override val size: Size
+-            get() = info.size
+-
+-        override val mimeType: String?
+-            get() = info.mimeType
+-
+-        override fun setTargetSize(width: Int, height: Int) {
+-            decoder.setTargetSize(width, height)
+-        }
+-    }
+-
+-    companion object {
+-        // Assume worst-case (RGBA_F16) to safely fit in memory.
+-        private const val BYTES_PER_PIXEL = 8
+-
+-        /**
+-         * Returns the preferred size to use for the given image size and max memory.
+-         *
+-         * If the image is larger than the max memory, this will return a size that will result in
+-         * the image size being no larger than the max memory. If the image is smaller than the max
+-         * memory, this will return null.
+-         *
+-         * @param width The width of the image in pixels.
+-         * @param height The height of the image in pixels.
+-         * @param maxMemoryBytes The maximum size in bytes of the image.
+-         * @return The preferred size to use for the image, or null if no downscaling is needed.
+-         */
+-        fun getPreferredSize(width: Int, height: Int, maxMemoryBytes: Long): Size? {
+-            // estimated size is in memory as bytes
+-            val estimatedSize = width.toLong() * height.toLong() * BYTES_PER_PIXEL
+-
+-            // If the image is larger than the max memory, we need to downscale it.
+-            if (estimatedSize > maxMemoryBytes) {
+-                // Ratio of the estimated size to the max memory.
+-                val maxPixels = maxMemoryBytes / BYTES_PER_PIXEL
+-                // Derive the scale factor to apply to the image to get the desired size.
+-                val scale = sqrt(maxPixels.toDouble() / (width.toLong() * height.toLong()))
+-                // Ensure at least 1 pixel dimensions
+-                // follow image decoder rounding behavior
+-                val targetWidth = max(1, (width * scale + 0.5).toInt())
+-                val targetHeight = max(1, (height * scale + 0.5).toInt())
+-                return Size(targetWidth, targetHeight)
+-            }
+-            return null
+-        }
+-    }
+-}
+diff --git a/quickstep/src/com/android/quickstep/QuickstepProcessInitializer.java b/quickstep/src/com/android/quickstep/QuickstepProcessInitializer.java
+index 43c5c553c00dc7ccc6ae8517fcc3e8dae0b7c97a..a551f55de5748851bfe13dbc2f7aa3eceb7e13c2 100644
+--- a/quickstep/src/com/android/quickstep/QuickstepProcessInitializer.java
++++ b/quickstep/src/com/android/quickstep/QuickstepProcessInitializer.java
+@@ -21,16 +21,12 @@ import android.content.pm.PackageManager;
+ import android.os.Build;
+ import android.os.UserManager;
+ import android.util.Log;
+-import android.graphics.ImageDecoder;
+ 
+ import com.android.launcher3.BuildConfig;
+ import com.android.launcher3.MainProcessInitializer;
+-import com.android.launcher3.R;
+ import com.android.systemui.shared.system.InteractionJankMonitorWrapper;
+ import com.android.systemui.shared.system.ThreadedRendererCompat;
+ 
+-import java.util.Set;
+-
+ @SuppressWarnings("unused")
+ @TargetApi(Build.VERSION_CODES.R)
+ public class QuickstepProcessInitializer extends MainProcessInitializer {
+@@ -65,15 +61,4 @@ public class QuickstepProcessInitializer extends MainProcessInitializer {
+         ThreadedRendererCompat.setContextPriority(
+                 ThreadedRendererCompat.EGL_CONTEXT_PRIORITY_HIGH_IMG);
+     }
+-
+-    private void setupImageDecoder(Context context) {
+-        // Limit the max memory usage.
+-        int maxMemoryMb = context.getResources().getInteger(R.integer.max_launcher_memory_mb);
+-        long maxMemoryBytes = maxMemoryMb * 1024L * 1024L;
+-        // Get the allowed mime types from the resources.
+-        Set<String> allowedMimeTypes = Set.of(context.getResources().getStringArray(
+-                R.array.allowed_image_mime_types));
+-        ImageDecoder.setDefaultProcessListener(
+-                new LauncherProcessImageListener(maxMemoryBytes, allowedMimeTypes));
+-    }
+ }
+diff --git a/quickstep/tests/multivalentTests/src/com/android/quickstep/LauncherProcessImageListenerTest.kt b/quickstep/tests/multivalentTests/src/com/android/quickstep/LauncherProcessImageListenerTest.kt
+deleted file mode 100644
+index 26849c58acc2680727c1c09361c217935f005f1a..0000000000000000000000000000000000000000
+--- a/quickstep/tests/multivalentTests/src/com/android/quickstep/LauncherProcessImageListenerTest.kt
++++ /dev/null
+@@ -1,152 +0,0 @@
+-/*
+- * Copyright (C) 2025 The Android Open Source Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package com.android.quickstep
+-
+-import android.util.Size
+-import androidx.test.filters.SmallTest
+-import com.google.common.truth.Truth.assertThat
+-import java.io.IOException
+-import org.junit.Assert.assertThrows
+-import org.junit.Test
+-import org.junit.runner.RunWith
+-import org.junit.runners.JUnit4
+-
+-@SmallTest
+-@RunWith(JUnit4::class)
+-class LauncherProcessImageListenerTest {
+-
+-    private class FakeImageDecoderWrapper(
+-        width: Int,
+-        height: Int,
+-        override val mimeType: String? = "image/png",
+-    ) : LauncherProcessImageListener.ImageDecoderWrapper {
+-
+-        var targetSize: Size? = null
+-
+-        override val size: Size = Size(width, height)
+-
+-        override fun setTargetSize(width: Int, height: Int) {
+-            targetSize = Size(width, height)
+-        }
+-    }
+-
+-    @Test
+-    fun onHeaderDecoded_smallerThanMax_doesNotSetTargetSize() {
+-        // 10x10 = 100 pixels * 8 bytes = 800 bytes. Limit 1000.
+-        val decoder = FakeImageDecoderWrapper(10, 10)
+-        val listener = LauncherProcessImageListener(1000, allowedMimeTypes)
+-
+-        listener.onHeaderDecoded(decoder)
+-
+-        assertThat(decoder.targetSize).isNull()
+-    }
+-
+-    @Test
+-    fun onHeaderDecoded_largerThanMax_setsTargetSize() {
+-        // 10x10 = 100 pixels * 8 bytes = 800 bytes. Limit 200.
+-        // Ratio 4. Sqrt(4) = 2. Scale 0.5. -> 5x5
+-        val decoder = FakeImageDecoderWrapper(10, 10)
+-        val listener = LauncherProcessImageListener(200, allowedMimeTypes)
+-
+-        listener.onHeaderDecoded(decoder)
+-
+-        assertThat(decoder.targetSize).isEqualTo(Size(5, 5))
+-    }
+-
+-    @Test
+-    fun onHeaderDecoded_unsupportedMimeType_throwsException() {
+-        val decoder = FakeImageDecoderWrapper(10, 10, mimeType = "image/unsupported")
+-        val listener = LauncherProcessImageListener(1000, allowedMimeTypes)
+-
+-        val exception =
+-            assertThrows(IOException::class.java) { listener.onHeaderDecoded(decoder) }
+-        assertThat(exception).hasMessageThat().contains("image/unsupported")
+-    }
+-
+-    @Test
+-    fun onHeaderDecoded_nullMimeType_throwsException() {
+-        val decoder = FakeImageDecoderWrapper(10, 10, mimeType = null)
+-        val listener = LauncherProcessImageListener(1000, allowedMimeTypes)
+-
+-        val exception =
+-            assertThrows(IOException::class.java) { listener.onHeaderDecoded(decoder) }
+-        assertThat(exception).hasMessageThat().contains("null")
+-    }
+-
+-    @Test
+-    fun onHeaderDecoded_supportedMimeTypes_doesNotThrow() {
+-        val listener = LauncherProcessImageListener(1000, allowedMimeTypes)
+-
+-        for (mimeType in allowedMimeTypes) {
+-            val decoder = FakeImageDecoderWrapper(10, 10, mimeType = mimeType)
+-            listener.onHeaderDecoded(decoder)
+-        }
+-    }
+-
+-    @Test
+-    fun onHeaderDecoded_supportedMimeTypesUpperCase_doesNotThrow() {
+-        val listener = LauncherProcessImageListener(1000, allowedMimeTypes)
+-        val decoder = FakeImageDecoderWrapper(10, 10, mimeType = "IMAGE/PNG")
+-        listener.onHeaderDecoded(decoder)
+-    }
+-
+-    @Test
+-    fun getPreferredSize_smallerThanMax_returnsNull() {
+-        // 100x100 = 10k pixels * 8 = 80k bytes. Limit 100k.
+-        assertThat(LauncherProcessImageListener.getPreferredSize(100, 100, 100_000)).isNull()
+-    }
+-
+-    @Test
+-    fun getPreferredSize_larger_returnsCorrectScale() {
+-        // 100x100 = 80k bytes. Limit 20k.
+-        // Ratio = 4. Sqrt(4) = 2. Scale 0.5. -> 50x50.
+-        assertThat(LauncherProcessImageListener.getPreferredSize(100, 100, 20_000))
+-            .isEqualTo(Size(50, 50))
+-    }
+-
+-    @Test
+-    fun getPreferredSize_huge_returnsCorrectScale() {
+-        // 100x100 = 80k bytes. Limit 5k.
+-        // Ratio = 16. Sqrt(16) = 4. Scale 0.25 -> 25x25.
+-        assertThat(LauncherProcessImageListener.getPreferredSize(100, 100, 5_000))
+-            .isEqualTo(Size(25, 25))
+-    }
+-
+-    @Test
+-    fun getPreferredSize_fractionalScale_returnsCorrectScale() {
+-        // 100x100 = 80k bytes. Limit 32k.
+-        // Ratio = 2.5. Sqrt(2.5) ~= 1.58. Scale = 0.632.
+-        // 100 * 0.632 = 63.
+-        assertThat(LauncherProcessImageListener.getPreferredSize(100, 100, 32_000))
+-            .isEqualTo(Size(63, 63))
+-    }
+-
+-    private companion object {
+-        private val allowedMimeTypes =
+-            setOf(
+-                "image/png",
+-                "image/jpeg",
+-                "image/webp",
+-                "image/gif",
+-                "image/bmp",
+-                "image/x-ico",
+-                "image/vnd.wap.wbmp",
+-                "image/heif",
+-                "image/heic",
+-                "image/avif",
+-            )
+-    }
+-}

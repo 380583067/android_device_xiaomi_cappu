@@ -1,5 +1,5 @@
 
-# For mt8173 bootup 
+# For mt8173 bootup
 allow system_app surfaceflinger:fifo_file { read write };
 
 allow system_app dri_device:chr_file  { open read write ioctl };

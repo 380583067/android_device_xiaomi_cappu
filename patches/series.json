@@ -1,0 +1,338 @@
+[
+  {
+    "project": "prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9",
+    "base_commit": "5e030eafe024784a73cdf47e6936ac0dbfc763dc",
+    "patch": "build/toolchains/aarch64-gcc49-python3.patch",
+    "sha256": "004b9a12d532b79b90cecf8e0e2e04bd78e09c6ea52a41017903005394fdc1bc"
+  },
+  {
+    "project": "prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9",
+    "base_commit": "111258a10e017f067b27e6cfcea7619d753f3309",
+    "patch": "build/toolchains/arm-gcc49-python3.patch",
+    "sha256": "b418af6be815437b88412c69919e6b2636fe810b681ee1d1027286991f769445"
+  },
+  {
+    "project": "vendor/lineage",
+    "base_commit": "41e277ea260ac0246f2e735dcba8985e50ac0d39",
+    "patch": "build/repo/read-only-build-manifest.patch",
+    "sha256": "de9b2bc8c6d396625df0b8f038a24f5db3c32bd7dc68de77d78de6eac91ce2d6"
+  },
+  {
+    "project": "system/libbase",
+    "base_commit": "d78d20d2d1afb349f17feec1e7ea7be623c46dfd",
+    "patch": "source-compat/libbase/mtk-nvram-logmessage-abi.patch",
+    "sha256": "e78f45c92a73bdbc9851deb7c77c8890b6462522993d3741b5932c8815af39b3"
+  },
+  {
+    "project": "system/tools/hidl",
+    "base_commit": "c8f38d3a93a7b86570d9a6d47df2d1b170b0ce11",
+    "patch": "source-compat/hidl/hidl-compat-source-support.patch",
+    "sha256": "05c851e4c18b742145eb8f45acc692dd71feb5007eb43b92ebd40d4fb684bb8a"
+  },
+  {
+    "project": "frameworks/native",
+    "base_commit": "acc134abe724dfaebaafd309490f697785d5d2a6",
+    "patch": "source-compat/hidl/propertymap-compat-source.patch",
+    "sha256": "049b651af86695db72af34c12d40812900884751038ba90599776aab1db1a9a6"
+  },
+  {
+    "project": "hardware/interfaces",
+    "base_commit": "ae469cee0dce6d71489588126a15da8e67a50102",
+    "patch": "source-compat/hidl/legacy-hidl-helper-abi.patch",
+    "sha256": "16ae6f9ec0c9ef4002b90d51ddb02bbdbd1df9855ad608ebab22c6f462557488"
+  },
+  {
+    "project": "hardware/interfaces",
+    "base_commit": "ae469cee0dce6d71489588126a15da8e67a50102",
+    "patch": "source-compat/hardware-interfaces/cappu-audio-hal-debug-null-guard.patch",
+    "sha256": "d44b37a9c284dffa4e3fe9ba1974ed9617b7e9955c0d8ecfd75f5a7b10661be9"
+  },
+  {
+    "project": "system/core",
+    "base_commit": "2fa0d41c7e8ae62375725b7426dfce9ef758c591",
+    "patch": "source-compat/mtk/legacy-runtime-abi.patch",
+    "sha256": "a0e1b9766962933377b172b6a3494f47f0d9ee71d0955c554f0aa523a0667ac6"
+  },
+  {
+    "project": "prebuilts/abi-dumps/vndk",
+    "base_commit": "b936a6ed860ee5c619c44804de4eb11a2d41eabb",
+    "patch": "source-compat/mtk/vndk32-arm-arm64-libcutils-abi.patch",
+    "sha256": "01fc2c5db8746ab9bffe2c962ec62f277951fe2c7dfd053ef7eea1f3de5ef4ec"
+  },
+  {
+    "project": "external/protobuf",
+    "base_commit": "6dc46cc0d095f02336ff96430167c5b321e0f961",
+    "patch": "source-compat/protobuf/protobuf-3.0-legacy-abi.patch",
+    "sha256": "1dd5f7b32f2c5a4939c0ba23a29d6c98f8c86c24ab297c242dfbec34702de851"
+  },
+  {
+    "project": "bionic",
+    "base_commit": "1f383abed28ce60b73700250434c1b7488546655",
+    "patch": "source-compat/bionic/libm-abi-compat.patch",
+    "sha256": "d1e757686430b1bec1b7522578a6507ecc40fa12a778a0d99e8ddc626d5fb608"
+  },
+  {
+    "project": "external/chromium-webview/patches",
+    "base_commit": "b29edaec0c61bac615a30263b70cc965c2551ffd",
+    "patch": "source-compat/chromium-webview/patchset.patch",
+    "sha256": "693ea069d11bac39eecb506f8702b1000803ea29d2960e3cdeb993f74410e3fd"
+  },
+  {
+    "project": "external/chromium-webview/prebuilt/arm",
+    "base_commit": "9f672a0b29b66e75333f9e0984a60615724f0a20",
+    "patch": "source-compat/chromium-webview/prebuilt-arm.patch",
+    "sha256": "5abb1b42bc399080f369fc7fe94889357bf41bdf6db93ebe5994d68e8b1951c6"
+  },
+  {
+    "project": "external/chromium-webview/prebuilt/arm64",
+    "base_commit": "11fd8afe58c011d04cb3c1b2259f406ec9fd49f2",
+    "patch": "source-compat/chromium-webview/prebuilt-arm64.patch",
+    "sha256": "3b6a049e64b86f9495750d3507c2d811853981e422142d88edb58d3c73d94087"
+  },
+  {
+    "project": "external/chromium-webview/prebuilt/x86",
+    "base_commit": "69d94d6d5c7e82dec3364bb5767db1fcabca0a07",
+    "patch": "source-compat/chromium-webview/prebuilt-x86.patch",
+    "sha256": "b9ef587323a40a53d0195fc7d5c42218018d9f655bb799e201dc334a94d9bd18"
+  },
+  {
+    "project": "external/chromium-webview/prebuilt/x86_64",
+    "base_commit": "d676fedf7ac7cdec6228f4e4173f753f1e906829",
+    "patch": "source-compat/chromium-webview/prebuilt-x86_64.patch",
+    "sha256": "27a6a47f67f392688cb1eafaf6737c1c24f8a4269a104847f28530f9852e2ce5"
+  },
+  {
+    "project": "external/dng_sdk",
+    "base_commit": "7567d7dd40dbb6a0dc44f7b31c73741bebb1dbfa",
+    "patch": "source-compat/dng-sdk/legacy-build-compat.patch",
+    "sha256": "4795315f752c27b7fd31ee6d47c7852706bdfe3a61013aca5f1b6dd470a84c7b"
+  },
+  {
+    "project": "frameworks/av",
+    "base_commit": "83fd5bcecf703ee7b105d58c442c89fae0a8d494",
+    "patch": "source-compat/frameworks-av/legacy-renderer-compat.patch",
+    "sha256": "448ae72e639706ecd2e85e2b50432fdb9ea77d8642685605349f09822a1f786e"
+  },
+  {
+    "project": "frameworks/av",
+    "base_commit": "83fd5bcecf703ee7b105d58c442c89fae0a8d494",
+    "patch": "source-compat/frameworks-av/cappu-legacy-omx-fdsan-compat.patch",
+    "sha256": "d7ad5149280ef639e391e78ead03abe0ea7ce35aca099043612524e3a8a7e145"
+  },
+  {
+    "project": "frameworks/base",
+    "base_commit": "f4467403550e61f7e6cc05698aff538d4f4150ec",
+    "patch": "source-compat/frameworks-base/legacy-platform-compat.patch",
+    "sha256": "d4538a7241f884c421ae127a072f7fd832871e2bc16cccaa82b5c0f48f77b21e"
+  },
+  {
+    "project": "packages/apps/Settings",
+    "base_commit": "cd9f7949413df68160aa5026e95d9591395e539e",
+    "patch": "source-compat/apps/settings-legacy-compat.patch",
+    "sha256": "5b03c15e977afce211c8fcf48aad4899fe8273e57c237e19f56e0c3edfe2a637"
+  },
+  {
+    "project": "packages/apps/Trebuchet",
+    "base_commit": "9b3b6b4040c9f007c11186c9b96efc729ac62df4",
+    "patch": "source-compat/apps/trebuchet-legacy-compat.patch",
+    "sha256": "4c4ab22aadfec5fc7ca23dd7b40f796b9fac1971fb2d7f49c4be1120ef00093a"
+  },
+  {
+    "project": "packages/services/Telephony",
+    "base_commit": "90914750237d5de47b1febd31a6dfba33a3e5738",
+    "patch": "source-compat/services/telephony-cappu-compat.patch",
+    "sha256": "07782e3d3caee45ab3ded006e7788fef726281f4ce5b7226cfb81f4b35fe96fa"
+  },
+  {
+    "project": "prebuilts/clang/host/linux-x86",
+    "base_commit": "2cddc8015b6a61bbcb8bb58e55d67e4e4b4db6d2",
+    "patch": "build/toolchains/clang-3289846-runtime-libs.patch",
+    "sha256": "47271577c3438342cf74b6b9f60f998ea775c1e4987cf46b1312d32893b4c5fd"
+  },
+  {
+    "project": "prebuilts/abi-dumps/vndk",
+    "base_commit": "b936a6ed860ee5c619c44804de4eb11a2d41eabb",
+    "patch": "source-compat/mtk/vndk32-arm-arm64-libutils-abi.patch",
+    "sha256": "a08307acc8d3e339c38eb63e41bbbf58d8506a0d412f650971881f132c72a76d"
+  },
+  {
+    "project": "vendor/xiaomi/cappu",
+    "base_commit": "5abc38048129397ba59701f2502eb7086c53401c",
+    "patch": "source-compat/vendor/cappu-build-and-blob-metadata.patch",
+    "sha256": "78c08658d34fe7471ca850b7516b2d97afe133efc8b77bd48cbea17d63f119ce"
+  },
+  {
+    "project": "kernel/xiaomi/cappu",
+    "base_commit": "533b67f59ea1586b297e2f544f74e5f37d62b18d",
+    "patch": "source-compat/kernel/cappu-host-tools-linker-flags.patch",
+    "sha256": "44a9b44f5c766805365457347240b37eca964a1bf5416e39e2f2c2dcb91c81a4"
+  },
+  {
+    "project": "kernel/xiaomi/cappu",
+    "base_commit": "533b67f59ea1586b297e2f544f74e5f37d62b18d",
+    "patch": "source-compat/kernel/cappu-binder-security-context.patch",
+    "sha256": "b7d7d1c28e2312fb617ff86b303e56fc85c21a94e885a338f181e7758d83a2fb"
+  },
+  {
+    "project": "device/xiaomi/cappu",
+    "base_commit": "98d68c4a365afa4f3960e5dceed11b42419fa8b3",
+    "patch": "source-compat/device-tree/cappu-lineage-19.1-port.patch",
+    "sha256": "11862613cef864c8077b07434186c97c8c64db6381b6d39da2c10e5725771141"
+  },
+  {
+    "project": "device/xiaomi/cappu",
+    "base_commit": "98d68c4a365afa4f3960e5dceed11b42419fa8b3",
+    "patch": "source-compat/device-tree/cappu-zygote-crypto-state-init.patch",
+    "sha256": "e2aaf28b951e9d4d9072316c63875e22574e017e6d1cdd7afaa78d5a6d7b37aa"
+  },
+  {
+    "project": "device/xiaomi/cappu",
+    "base_commit": "98d68c4a365afa4f3960e5dceed11b42419fa8b3",
+    "patch": "source-compat/device-tree/cappu-frp-block-device-permissions.patch",
+    "sha256": "f13a4042ae7cc92766fe517cd56cafdc74bec483d5a0a73d6e4d1a8b19bbd81b"
+  },
+  {
+    "project": "build/make",
+    "base_commit": "ec4184bcd771e59d3d108115507587444697be38",
+    "patch": "source-compat/build-make/accept-declared-system-shared-libs.patch",
+    "sha256": "257311a68b88ca193d55c163f863f4bfc0addd71b797bf66e3cf4bc814e29098"
+  },
+  {
+    "project": "kernel/xiaomi/cappu",
+    "base_commit": "533b67f59ea1586b297e2f544f74e5f37d62b18d",
+    "patch": "source-compat/kernel/cappu-mtk-ram-console-panic-logs.patch",
+    "sha256": "ed40c2dfe21c17715b806605a6298eac3688750423c21a211fa26993934750b6"
+  },
+  {
+    "project": "device/xiaomi/cappu",
+    "base_commit": "98d68c4a365afa4f3960e5dceed11b42419fa8b3",
+    "patch": "source-compat/device-tree/cappu-wdt-kicker-timing.patch",
+    "sha256": "25ec5ce8ab4515dc42280299717ce915889fa53ca75dac291d22b36b3d9f0475"
+  },
+  {
+    "project": "kernel/xiaomi/cappu",
+    "base_commit": "533b67f59ea1586b297e2f544f74e5f37d62b18d",
+    "patch": "source-compat/kernel/cappu-wdt-kicker-startup-interval.patch",
+    "sha256": "2e1785346d2f9adfcbcf05c4f352e88128f530fd9995d6eb2d7634fea403a9e8"
+  },
+  {
+    "project": "kernel/xiaomi/cappu",
+    "base_commit": "533b67f59ea1586b297e2f544f74e5f37d62b18d",
+    "patch": "source-compat/kernel/cappu-sdcardfs-unshared-obb-option.patch",
+    "sha256": "55f3de69c7c3821297f35233346983f4dbeefd3bd9e62fd25fc72cd08c758ce8"
+  },
+  {
+    "project": "device/xiaomi/cappu",
+    "base_commit": "98d68c4a365afa4f3960e5dceed11b42419fa8b3",
+    "patch": "source-compat/device-tree/cappu-audio-hal-2.0-policy.patch",
+    "sha256": "0a2086312e3873350bf6b684a71aaa2890c57184427d842ef13517bd8301e716"
+  },
+  {
+    "project": "device/xiaomi/cappu",
+    "base_commit": "98d68c4a365afa4f3960e5dceed11b42419fa8b3",
+    "patch": "source-compat/device-tree/cappu-video-compiler-rt.patch",
+    "sha256": "790b2787b9ed067eb0ba3d58d77f2daf03f1fd96a8494b51ee89cef0a34b1e74"
+  },
+  {
+    "project": "vendor/xiaomi/cappu",
+    "base_commit": "5abc38048129397ba59701f2502eb7086c53401c",
+    "patch": "source-compat/vendor/cappu-audio-hal-linker-compat.patch",
+    "sha256": "b2165f1e3ebbace1715df23b40fb34deaeb4d667e744234ade736300ff2a4fa4"
+  },
+  {
+    "project": "device/xiaomi/cappu",
+    "base_commit": "98d68c4a365afa4f3960e5dceed11b42419fa8b3",
+    "patch": "source-compat/device-tree/cappu-audio-platform-hidl-adapter.patch",
+    "sha256": "e294adf0ec0f46b4b383b2ebcfa0627b52481b6a9d79143456b9395ddc70a353"
+  },
+  {
+    "project": "system/bt",
+    "base_commit": "f6f0c30c842f0c65b91d5ecde0b944aa9dba9729",
+    "patch": "source-compat/bluetooth/cappu-posix-timer-rt-fallback.patch",
+    "sha256": "3c36c2f030623443dd338ce04c36bde2dda6630b3a3a07f4d0793642bae2ce93"
+  },
+  {
+    "project": "packages/apps/Settings",
+    "base_commit": "cd9f7949413df68160aa5026e95d9591395e539e",
+    "patch": "source-compat/apps/cappu-legacy-usb-function-role-fallback.patch",
+    "sha256": "0b1dec22a55539f339b310e5b1aa76928fcace4fa6f6737bd9b66d2163f610c6"
+  },
+  {
+    "project": "system/bt",
+    "base_commit": "f6f0c30c842f0c65b91d5ecde0b944aa9dba9729",
+    "patch": "source-compat/bluetooth/cappu-bluetooth-rt-priority-optional.patch",
+    "sha256": "fd97f18b96b2015b79383e754b1a286ca57a2c1d727c748c4e3f58a4955fee28"
+  },
+  {
+    "project": "kernel/xiaomi/cappu",
+    "base_commit": "533b67f59ea1586b297e2f544f74e5f37d62b18d",
+    "patch": "source-compat/kernel/cappu-camera-tsf-crop-compat.patch",
+    "sha256": "5ef3d6fa0a6becb6cf252fe269cb708441d6a4b6f0e5cfa6cf9f04faf9b06c11"
+  },
+  {
+    "project": "kernel/xiaomi/cappu",
+    "base_commit": "533b67f59ea1586b297e2f544f74e5f37d62b18d",
+    "patch": "source-compat/kernel/cappu-camera-disable-hal-test-pattern.patch",
+    "sha256": "3d0d382cd89a33d620513e71b6e813a8e75e7af757899ab9cb7d95f1bc9b8177"
+  },
+  {
+    "project": "kernel/xiaomi/cappu",
+    "base_commit": "533b67f59ea1586b297e2f544f74e5f37d62b18d",
+    "patch": "source-compat/kernel/cappu-camera-compat-getinfo.patch",
+    "sha256": "f54bc462b3044e5874c7c006966548559c26df47466bb2f93d16d07830965b20"
+  },
+  {
+    "project": "device/xiaomi/cappu",
+    "base_commit": "98d68c4a365afa4f3960e5dceed11b42419fa8b3",
+    "patch": "source-compat/device-tree/cappu-network-validation-autojoin.patch",
+    "sha256": "a4f2ee3832631915691c2c725dbfeddd198d5fa4a976964d425cd6c7d3aeba92"
+  },
+  {
+    "project": "device/xiaomi/cappu",
+    "base_commit": "98d68c4a365afa4f3960e5dceed11b42419fa8b3",
+    "patch": "source-compat/device-tree/cappu-renderscript-host-runtime-libs.patch",
+    "sha256": "c71655d8f20773b1bbd7bb472e01dfdb55d3e87b29c1582df15e1555db3e5c92"
+  },
+  {
+    "project": "frameworks/rs",
+    "base_commit": "e50017c8ff8795c1bc69b2417f13331cddbf89dd",
+    "patch": "source-compat/frameworks-rs/renderscript-bcc-strip-attr-host-libs.patch",
+    "sha256": "6541adeb45ab47c2a9cbd95dcc5916bf6b33d9e9442867a9c8cee07ace337dc1"
+  },
+  {
+    "project": "build/soong",
+    "base_commit": "59d5b37cce358e0d300392676d64191d3938608f",
+    "patch": "source-compat/build-soong/renderscript-llvm-rs-cc-host-libs.patch",
+    "sha256": "6b67596ab9925348ee67537d471a18082e25c2615e54b0566c3f8e67a2f20d30"
+  },
+  {
+    "project": "kernel/xiaomi/cappu",
+    "base_commit": "533b67f59ea1586b297e2f544f74e5f37d62b18d",
+    "patch": "source-compat/kernel/mt8173-display-smi-clock-resume.patch",
+    "sha256": "53ca469cdf00db4f52f7a19e14668671c4a3349f6d94c451f682626cca6eed03"
+  },
+  {
+    "project": "device/xiaomi/cappu",
+    "base_commit": "98d68c4a365afa4f3960e5dceed11b42419fa8b3",
+    "patch": "source-compat/device-tree/cappu-selinux-policy-labels.patch",
+    "sha256": "3d8613886f255f821c7a42a5966ac94dd6ea3be4d8c14ef978a69958669337ab"
+  },
+  {
+    "project": "kernel/xiaomi/cappu",
+    "base_commit": "533b67f59ea1586b297e2f544f74e5f37d62b18d",
+    "patch": "source-compat/kernel/cappu-camera-mclk-ioctl-compat.patch",
+    "sha256": "faa64fc2e1f96639b578b211ac6289a800786c5af4192830329e364d1745d8da"
+  },
+  {
+    "project": "kernel/xiaomi/cappu",
+    "base_commit": "533b67f59ea1586b297e2f544f74e5f37d62b18d",
+    "patch": "source-compat/kernel/cappu-camera-shutter-frame-time.patch",
+    "sha256": "807f6371966500a27768665fe168c6873abdc9d762a91ea2fe80b546c2836b6b"
+  },
+  {
+    "project": "kernel/xiaomi/cappu",
+    "base_commit": "533b67f59ea1586b297e2f544f74e5f37d62b18d",
+    "patch": "source-compat/kernel/cappu-camera-aao-size-recovery.patch",
+    "sha256": "c577329312f2e3202f3612662b3512052914e2dc8945243e922d42afd8b6eb67"
+  }
+]

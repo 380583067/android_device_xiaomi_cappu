@@ -1,0 +1,35 @@
+diff --git a/build/hidl_interface.go b/build/hidl_interface.go
+index 8ce3e4b..1ec7759 100644
+--- a/build/hidl_interface.go
++++ b/build/hidl_interface.go
+@@ -482,6 +482,10 @@ type hidlInterfaceProperties struct {
+ 	// List of .hal files which compose this interface.
+ 	Srcs []string
+ 
++	// Additional C++ sources compiled into the generated interface library.
++	// This is reserved for narrowly scoped compatibility shims for vendor ABI.
++	Compat_srcs []string
++
+ 	// List of hal interface packages that this library depends on.
+ 	Interfaces []string
+ 
+@@ -691,6 +695,7 @@ This corresponds to the "-r%s:<some path>" option that would be passed into hidl
+ 	if shouldGenerateLibrary {
+ 		mctx.CreateModule(cc.LibraryFactory, &ccProperties{
+ 			Name:               proptools.StringPtr(name.string()),
++			Srcs:               i.properties.Compat_srcs,
+ 			Host_supported:     proptools.BoolPtr(true),
+ 			Recovery_available: proptools.BoolPtr(true),
+ 			Vendor_available:   vendorAvailable,
+diff --git a/build/properties.go b/build/properties.go
+index c88bbef..2f4dd39 100644
+--- a/build/properties.go
++++ b/build/properties.go
+@@ -27,6 +27,7 @@ type fileGroupProperties struct {
+ type ccProperties struct {
+ 	Name                      *string
+ 	Owner                     *string
++	Srcs                      []string
+ 	Defaults                  []string
+ 	Host_supported            *bool
+ 	Vendor_available          *bool

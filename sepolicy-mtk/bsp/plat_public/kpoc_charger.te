@@ -1,7 +1,3 @@
-# ==============================================
-# Policy File of /system/bin/kpoc_charger Executable File
-
-# ==============================================
-# Type Declaration
-# ==============================================
-type kpoc_charger, domain;
+# cappu Android 12 migration note: this legacy MTK power-off charging service
+# has no binary, init service, or PRODUCT_PACKAGES entry in this source tree.
+# LineageOS uses the platform charger path; omit the unused domain and grants.

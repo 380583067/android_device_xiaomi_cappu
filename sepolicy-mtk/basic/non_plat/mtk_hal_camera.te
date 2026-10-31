@@ -1,3 +1,4 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 # ==============================================================================
 # Policy File of /vendor/bin/camerahalserver Executable File
 
@@ -22,12 +23,14 @@ init_daemon_domain(mtk_hal_camera)
 # Allow a base set of permissions required for a domain to offer a
 # HAL implementation of the specified type over HwBinder.
 hal_server_domain(mtk_hal_camera, hal_camera)
+# The camera HAL allocates gralloc buffers through the stable allocator HAL.
+hal_client_domain(mtk_hal_camera, hal_graphics_allocator)
 
 # Allow camerahalserver to use HwBinder and vendor binder IPC.
 hwbinder_use(mtk_hal_camera)
 vndbinder_use(mtk_hal_camera)
 
-allow mtk_hal_camera hwservicemanager_prop:file { open read getattr };
+get_prop(mtk_hal_camera, hwservicemanager_prop)
 
 
 # -----------------------------------
@@ -53,7 +56,8 @@ binder_call(mtk_hal_camera, mtk_hal_power)
 # Purpose: Allow camerahalserver to find a service from hwservice_manager
 # -----------------------------------
 allow mtk_hal_camera hal_graphics_mapper_hwservice:hwservice_manager find;
-allow mtk_hal_camera hal_graphics_allocator_hwservice:hwservice_manager find;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/public/hal_graphics_allocator.te:4; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow mtk_hal_camera hal_graphics_allocator_hwservice:hwservice_manager find;
 allow mtk_hal_camera fwk_sensor_hwservice:hwservice_manager find;
 allow mtk_hal_camera mtk_hal_power_hwservice:hwservice_manager find;
 allow mtk_hal_camera nvram_data_file:lnk_file { read write getattr setattr read create open };
@@ -146,7 +150,7 @@ allow mtk_hal_camera sdcard_type:file { append create getattr };
 # -----------------------------------
 # Purpose: property access
 # -----------------------------------
-allow mtk_hal_camera mtkcam_prop:file { open read getattr };
+get_prop(mtk_hal_camera, mtkcam_prop)
 
 
 # -----------------------------------

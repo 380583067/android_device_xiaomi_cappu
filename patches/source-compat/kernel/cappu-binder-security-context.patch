@@ -1,0 +1,250 @@
+diff --git a/drivers/staging/android/binder.c b/drivers/staging/android/binder.c
+index 0fdcdb93..7a19ad0b 100644
+--- a/drivers/staging/android/binder.c
++++ b/drivers/staging/android/binder.c
+@@ -398,6 +398,8 @@ struct binder_node {
+ 		u8 accept_fds:1;
+ 		u8 min_priority;
+ 	};
++	/* Android 12 services opt in to receiving the caller's SELinux SID. */
++	bool txn_security_ctx;
+ 	bool has_async_transaction;
+ 	struct list_head async_todo;
+ };
+@@ -648,6 +650,8 @@ struct binder_transaction {
+ 	/* unsigned is_dead:1; */	/* not used at the moment */
+ 
+ 	struct binder_buffer *buffer;
++	/* Address of the sender SID stored in the transaction buffer tail. */
++	binder_uintptr_t security_ctx;
+ 	unsigned int	code;
+ 	unsigned int	flags;
+ 	struct binder_priority	priority;
+@@ -1356,6 +1360,7 @@ static struct binder_node *binder_init_node_ilocked(
+ 	node->min_priority = to_kernel_prio(node->sched_policy, priority);
+ 	node->accept_fds = !!(flags & FLAT_BINDER_FLAG_ACCEPTS_FDS);
+ 	node->inherit_rt = !!(flags & FLAT_BINDER_FLAG_INHERIT_RT);
++	node->txn_security_ctx = !!(flags & FLAT_BINDER_FLAG_TXN_SECURITY_CTX);
+ 	spin_lock_init(&node->lock);
+ 	INIT_LIST_HEAD(&node->work.entry);
+ 	INIT_LIST_HEAD(&node->async_todo);
+@@ -2826,6 +2831,8 @@ static void binder_transaction(struct binder_proc *proc,
+ 	struct binder_buffer_object *last_fixup_obj = NULL;
+ 	binder_size_t last_fixup_min_off = 0;
+ 	struct binder_context *context = proc->context;
++	char *secctx = NULL;
++	u32 secctx_sz = 0;
+ 	int t_debug_id = atomic_inc_return(&binder_last_id);
+ 
+ 	e = binder_transaction_log_add(&binder_transaction_log);
+@@ -3040,6 +3047,7 @@ static void binder_transaction(struct binder_proc *proc,
+ 	t->to_thread = target_thread;
+ 	t->code = tr->code;
+ 	t->flags = tr->flags;
++	t->security_ctx = 0;
+ 	if (!(t->flags & TF_ONE_WAY) &&
+ 	    binder_supported_policy(current->policy)) {
+ 		/* Inherit supported policies for synchronous transactions */
+@@ -3050,6 +3058,25 @@ static void binder_transaction(struct binder_proc *proc,
+ 		t->priority = target_proc->default_priority;
+ 	}
+ 
++	/*
++	 * Android 12 Keystore2 performs SELinux permission checks using the
++	 * Binder caller SID. Only opted-in service nodes receive this extra
++	 * payload; all other Binder transactions retain their legacy layout.
++	 */
++	if (target_node && target_node->txn_security_ctx) {
++		u32 secid;
++
++		security_task_getsecid(proc->tsk, &secid);
++		ret = security_secid_to_secctx(secid, &secctx, &secctx_sz);
++		if (ret) {
++			return_error = BR_FAILED_REPLY;
++			return_error_param = ret;
++			return_error_line = __LINE__;
++			goto err_get_secctx_failed;
++		}
++		extra_buffers_size += ALIGN(secctx_sz, sizeof(u64));
++	}
++
+ 	trace_binder_transaction(reply, t, target_node);
+ 
+ 	t->buffer = binder_alloc_new_buf(&target_proc->alloc, tr->data_size,
+@@ -3066,6 +3093,21 @@ static void binder_transaction(struct binder_proc *proc,
+ 		t->buffer = NULL;
+ 		goto err_binder_alloc_buf_failed;
+ 	}
++	if (secctx) {
++		binder_size_t secctx_offset =
++			ALIGN(tr->data_size, sizeof(void *)) +
++			ALIGN(tr->offsets_size, sizeof(void *)) +
++			ALIGN(extra_buffers_size, sizeof(void *)) -
++			ALIGN(secctx_sz, sizeof(u64));
++		char *secctx_buf = t->buffer->data + secctx_offset;
++
++		/* Keep the SID after parcel and scatter-gather payloads. */
++		t->security_ctx = (binder_uintptr_t)(uintptr_t)secctx_buf +
++			binder_alloc_get_user_buffer_offset(&target_proc->alloc);
++		memcpy(secctx_buf, secctx, secctx_sz);
++		security_release_secctx(secctx, secctx_sz);
++		secctx = NULL;
++	}
+ 	t->buffer->allow_user_free = 0;
+ 	t->buffer->debug_id = t->debug_id;
+ 	t->buffer->transaction = t;
+@@ -3331,7 +3373,10 @@ err_copy_data_failed:
+ 	target_node = NULL;
+ 	t->buffer->transaction = NULL;
+ 	binder_alloc_free_buf(&target_proc->alloc, t->buffer);
++err_get_secctx_failed:
+ err_binder_alloc_buf_failed:
++	if (secctx)
++		security_release_secctx(secctx, secctx_sz);
+ 	kfree(tcomplete);
+ 	binder_stats_deleted(BINDER_STAT_TRANSACTION_COMPLETE);
+ err_alloc_tcomplete_failed:
+@@ -3973,7 +4018,9 @@ retry:
+ 
+ 	while (1) {
+ 		uint32_t cmd;
+-		struct binder_transaction_data tr;
++		struct binder_transaction_data_secctx tr;
++		struct binder_transaction_data *trd = &tr.transaction_data;
++		size_t trsize = sizeof(*trd);
+ 		struct binder_work *w = NULL;
+ 		struct list_head *list = NULL;
+ 		struct binder_transaction *t = NULL;
+@@ -4172,40 +4219,45 @@ retry:
+ 			struct binder_node *target_node = t->buffer->target_node;
+ 			struct binder_priority node_prio;
+ 
+-			tr.target.ptr = target_node->ptr;
+-			tr.cookie =  target_node->cookie;
++			trd->target.ptr = target_node->ptr;
++			trd->cookie =  target_node->cookie;
+ 			node_prio.sched_policy = target_node->sched_policy;
+ 			node_prio.prio = target_node->min_priority;
+ 			binder_transaction_priority(current, t, node_prio,
+ 						    target_node->inherit_rt);
+ 			cmd = BR_TRANSACTION;
+ 		} else {
+-			tr.target.ptr = 0;
+-			tr.cookie = 0;
++			trd->target.ptr = 0;
++			trd->cookie = 0;
+ 			cmd = BR_REPLY;
+ 		}
+-		tr.code = t->code;
+-		tr.flags = t->flags;
+-		tr.sender_euid = from_kuid(current_user_ns(), t->sender_euid);
++		trd->code = t->code;
++		trd->flags = t->flags;
++		trd->sender_euid = from_kuid(current_user_ns(), t->sender_euid);
+ 
+ 		t_from = binder_get_txn_from(t);
+ 		if (t_from) {
+ 			struct task_struct *sender = t_from->proc->tsk;
+ 
+-			tr.sender_pid = task_tgid_nr_ns(sender,
++			trd->sender_pid = task_tgid_nr_ns(sender,
+ 							task_active_pid_ns(current));
+ 		} else {
+-			tr.sender_pid = 0;
++			trd->sender_pid = 0;
+ 		}
+ 
+-		tr.data_size = t->buffer->data_size;
+-		tr.offsets_size = t->buffer->offsets_size;
+-		tr.data.ptr.buffer = (binder_uintptr_t)
++		trd->data_size = t->buffer->data_size;
++		trd->offsets_size = t->buffer->offsets_size;
++		trd->data.ptr.buffer = (binder_uintptr_t)
+ 			((uintptr_t)t->buffer->data +
+ 			binder_alloc_get_user_buffer_offset(&proc->alloc));
+-		tr.data.ptr.offsets = tr.data.ptr.buffer +
++		trd->data.ptr.offsets = trd->data.ptr.buffer +
+ 					ALIGN(t->buffer->data_size,
+ 					    sizeof(void *));
++		if (t->security_ctx) {
++			cmd = BR_TRANSACTION_SEC_CTX;
++			tr.secctx = t->security_ctx;
++			trsize = sizeof(tr);
++		}
+ 
+ 		if (put_user(cmd, (uint32_t __user *)ptr)) {
+ 			if (t_from)
+@@ -4213,29 +4265,30 @@ retry:
+ 			return -EFAULT;
+ 		}
+ 		ptr += sizeof(uint32_t);
+-		if (copy_to_user(ptr, &tr, sizeof(tr))) {
++		if (copy_to_user(ptr, &tr, trsize)) {
+ 			if (t_from)
+ 				binder_thread_dec_tmpref(t_from);
+ 			return -EFAULT;
+ 		}
+-		ptr += sizeof(tr);
++		ptr += trsize;
+ 
+ 		trace_binder_transaction_received(t);
+ 		binder_stat_br(proc, thread, cmd);
+ 		binder_debug(BINDER_DEBUG_TRANSACTION,
+ 			     "%d:%d %s %d %d:%d, cmd %d size %zd-%zd ptr %016llx-%016llx\n",
+ 			     proc->pid, thread->pid,
+-			     (cmd == BR_TRANSACTION) ? "BR_TRANSACTION" :
+-			     "BR_REPLY",
++				(cmd == BR_TRANSACTION_SEC_CTX) ? "BR_TRANSACTION_SEC_CTX" :
++				(cmd == BR_TRANSACTION) ? "BR_TRANSACTION" : "BR_REPLY",
+ 			     t->debug_id, t_from ? t_from->proc->pid : 0,
+ 			     t_from ? t_from->pid : 0, cmd,
+ 			     t->buffer->data_size, t->buffer->offsets_size,
+-			     (u64)tr.data.ptr.buffer, (u64)tr.data.ptr.offsets);
++			     (u64)trd->data.ptr.buffer, (u64)trd->data.ptr.offsets);
+ 
+ 		if (t_from)
+ 			binder_thread_dec_tmpref(t_from);
+ 		t->buffer->allow_user_free = 1;
+-		if (cmd == BR_TRANSACTION && !(t->flags & TF_ONE_WAY)) {
++		if ((cmd == BR_TRANSACTION || cmd == BR_TRANSACTION_SEC_CTX) &&
++		    !(t->flags & TF_ONE_WAY)) {
+ 			binder_inner_proc_lock(thread->proc);
+ 			t->to_parent = thread->transaction_stack;
+ 			t->to_thread = thread;
+diff --git a/drivers/staging/android/uapi/binder.h b/drivers/staging/android/uapi/binder.h
+index 8840106e..9cec0a07 100644
+--- a/drivers/staging/android/uapi/binder.h
++++ b/drivers/staging/android/uapi/binder.h
+@@ -84,6 +84,8 @@ enum flat_binder_object_flags {
+ 	 * scheduling policy from the caller (for synchronous transactions).
+ 	 */
+ 	FLAT_BINDER_FLAG_INHERIT_RT = 0x800,
++	/* Android 12 Keystore2 requests this flag to receive caller SELinux SIDs. */
++	FLAT_BINDER_FLAG_TXN_SECURITY_CTX = 0x1000,
+ };
+ 
+ #ifdef BINDER_IPC_32BIT
+@@ -307,6 +309,12 @@ struct binder_transaction_data {
+ 	} data;
+ };
+ 
++/* Extended reply payload used only for nodes that request the caller SID. */
++struct binder_transaction_data_secctx {
++	struct binder_transaction_data transaction_data;
++	binder_uintptr_t secctx;
++};
++
+ struct binder_transaction_data_sg {
+ 	struct binder_transaction_data transaction_data;
+ 	binder_size_t buffers_size;
+@@ -342,6 +350,10 @@ enum binder_driver_return_protocol {
+ 	BR_OK = _IO('r', 1),
+ 	/* No parameters! */
+ 
++	BR_TRANSACTION_SEC_CTX = _IOR('r', 2,
++				      struct binder_transaction_data_secctx),
++	/* binder_transaction_data_secctx: transaction plus sender SELinux context. */
++
+ 	BR_TRANSACTION = _IOR('r', 2, struct binder_transaction_data),
+ 	BR_REPLY = _IOR('r', 3, struct binder_transaction_data),
+ 	/*

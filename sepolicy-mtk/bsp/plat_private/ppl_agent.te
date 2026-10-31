@@ -6,7 +6,8 @@
 # Type Declaration
 # ==============================================
 
-type ppl_agent_exec , exec_type, file_type;
+# Android 12 Treble: matching file_contexts labels a /system path; mark this executable as system_file_type so coredomain entrypoints remain in the system partition.
+type ppl_agent_exec , system_file_type, exec_type, file_type;
 #type ppl_agent ,domain;
 typeattribute ppl_agent coredomain;
 
@@ -39,13 +40,14 @@ allow ppl_agent ppl_agent_service:service_manager add;
 # Operation : QC
 # Purpose : FileOp_BackupToBinRegionForDM() interface needs below policy for nand project
 # Package name : com.mediatek.ppl.ppl_agent
-allow ppl_agent mtd_device:dir search;
-allow ppl_agent mtd_device:chr_file { read write open };
+# cappu Android 12: the old MTK mtd_device type was removed; use the exported board type for legacy rules and labels.
+allow ppl_agent cappu_mtd_device:dir search;
+allow ppl_agent cappu_mtd_device:chr_file { read write open };
 
 # Data : 2017/07/7
 # Purpose : [Privacy protection lock][ppl_agent need access fstab.mt6755 ppl on mt6755]
 # Package name : com.mediatek.ppl
 allow ppl_agent system_data_file:lnk_file read;
 allow ppl_agent rootfs:file { read open getattr };
-allow ppl_agent sysfs:file { read open getattr };
-allow ppl_agent sysfs:dir { read open getattr };
+# Android 12 forbids unrestricted sysfs traversal from coredomains; retain only
+# board-specific sysfs types if the privacy-lock agent needs a verified node.

@@ -1,0 +1,15 @@
+diff --git a/arch/arm64/configs/cappu_defconfig b/arch/arm64/configs/cappu_defconfig
+index 507ff70b..8edb45b2 100644
+--- a/arch/arm64/configs/cappu_defconfig
++++ b/arch/arm64/configs/cappu_defconfig
+@@ -268,6 +268,10 @@ CONFIG_SCREEN_ON_BOOST=y
+ CONFIG_MTPROF=y
+ CONFIG_MTK_RAM_CONSOLE=y
+ CONFIG_MTK_RAM_CONSOLE_USING_DRAM=y
++# cappu MT8173 DTS reserves this 512 KiB DRAM range for crash logs;
++# keep the MTK console aligned with it so /proc/last_kmsg survives a reboot.
++CONFIG_MTK_RAM_CONSOLE_DRAM_ADDR=0x44400000
++CONFIG_MTK_RAM_CONSOLE_DRAM_SIZE=0x80000
+ CONFIG_MTK_RAM_CONSOLE_SIZE=0x3000
+ CONFIG_MTK_RAM_CONSOLE_ADDR=0xF912D000
+ CONFIG_MTK_SCHED_RQAVG_KS=y

@@ -1,0 +1,36 @@
+diff --git a/device.mk b/device.mk
+--- a/device.mk
++++ b/device.mk
+@@ -140,6 +140,11 @@
+     audio.a2dp.default
+ 
+ # Media
++# The legacy MTK OMX core dlopens libmp4enc_sa.ca7.so, which needs the 32-bit
++# libcompiler_rt runtime. Its copy in the VNDK APEX is hidden from this vendor
++# process namespace, so install the same-build runtime in /vendor/lib locally.
++PRODUCT_PACKAGES += cappu_vendor_libcompiler_rt
++
+ PRODUCT_COPY_FILES += \
+     $(LOCAL_PATH)/configs/media_codecs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs.xml \
+     $(LOCAL_PATH)/configs/media_codecs_performance.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_performance.xml \
+diff --git a/compat/compiler_rt/Android.mk b/compat/compiler_rt/Android.mk
+new file mode 100644
+--- /dev/null
++++ b/compat/compiler_rt/Android.mk
+@@ -0,0 +1,16 @@
++# Keep the old MTK OMX dependency local to cappu: stage the exact 32-bit
++# libcompiler_rt built into this product's VNDK APEX under /vendor/lib so the
++# vendor OMX process can resolve its DT_NEEDED entry without changing global
++# linker namespaces or carrying a stale binary blob in the device repository.
++include $(CLEAR_VARS)
++LOCAL_MODULE := cappu_vendor_libcompiler_rt
++LOCAL_MODULE_CLASS := SHARED_LIBRARIES
++LOCAL_MODULE_TAGS := optional
++LOCAL_VENDOR_MODULE := true
++LOCAL_MULTILIB := 32
++LOCAL_MODULE_SUFFIX := .so
++LOCAL_INSTALLED_MODULE_STEM := libcompiler_rt.so
++LOCAL_PREBUILT_MODULE_FILE := $(TARGET_OUT)/apex/com.android.vndk.current/lib/libcompiler_rt.so
++LOCAL_CHECK_ELF_FILES := true
++LOCAL_STRIP_MODULE := false
++include $(BUILD_PREBUILT)

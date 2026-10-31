@@ -1,0 +1,33 @@
+# Wi-Fi vendor HAL needs the system group to read the board's factory NVRAM.
+# /vendor/nvdata and its WIFI calibration file are intentionally root:system
+# with group search/read/write permissions; the stock HAL service had only
+# wifi/gps supplementary groups and failed to read WIFI with EACCES, falling
+# back to a placeholder MAC. Keep its existing interfaces/capabilities and add
+# only the missing group on this per-service override.
+service vendor.wifi_hal_legacy /vendor/bin/hw/android.hardware.wifi@1.0-service
+    override
+    interface android.hardware.wifi@1.0::IWifi default
+    interface android.hardware.wifi@1.1::IWifi default
+    interface android.hardware.wifi@1.2::IWifi default
+    interface android.hardware.wifi@1.3::IWifi default
+    interface android.hardware.wifi@1.4::IWifi default
+    interface android.hardware.wifi@1.5::IWifi default
+    class hal
+    capabilities NET_ADMIN NET_RAW SYS_MODULE
+    user wifi
+    group wifi gps system
+
+# cappu 使用的 32 位 Android 7 MTK Camera HAL 通过 libcamalgo.so 依赖
+# system/lib/libgui.so。Android 12 vendor linker namespace 默认不搜索该目录，
+# 因而 camera provider dlopen 失败并导致 CameraService 枚举出 0 台设备。
+# 只覆盖 camerahalserver 并加入 32 位 system 库路径；复制原服务的身份、组、
+# class、实时 I/O 优先级、能力和 PID 文件设置，确保修复不改变 HAL 生命周期。
+service camerahalserver /vendor/bin/hw/camerahalserver
+    override
+    class main
+    user cameraserver
+    group audio camera input drmrpc sdcard_rw system media graphics
+    ioprio rt 4
+    capabilities SYS_NICE
+    setenv LD_LIBRARY_PATH /system/lib
+    writepid /dev/cpuset/camera-daemon/tasks /dev/stune/top-app/tasks

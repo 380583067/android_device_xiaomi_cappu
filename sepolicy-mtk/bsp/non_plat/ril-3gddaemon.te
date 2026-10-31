@@ -1,5 +1,7 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 # ril-3gddaemon - radio interface layer daemon
-type ril-3gddaemon_exec, exec_type, file_type;
+# Android 12 Treble: the matching file_contexts path is /system/bin/rild_dongle.
+type ril-3gddaemon_exec, system_file_type, exec_type, file_type;
 type ril-3gddaemon, domain;
 typeattribute ril-3gddaemon coredomain;
 
@@ -7,12 +9,13 @@ init_daemon_domain(ril-3gddaemon)
 net_domain(ril-3gddaemon)
 
 # property service
+# Android 12 removed system_radio_prop and maps supported RIL properties to
+# radio_prop/net_radio_prop. Keep only those explicit current labels rather
+# than restoring a generic grant to a property class that no longer exists.
 auditallow ril-3gddaemon net_radio_prop:property_service set;
-auditallow ril-3gddaemon system_radio_prop:property_service set;
 allow ril-3gddaemon net_radio_prop:property_service { set };
 set_prop(ril-3gddaemon, radio_prop)
 set_prop(ril-3gddaemon, net_radio_prop)
-set_prop(ril-3gddaemon, system_radio_prop)
 set_prop(ril-3gddaemon, system_prop)
 set_prop(ril-3gddaemon, pppoe_ppp0_prop)
 set_prop(ril-3gddaemon, ctl_zpppdgprs_prop)
@@ -33,15 +36,17 @@ allowxperm ril-3gddaemon self:udp_socket ioctl { SIOCSIFNETMASK SIOCSIFDSTADDR S
 #system/bin/toybox for tedongle(ril-3gddaemon) script
 allow ril-3gddaemon toolbox_exec:file rx_file_perms;
 
-allow ril-3gddaemon tedongle_prop:file { read open getattr };
+get_prop(ril-3gddaemon, tedongle_prop)
 allow ril-3gddaemon kernel:system module_request;
 allow ril-3gddaemon kernel:file { read open getattr };
 allow ril-3gddaemon kernel:dir { read open getattr search };
-allow ril-3gddaemon self:capability { setuid setgid net_admin net_raw dac_override sys_module };
+# Android 12 forbids DAC-bypass capabilities for these legacy device domains; keep access controlled by the specific SELinux file and device labels.
+allow ril-3gddaemon self:capability { setuid setgid net_admin net_raw sys_module };
 allow ril-3gddaemon self:file { read open getattr };
 allow ril-3gddaemon ppp_exec:file { read open getattr execute execute_no_trans };
 allow ril-3gddaemon ppp_device:chr_file { read write open ioctl };
-allow ril-3gddaemon radio_device:chr_file rw_file_perms;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:240; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow ril-3gddaemon radio_device:chr_file rw_file_perms;
 allow ril-3gddaemon radio_device:blk_file r_file_perms;
 allow ril-3gddaemon radio_data_file:dir rw_dir_perms;
 allow ril-3gddaemon radio_data_file:file create_file_perms;
@@ -63,7 +68,8 @@ allow ril-3gddaemon system_data_file:dir r_dir_perms;
 allow ril-3gddaemon system_data_file:file r_file_perms;
 allow ril-3gddaemon system_file:file x_file_perms;
 allow ril-3gddaemon sysfs:dir { read execute open };
-allow ril-3gddaemon sysfs:file { read open getattr };
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow ril-3gddaemon sysfs:file { read open getattr };
 allow ril-3gddaemon device:dir { read open write};
 allow ril-3gddaemon logd:file { read open getattr };
 allow ril-3gddaemon aee_aed:file { read open getattr };

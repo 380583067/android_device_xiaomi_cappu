@@ -33,5 +33,6 @@ allow mtk_hal_pq graphics_device:chr_file { read write open ioctl };
 # Purpose : Allow property set
 allow mtk_hal_pq init:unix_stream_socket connectto;
 allow mtk_hal_pq property_socket:sock_file write;
-allow mtk_hal_pq system_prop:property_service set;
-allow mtk_hal_pq debug_prop:property_service set;
+# Android 12 keeps system_prop/debug_prop system-owned. Picture-quality
+# controls stay on the vendor HAL/property interfaces defined for this device;
+# the HAL cannot write arbitrary core or debug properties.

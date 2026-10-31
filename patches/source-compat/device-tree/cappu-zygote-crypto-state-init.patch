@@ -1,0 +1,21 @@
+diff --git a/rootdir/etc/init.mt8173.rc b/rootdir/etc/init.mt8173.rc
+--- a/rootdir/etc/init.mt8173.rc
++++ b/rootdir/etc/init.mt8173.rc
+@@ -65,10 +65,17 @@
+     symlink /dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/kb /dev/kb
+     symlink /dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/dkb /dev/dkb
+     write /proc/bootprof "INIT:Mount_END"
+     write /proc/sys/vm/page-cluster 0
+     swapon_all /vendor/etc/fstab.enableswap
++
++on late-fs
++    # Android 12 的 mount_all --early 会挂载普通分区，但刻意不派发 fs_mgr 加密状态事件。
++    # cappu 当前 fstab 没有 latemount 分区，late 阶段仍需处理 fstab，令 fs_mgr 返回
++    # NOT_ENCRYPTABLE 并触发 nonencrypted；否则 ro.crypto.state 为空，zygote-start 条件
++    # 不匹配，zygote/system_server 不会启动，设备会一直显示开机动画。
++    mount_all /vendor/etc/fstab.mt8173 --late
+ 
+ on post-fs
+     # Support legacy paths
+     symlink /sdcard /storage/sdcard0
+ 

@@ -24,4 +24,5 @@ allow hal_fingerprint_default mnt_user_file:lnk_file {read};
 allow hal_fingerprint_default storage_file:lnk_file {read};
 
 allow hal_fingerprint_default sysfs:file { open read write getattr };
-allow hal_fingerprint_default sysfs:dir { open read write getattr };
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/public/domain.te:1323; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow hal_fingerprint_default sysfs:dir { open read write getattr };

@@ -6,7 +6,8 @@
 # Type Declaration
 # ==============================================
 
-type meta_tst_exec , exec_type, file_type;
+# Android 12 Treble: matching file_contexts labels a /system path; mark this executable as system_file_type so coredomain entrypoints remain in the system partition.
+type meta_tst_exec , system_file_type, exec_type, file_type;
 typeattribute meta_tst coredomain;
 
 # ==============================================
@@ -21,7 +22,8 @@ init_daemon_domain(meta_tst)
 #============= meta_tst =========================
 
 allow meta_tst port:tcp_socket { name_connect name_bind };
-allow meta_tst self:capability { net_raw chown fsetid sys_nice net_admin fowner dac_override sys_admin };
+# Android 12 neverallows DAC override; retain other factory-test capabilities.
+allow meta_tst self:capability { net_raw chown fsetid sys_nice net_admin fowner sys_admin };
 allow meta_tst self:tcp_socket { create connect setopt bind };
 allow meta_tst self:tcp_socket { bind setopt listen accept read write };
 allow meta_tst self:udp_socket { create ioctl };
@@ -29,9 +31,10 @@ allow meta_tst self:capability { sys_boot ipc_lock };
 allow meta_tst sysfs_wake_lock:file rw_file_perms;
 #allow meta_tst sysfs:file write;
 allow meta_tst property_socket:sock_file w_file_perms;
-allow meta_tst vold_socket:sock_file w_file_perms;
 allow meta_tst init:unix_stream_socket connectto;
-allow meta_tst vold:unix_stream_socket connectto;
+# cappu Android 12: vold now exposes IVold over Binder and no longer creates
+# the legacy /dev/socket/vold endpoint, so the old socket-file and connectto
+# grants do not describe a live service and must not be carried forward.
 allow meta_tst node:tcp_socket node_bind;
 allow meta_tst labeledfs:filesystem unmount;
 allow meta_tst shell_exec:file execute;

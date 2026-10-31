@@ -1,8 +1,10 @@
 #allow emdlogger to set property
+# Android 12 removed system_radio_prop and maps supported RIL properties to
+# radio_prop/net_radio_prop. Keep only those explicit current labels rather
+# than restoring a generic grant to a property class that no longer exists.
 allow emdlogger debug_mdlogger_prop:property_service set;
 allow emdlogger debug_prop:property_service set;
 allow emdlogger persist_mtklog_prop:property_service set;
-allow emdlogger system_radio_prop:property_service set;
 
 # ccci device for internal modem
 allow emdlogger ccci_device:chr_file { rw_file_perms };
@@ -57,7 +59,8 @@ allow emdlogger storage_file:file { create_file_perms };
 
 #permission for read boot mode
 #avc: denied { open }  path="/sys/devices/virtual/BOOT/BOOT/boot/boot_mode" dev="sysfs"
-allow emdlogger sysfs:file { read open };
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow emdlogger sysfs:file { read open };
 
 # Allow read to sys/kernel/ccci/* files
 allow emdlogger sysfs_ccci:dir search;
@@ -86,4 +89,5 @@ allow emdlogger file_contexts_file:file { read getattr open };
 
 allow emdlogger block_device:dir search;
 allow emdlogger md_block_device:blk_file { read open };
-allow emdlogger self:capability { chown dac_override };
+# Android 12 forbids DAC-bypass capabilities for these legacy device domains; keep access controlled by the specific SELinux file and device labels.
+allow emdlogger self:capability { chown };

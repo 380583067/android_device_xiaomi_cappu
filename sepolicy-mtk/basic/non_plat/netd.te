@@ -6,13 +6,13 @@
 # Date : WK14.34
 # Operation : Migration
 # Purpose :  For WIFI SANITY test to set FW path(STA/P2P/AP) 
-# Owner£º TingTing Lei
+# Ownerï¿½ï¿½ TingTing Lei
 allow netd wmtWifi_device:chr_file { write open };
 
 # Date : WK14.34
 # Operation : Migration
 # Purpose :  NA  
-# Owner£º Changqing Sun
+# Ownerï¿½ï¿½ Changqing Sun
 allow netd kernel:system module_request;
 allow netd self:capability sys_module;
 allow netd self:capability fsetid;

@@ -1,3 +1,5 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
+# Android 12 Treble forbids the coredomain radio service from executing arbitrary vendor files.
 # ==============================================
 # MTK Policy Rule
 # ============
@@ -129,7 +131,6 @@ allow radio nfc_service:service_manager find;
 # Operation : IT
 # Purpose : STMicro NFC integration for Engineering mode
 allow radio st21nfc_device:chr_file { read write getattr ioctl open };
-allow radio vendor_file:file { getattr execute execute_no_trans read open };
 set_prop(radio,hwservicemanager_prop);
 
 # Dat: 2017/08/26
@@ -144,7 +145,7 @@ set_prop(radio,media_wfd_prop);
 # Operation : IT
 # Purpose : 4G/3G Dongle
 allow radio rild-dongle_socket:sock_file write;
-allow radio tedongle_prop:file { read open getattr };
+get_prop(radio, tedongle_prop)
 allow radio ril-3gddaemon:unix_stream_socket connectto;
 
 

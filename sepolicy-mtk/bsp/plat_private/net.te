@@ -13,7 +13,8 @@ allow netdomain node_type:{ tcp_socket udp_socket } node_bind;
 allow netdomain port_type:udp_socket name_bind;
 allow netdomain port_type:tcp_socket name_bind;
 # Get route information.
-allow netdomain self:netlink_route_socket { create bind read nlmsg_read };
+# Android 12's netlink_route_socket policy restricts privileged route messages
+# to the platform networking stack; vendor helpers must use INetd Binder.
 
 # Talks to netd via dnsproxyd socket.
 unix_socket_connect(netdomain, dnsproxyd, netd)

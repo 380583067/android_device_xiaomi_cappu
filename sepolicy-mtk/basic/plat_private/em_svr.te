@@ -6,7 +6,8 @@
 # Type Declaration
 # ==============================================
 
-type em_svr_exec , exec_type, file_type;
+# Android 12 Treble: matching file_contexts labels a /system path; mark this executable as system_file_type so coredomain entrypoints remain in the system partition.
+type em_svr_exec , system_file_type, exec_type, file_type;
 typeattribute em_svr coredomain;
 
 # ==============================================
@@ -26,8 +27,8 @@ init_daemon_domain(em_svr)
 # Date: W14.38 2014/09/17
 # Operation : Migration
 # Purpose : for em_svr
-allow em_svr proc:file write;
-allow em_svr sysfs:file write;
+# Android 12 forbids unrestricted proc/sysfs access from coredomains. Keep only
+# the processor and LED sysfs types explicitly labelled for this device below.
 allow em_svr shell_exec:file { read execute open getattr execute_no_trans };
 allow em_svr system_file:file execute_no_trans;
 allow em_svr block_device:dir search;
@@ -36,7 +37,7 @@ allow em_svr graphics_device:dir search;
 allow em_svr radio_data_file:dir { search write add_name create };
 allow em_svr radio_data_file:file { create write open read };
 allow em_svr sysfs_devices_system_cpu:file write;
-allow em_svr self:capability { dac_override sys_nice fowner chown fsetid };
+allow em_svr self:capability { sys_nice fowner chown fsetid };
 allow em_svr self:process execmem;
 allow em_svr system_data_file:dir { write remove_name add_name relabelfrom create open };
 allow em_svr kernel:system module_request;
@@ -52,7 +53,6 @@ allow em_svr surfaceflinger_service:service_manager find;
 # Date: 2015/08/21
 # Operation : M Migration
 # Purpose : set policy for sysfs:dir
-allow em_svr sysfs:dir write;
 
 # for use binder
 binder_use(em_svr)
@@ -62,9 +62,10 @@ binder_call(em_svr, surfaceflinger)
 # Operation : O Migration
 # Purpose : add policy for desense/Power/Memory access system file
 allow em_svr toolbox_exec:file { getattr execute read open execute_no_trans };
-allow em_svr vendor_toolbox_exec:file { getattr };
-allow em_svr proc:file { open read };
-allow em_svr sysfs:file { read };
+# Android 12 keeps vendor toolbox metadata private from system coredomains; this
+# legacy metadata query is not required by the system-side engineering helper.
+# Do not reintroduce broad proc/sysfs access; add a specific exported label only
+# after confirming the corresponding em_svr path on this board.
 
 # Date: 2017/07/19
 # Operation : O Migration
@@ -82,7 +83,6 @@ allow em_svr system_data_file:file open;
 # Purpose: add policy for backlight file access
 allow em_svr sysfs_leds:dir search;
 allow em_svr sysfs_leds:lnk_file read;
-allow em_svr sysfs:file open;
 
 # Date: WK1742
 # Purpose: add em_svr to access md log filter in sdcard

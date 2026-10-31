@@ -3,7 +3,8 @@
 
 # New added for move to /system
 typeattribute boot_logo_updater coredomain;
-type boot_logo_updater_exec , exec_type, file_type;
+# Android 12 Treble: matching file_contexts labels a /system path; mark this executable as system_file_type so coredomain entrypoints remain in the system partition.
+type boot_logo_updater_exec , system_file_type, exec_type, file_type;
 
 # ==============================================
 # MTK Policy Rule
@@ -21,30 +22,27 @@ allow boot_logo_updater graphics_device:chr_file rw_file_perms;
 # For IPC communication
 allow boot_logo_updater init:unix_stream_socket connectto;
 allow boot_logo_updater property_socket:sock_file write;
-allow boot_logo_updater self:capability dac_override;
-# To access some boot_mode infornation
-allow boot_logo_updater sysfs:file rw_file_perms;
+# Android 12 forbids this coredomain from bypassing file DAC or accessing the
+# generic sysfs label. Preserve only the explicit boot-mode/device labels below.
 # To access directory /dev/block/mmcblk0 or /dev/block/sdc
 allow boot_logo_updater block_device:dir search;
 allow boot_logo_updater graphics_device:dir search;
 # to access file at  /dev/block/mtd
-allow boot_logo_updater mtd_device:chr_file r_file_perms;
-allow boot_logo_updater mtd_device:dir search;
+# cappu Android 12: the old MTK mtd_device type was removed; use the exported board type for legacy rules and labels.
+allow boot_logo_updater cappu_mtd_device:chr_file r_file_perms;
+allow boot_logo_updater cappu_mtd_device:dir search;
 #To access the file at   /dev/kmsg
 allow boot_logo_updater device:dir write;
 allow boot_logo_updater kmsg_device:chr_file w_file_perms;
 #To the access /fstab mount point
 allow boot_logo_updater rootfs:file r_file_perms;
-#To access linux filesystem
-allow boot_logo_updater sysfs:dir read;
 # sanity fail for ALPS03604686:
 # for path="/sys/firmware/devicetree/base/firmware/android/fstab" andfor name = "cmdline" and "mtdblock14"
-allow boot_logo_updater mtd_device:blk_file read;
-allow boot_logo_updater proc:file read;
-allow boot_logo_updater sysfs:dir open;
+allow boot_logo_updater cappu_mtd_device:blk_file read;
+# Android 12 restricts generic proc/sysfs traversal; cmdline and boot state need
+# dedicated exported labels, so do not grant whole-tree access here.
 # for path="/proc/cmdline and ="/dev/block/mtdblock14"
-allow boot_logo_updater proc:file open;
 allow boot_logo_updater system_data_file:dir write;
-allow boot_logo_updater mtd_device:blk_file open;
+allow boot_logo_updater cappu_mtd_device:blk_file open;
 
 

@@ -6,7 +6,8 @@
 # Type Declaration
 # ==============================================
 
-type dm_agent_binder_exec , exec_type, file_type;
+# Android 12 Treble: matching file_contexts labels a /system path; mark this executable as system_file_type so coredomain entrypoints remain in the system partition.
+type dm_agent_binder_exec , system_file_type, exec_type, file_type;
 typeattribute dm_agent_binder coredomain;
 
 # ==============================================
@@ -68,7 +69,8 @@ allow dm_agent_binder kmsg_device:chr_file { write read open ioctl };
 # Date : WK17.06
 # Operation : N0-Alaska IT
 # Purpose : permission to override dac capability
-allow dm_agent_binder dm_agent_binder:capability dac_override;
+# Android 12 neverallows DAC override; the agent must rely on its labelled data
+# paths rather than bypassing filesystem ownership checks.
 # Date : WK17.29
 # Operation : O0-Denali IT
 # Purpose : permission to read system data file

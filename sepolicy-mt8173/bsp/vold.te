@@ -3,5 +3,5 @@
 # ============
 
 # for supporting mlc nand
-allow vold mtd_device:chr_file { read write open };
-allow vold mtd_device:dir search;
+# Android 12 migration: the equivalent MTD rules are maintained in
+# sepolicy-mtk/bsp/plat_private/vold.te with cappu_mtd_device.

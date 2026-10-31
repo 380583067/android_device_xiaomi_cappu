@@ -1,1 +1,2 @@
-allow aee_aed sysfs:file write;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow aee_aed sysfs:file write;

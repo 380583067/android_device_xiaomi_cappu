@@ -6,7 +6,8 @@
 # Type Declaration
 # ==============================================
 
-type thermald_exec , exec_type, file_type;
+# Android 12 Treble: matching file_contexts labels a /system path; mark this executable as system_file_type so coredomain entrypoints remain in the system partition.
+type thermald_exec , system_file_type, exec_type, file_type;
 typeattribute thermald coredomain;
 
 # ==============================================

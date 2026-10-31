@@ -1,3 +1,4 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 # ==============================================================================
 # Type Declaration
 # ==============================================================================
@@ -20,7 +21,7 @@ allow mtk_hal_sensors sysfs:file rw_file_perms;
 
 # hal sensor for chr_file
 allow mtk_hal_sensors hwmsensor_device:chr_file r_file_perms;
-allow mtk_hal_sensors hwservicemanager_prop:file r_file_perms;
+get_prop(mtk_hal_sensors, hwservicemanager_prop)
 
 #hwservicemanager
 hal_server_domain(mtk_hal_sensors, hal_sensors);

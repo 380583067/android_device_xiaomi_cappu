@@ -1,0 +1,35 @@
+diff --git a/common/message_loop_thread.cc b/common/message_loop_thread.cc
+index 643de64..c35a449 100644
+--- a/common/message_loop_thread.cc
++++ b/common/message_loop_thread.cc
+@@ -16,6 +16,7 @@
+ 
+ #include "message_loop_thread.h"
+ 
++#include <errno.h>
+ #include <sys/syscall.h>
+ #include <unistd.h>
+ #include <thread>
+@@ -200,10 +201,21 @@ bool MessageLoopThread::EnableRealTimeScheduling() {
+                                       kRealTimeFifoSchedulingPriority};
+   int rc = sched_setscheduler(linux_tid_, SCHED_FIFO, &rt_params);
+   if (rc != 0) {
++    const int scheduling_error = errno;
++    // RT priority improves latency but is not required for the Bluetooth
++    // message loop to function. Legacy cappu kernels can deny SCHED_FIFO to
++    // the Bluetooth UID even though normal scheduling works; report that
++    // limitation and keep running at the default policy instead of aborting
++    // adapter initialization in callers that require this method to succeed.
++    if (scheduling_error == EPERM) {
++      LOG(WARNING) << __func__ << ": permission denied setting SCHED_FIFO for thread "
++                   << *this << "; continuing with default scheduling";
++      return true;
++    }
+     LOG(ERROR) << __func__ << ": unable to set SCHED_FIFO priority "
+                << kRealTimeFifoSchedulingPriority << " for linux_tid "
+                << std::to_string(linux_tid_) << ", thread " << *this
+-               << ", error: " << strerror(errno);
++               << ", error: " << strerror(scheduling_error);
+     return false;
+   }
+   return true;

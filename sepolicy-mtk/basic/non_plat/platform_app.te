@@ -72,7 +72,8 @@ allow platform_app aee_aed:unix_stream_socket connectto;
 # Date : WK17.31
 # Operation : O Migration
 # Purpose : m4u Driver
-allow platform_app proc:file r_file_perms;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow platform_app proc:file r_file_perms;
 
 # Date : WK17.44
 # Operation : O Migration

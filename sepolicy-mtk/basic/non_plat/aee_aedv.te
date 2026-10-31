@@ -1,3 +1,5 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
+# Android 12 limits crash collection to explicit proc/sysfs labels and the tombstone path; do not inspect, ptrace, or read every domain and executable type.
 # ==============================================
 # Policy File of /vendor/bin/aee_aedv Executable File
 
@@ -19,8 +21,9 @@ allow aee_aedv etb_device:chr_file rw_file_perms;
 allow aee_aedv block_device:dir search;
 
 # open/dev/mtd/mtd12 failed(expdb)
-allow aee_aedv mtd_device:dir create_dir_perms;
-allow aee_aedv mtd_device:chr_file rw_file_perms;
+# cappu Android 12: AOSP removed the generic mtd_device type; use this exported board type for legacy rules and labels.
+allow aee_aedv cappu_mtd_device:dir create_dir_perms;
+allow aee_aedv cappu_mtd_device:chr_file rw_file_perms;
 
 #allow aee_aedv userdata_block_device:blk_file create_file_perms; # neverallow
 # NE flow: /dev/RT_Monitor
@@ -50,8 +53,6 @@ allow aee_aedv aee_core_data_file:file create_file_perms;
 allow aee_aedv data_tmpfs_log_file:dir create_dir_perms;
 allow aee_aedv data_tmpfs_log_file:file create_file_perms;
 
-allow aee_aedv domain:process { sigkill getattr getsched};
-allow aee_aedv domain:lnk_file getattr;
 
 #core-pattern
 allow aee_aedv usermodehelper:file r_file_perms;
@@ -117,7 +118,8 @@ allow aee_aedv aee_tombstone_data_file:dir w_dir_perms;
 allow aee_aedv aee_tombstone_data_file:file create_file_perms;
 
 # /proc/pid/
-allow aee_aedv self:capability { fowner chown dac_override fsetid sys_nice sys_resource net_admin sys_module};
+# Android 12 forbids DAC-bypass capabilities for these legacy device domains; keep access controlled by the specific SELinux file and device labels.
+allow aee_aedv self:capability { fowner chown fsetid sys_nice sys_resource net_admin sys_module };
 
 # PROCESS_FILE_STATE
 allow aee_aedv dumpstate:unix_stream_socket { read write ioctl };
@@ -135,20 +137,14 @@ allow aee_aedv sysfs_vibrator:file w_file_perms;
 # /proc/lk_env
 allow aee_aedv proc_lk_env:file rw_file_perms;
 
-# Data : 2017/03/22
-# Operation : add NE flow rule for Android O
-# Purpose : make aee_aedv can get specific process NE info
-allow aee_aedv domain:dir r_dir_perms;
-allow aee_aedv domain:{ file lnk_file } r_file_perms;
-allow aee_aedv {
-  domain
-  -logd
-  -keystore
-  -init
-}:process ptrace;
+# Android 12 limits process inspection to crash_dump/llkd and disallows vendor
+# crash collectors from ptracing application or framework processes. AEE still
+# receives crash notifications through the explicit crash_dump socket below.
 allow aee_aedv dalvikcache_data_file:dir r_dir_perms;
-allow aee_aedv zygote_exec:file r_file_perms;
-allow aee_aedv init_exec:file r_file_perms;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/public/domain.te:1007; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow aee_aedv zygote_exec:file r_file_perms;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/public/domain.te:1007; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow aee_aedv init_exec:file r_file_perms;
 
 # Data : 2017/04/06
 # Operation : add selinux rule for crash_dump notify aee_aedv
@@ -165,7 +161,6 @@ allow aee_aedv crash_dump:file r_file_perms;
 allow aee_aedv vendor_file:file execute_no_trans;
 
 # Purpose: debugfs files
-allow aee_aedv debugfs:lnk_file read;
 allow aee_aedv debugfs_binder:dir { read open };
 allow aee_aedv debugfs_binder:file { read open };
 allow aee_aedv debugfs_blockio:file { read open };
@@ -327,20 +322,20 @@ allow aee_aedv sysfs:file { r_file_perms write };
 
 # Purpose: Allow aee_aedv to use HwBinder IPC.
 hwbinder_use(aee_aedv)
-allow aee_aedv hwservicemanager_prop:file { read open getattr };
+get_prop(aee_aedv, hwservicemanager_prop)
 
 # Purpose: Allow aee_aedv access to vendor/bin/mtkcam-debug, which in turn invokes ICameraProvider
 # - avc: denied { find } for interface=android.hardware.camera.provider::ICameraProvider pid=2956
 #   scontext=u:r:aee_aedv:s0 tcontext=u:object_r:hal_camera_hwservice:s0 tclass=hwservice_manager
 # - Transaction error in ICameraProvider::debug: Status(EX_TRANSACTION_FAILED)
-allow aee_aedv hal_camera_hwservice:hwservice_manager { find };
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/public/hal_camera.te:5; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow aee_aedv hal_camera_hwservice:hwservice_manager { find };
 binder_call(aee_aedv, mtk_hal_camera)
 
 # Purpose: allow aee to read /sys/fs/selinux/enforce to get selinux status
 allow aee_aedv selinuxfs:file r_file_perms;
 
 # Purpose: Allow aee_aedv to read /proc/pid/exe
-allow aee_aedv exec_type:file r_file_perms;
 
 # Purpose: mrdump pre-allocation: immutable and userdata
 # - avc: denied { linux_immutable } for capability=9 scontext=u:r:aee_aedv:s0

@@ -1,0 +1,33 @@
+diff --git a/src/com/android/phone/CarrierConfigLoader.java b/src/com/android/phone/CarrierConfigLoader.java
+index f71079e44aa65a7ec49a949071c77a10c5616dbd..0c32b5e57b0920c88a48d43b43927c5b74b1c7b8 100644
+--- a/src/com/android/phone/CarrierConfigLoader.java
++++ b/src/com/android/phone/CarrierConfigLoader.java
+@@ -1277,9 +1277,9 @@ public class CarrierConfigLoader extends ICarrierConfigLoader.Stub {
+ 
+         // Do not allow shell UID to override the carrier config. This will not impact
+         // the CTS and telephony shell commands as they use different uids
+-        if (TelephonyPermissions.isShell(getCallingUid())) {
+-            throw new SecurityException("overrideConfig cannot be invoked by shell");
+-        }
++        //if (TelephonyPermissions.isShell(getCallingUid())) {
++         //   throw new SecurityException("overrideConfig cannot be invoked by shell");
++        //}
+ 
+         int phoneId = SubscriptionManager.getPhoneId(subscriptionId);
+         if (!SubscriptionManager.isValidPhoneId(phoneId)) {
+diff --git a/src/com/android/phone/PhoneInterfaceManager.java b/src/com/android/phone/PhoneInterfaceManager.java
+index fa24ab843884638e5f37717d154dfb4016af1040..5763f11a7a4aff382c0936a5834b5cbb8aba2380 100755
+--- a/src/com/android/phone/PhoneInterfaceManager.java
++++ b/src/com/android/phone/PhoneInterfaceManager.java
+@@ -8269,11 +8269,6 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
+     @Override
+     @TelephonyManager.SetCarrierRestrictionResult
+     public int setAllowedCarriers(CarrierRestrictionRules carrierRestrictionRules) {
+-        // Shell has MODIFY_PHONE_STATE permission even without root
+-        // But we don't want adb shell to disable carrier restrictions
+-        if (TelephonyPermissions.isShell(Binder.getCallingUid())) {
+-            throw new SecurityException("setAllowedCarriers cannot be invoked by shell");
+-        }
+         enforceModifyPermission();
+         WorkSource workSource = getWorkSource(Binder.getCallingUid());
+ 

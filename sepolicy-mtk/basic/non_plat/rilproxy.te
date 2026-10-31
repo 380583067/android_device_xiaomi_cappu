@@ -1,3 +1,4 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 # ==============================================
 # Policy File of /vendor/bin/rilproxy Executable File
 
@@ -28,12 +29,12 @@ allow servicemanager rild:process getattr;
 allow rild proc:file read;
 
 # Allow the socket read/write of netd for rild
-allow rild netd_socket:sock_file write;
-allow rild netd_socket:sock_file read;
+# cappu Android 12: netd exposes its supported control API through Binder, not
+# the removed /dev/socket/netd endpoint used by the legacy RIL proxy.
 
 #Date : W17.13
 #Purpose: Treble SEpolicy denied clean up
-allow rild hwservicemanager_prop:file r_file_perms;
+get_prop(rild, hwservicemanager_prop)
 
 #Date : W17.18
 #Purpose: Treble SEpolicy denied clean up
@@ -47,5 +48,6 @@ vndbinder_use(rild)
 #Date : W17.20
 #Purpose: allow access to audio hal
 binder_call(rild, mtk_hal_audio)
-allow rild hal_audio_hwservice:hwservice_manager find;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/public/hal_audio.te:5; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow rild hal_audio_hwservice:hwservice_manager find;
 

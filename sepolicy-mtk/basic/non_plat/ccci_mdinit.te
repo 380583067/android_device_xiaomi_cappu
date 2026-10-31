@@ -27,7 +27,9 @@ set_prop(ccci_mdinit, ctl_dualmdlogger_prop)
 set_prop(ccci_mdinit, ctl_gsm0710muxd_prop)
 set_prop(ccci_mdinit, ctl_gsm0710muxd-s_prop)
 set_prop(ccci_mdinit, ctl_gsm0710muxd-d_prop)
-set_prop(ccci_mdinit, ctl_rildaemon_prop)
+# Android 12 keeps ctl.rildaemon under init ownership. This vendor modem
+# helper cannot set a system-internal service-control property; service
+# lifecycle remains owned by the init rc definitions and vendor control props.
 set_prop(ccci_mdinit, ctl_ril-daemon-mtk_prop)
 set_prop(ccci_mdinit, ctl_fusion_ril_mtk_prop)
 set_prop(ccci_mdinit, ctl_ril-daemon-s_prop)
@@ -35,7 +37,8 @@ set_prop(ccci_mdinit, ctl_ril-daemon-d_prop)
 set_prop(ccci_mdinit, ctl_ril-proxy_prop)
 set_prop(ccci_mdinit, ril_active_md_prop)
 set_prop(ccci_mdinit, mtk_md_prop)
-set_prop(ccci_mdinit, radio_prop)
+# Android 12 reserves radio_prop writes for the telephony HAL server. ccci_mdinit
+# is a vendor modem helper, so its state stays on the MTK-owned properties above.
 set_prop(ccci_mdinit, net_cdma_mdmstat)
 
 #=============allow ccci_mdinit to start/stop fsd==============
@@ -85,8 +88,9 @@ allow ccci_mdinit custom_file:dir r_dir_perms;
 allow ccci_mdinit custom_file:file r_file_perms;
 
 # Purpose : for nand partition access
-allow ccci_mdinit mtd_device:dir search;
-allow ccci_mdinit mtd_device:chr_file rw_file_perms;
+# cappu Android 12: AOSP removed the generic mtd_device type; use this exported board type for legacy rules and labels.
+allow ccci_mdinit cappu_mtd_device:dir search;
+allow ccci_mdinit cappu_mtd_device:chr_file rw_file_perms;
 allow ccci_mdinit devmap_device:chr_file r_file_perms;
 # Purpose : for device bring up, not to block early migration/sanity
 allow ccci_mdinit proc_lk_env:file rw_file_perms;

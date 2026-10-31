@@ -1,33 +1,61 @@
+<!-- cappu Android 12：按当前 framework manifest 指定接口及实例。
+     HIDL manager 的 1.0 客户端可使用 1.2 服务；移除无效的 VNDK 0.0.0 声明。
+     本树没有冻结的 VNDK vendor 映像，不虚构一个 VNDK 版本。 -->
 <compatibility-matrix version="1.0" type="device">
     <hal format="hidl" optional="false">
         <name>android.frameworks.schedulerservice</name>
         <version>1.0</version>
+        <interface>
+            <name>ISchedulingPolicyService</name>
+            <instance>default</instance>
+        </interface>
     </hal>
     <hal format="hidl" optional="false">
         <name>android.frameworks.sensorservice</name>
         <version>1.0</version>
+        <interface>
+            <name>ISensorManager</name>
+            <instance>default</instance>
+        </interface>
     </hal>
     <hal format="hidl" optional="false">
         <name>android.hidl.allocator</name>
         <version>1.0</version>
+        <interface>
+            <name>IAllocator</name>
+            <instance>ashmem</instance>
+        </interface>
     </hal>
     <hal format="hidl" optional="false">
         <name>android.hidl.manager</name>
-        <version>1.0</version>
+        <version>1.0-2</version>
+        <interface>
+            <name>IServiceManager</name>
+            <instance>default</instance>
+        </interface>
     </hal>
     <hal format="hidl" optional="false">
         <name>android.hidl.memory</name>
         <version>1.0</version>
+        <interface>
+            <name>IMapper</name>
+            <instance>ashmem</instance>
+        </interface>
     </hal>
     <hal format="hidl" optional="false">
         <name>android.hidl.token</name>
         <version>1.0</version>
+        <interface>
+            <name>ITokenManager</name>
+            <instance>default</instance>
+        </interface>
     </hal>
     <hal format="hidl" optional="false">
         <name>android.system.wifi.keystore</name>
         <version>1.0</version>
+        <interface>
+            <name>IKeystore</name>
+            <instance>default</instance>
+        </interface>
     </hal>
-    <vndk>
-        <version>0.0.0</version>
-    </vndk>
 </compatibility-matrix>

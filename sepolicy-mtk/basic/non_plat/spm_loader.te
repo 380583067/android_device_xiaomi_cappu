@@ -16,5 +16,5 @@ type spm_loader ,domain;
 init_daemon_domain(spm_loader)
 
 # Read to /dev/spm
-allow spm_loader self:capability { dac_read_search dac_override };
+# Android 12 forbids DAC-bypass capabilities for these legacy device domains; keep access controlled by the specific SELinux file and device labels.
 allow spm_loader spm_device:chr_file r_file_perms;

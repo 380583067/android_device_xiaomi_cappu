@@ -1,0 +1,33 @@
+diff --git a/osi/src/alarm.cc b/osi/src/alarm.cc
+index 6e5d22f..96d83a1 100644
+--- a/osi/src/alarm.cc
++++ b/osi/src/alarm.cc
+@@ -678,7 +678,27 @@ static bool timer_create_internal(const clockid_t clock_id, timer_t* timer) {
+   sigevent.sigev_notify = SIGEV_THREAD;
+   sigevent.sigev_notify_function = (void (*)(union sigval))timer_callback;
+   sigevent.sigev_notify_attributes = &thread_attr;
+-  if (timer_create(clock_id, &sigevent, timer) == -1) {
++  int timer_result = timer_create(clock_id, &sigevent, timer);
++  int timer_error = errno;
++  pthread_attr_destroy(&thread_attr);
++
++  // cappu's legacy Android 3.18 kernel/device policy can reject the optional
++  // SCHED_FIFO callback thread with EPERM even though ordinary Bluetooth
++  // timers are supported. Bionic then makes timer_create() fail as a whole,
++  // which causes lazy_initialize() to abort the Bluetooth stack at startup.
++  // Retry with the caller's normal scheduling policy so Bluetooth remains
++  // usable; callbacks lose RT priority only on devices where that privilege
++  // is unavailable. Keep the original error if the retry also fails.
++  if (timer_result == -1 && timer_error == EPERM) {
++    LOG_WARN("%s could not create RT timer thread for clock %d; "
++             "retrying with default scheduling", __func__, clock_id);
++    sigevent.sigev_notify_attributes = nullptr;
++    timer_result = timer_create(clock_id, &sigevent, timer);
++    timer_error = errno;
++  }
++
++  if (timer_result == -1) {
++    errno = timer_error;
+     LOG_ERROR("%s unable to create timer with clock %d: %s", __func__, clock_id,
+               strerror(errno));
+     if (clock_id == CLOCK_BOOTTIME_ALARM) {

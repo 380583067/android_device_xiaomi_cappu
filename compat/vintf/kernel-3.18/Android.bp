@@ -1,0 +1,12 @@
+// cappu Android 12 migration note: the platform's kernel/configs checkout only
+// carries P and newer configs, but this device still runs the Android O-MR1
+// 3.18 kernel. Keep the official O-MR1 requirements as a local module so FCM 2
+// is assembled with its real kernel constraints instead of weakening VINTF.
+kernel_config {
+    name: "cappu_kernel_config_o_mr1_3.18",
+    srcs: [
+        "android-base.config",
+        "android-base-arm64.config",
+    ],
+    meta: "android-base-conditional.xml",
+}

@@ -1,7 +1,10 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 #============= GoogleOtaBinder ==============
-allow GoogleOtaBinder sysfs:file open;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow GoogleOtaBinder sysfs:file open;
 allow GoogleOtaBinder sysfs:dir { read open };
-allow GoogleOtaBinder sysfs:file getattr;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow GoogleOtaBinder sysfs:file getattr;
 
 #============= atci_service ==============
 allow atci_service camera_pipemgr_device:chr_file {read write open ioctl};
@@ -9,7 +12,7 @@ allow atci_service camera_pipemgr_device:chr_file {read write open ioctl};
 allow atci_service media_rw_data_file:dir { read open };
 allow atci_service media_rw_data_file:file getattr;
 
-allow atci_service mtkcam_prop:file {read open};
+get_prop(atci_service, mtkcam_prop)
 
 #============= priv_app ==============
 #allow priv_app property_socket:sock_file write;

@@ -1,5 +1,5 @@
 
-# For mt8173 bootup 
+# For mt8173 bootup
 allow bluetooth nvram_data_file:lnk_file read;
 
 #============= bluetooth ==============

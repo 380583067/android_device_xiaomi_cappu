@@ -1,3 +1,5 @@
+# cappu Android 12 HIDL：transport 和 hwbinder 的实现已合并到 libhidlbase。
+# 本地服务只链接 libhidlbase，避免依赖平台已废弃的空壳库。
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
@@ -11,11 +13,9 @@ LOCAL_SHARED_LIBRARIES := \
     liblog \
     libcutils \
     libhardware \
-    libhwbinder \
     libbase \
     libutils \
     libhidlbase \
-    libhidltransport \
     android.hardware.sensors@1.0 
 
 LOCAL_STATIC_LIBRARIES := \
@@ -42,9 +42,7 @@ LOCAL_SHARED_LIBRARIES := \
         libhardware 
 
 LOCAL_SHARED_LIBRARIES += \
-        libhwbinder \
         libhidlbase \
-        libhidltransport \
         android.hardware.sensors@1.0 
 
 include $(BUILD_EXECUTABLE)

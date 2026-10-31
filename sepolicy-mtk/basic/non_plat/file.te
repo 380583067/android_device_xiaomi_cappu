@@ -111,7 +111,9 @@ type c2k_file, file_type, data_file_type;
 #For sensor
 type sensor_data_file, file_type, data_file_type;
 type stp_dump_data_file, file_type,data_file_type;
-type sysfs_keypad_file, file_type,sysfs_type;
+# Android 12 Treble: model this sysfs inode like AOSP sysfs labels.
+# Keep it out of file_type: combining file_type with fs_type violates AOSP policy.
+type sysfs_keypad_file, fs_type, sysfs_type;
 type rild_via_socket, file_type;
 type rpc_socket, file_type;
 type rild_ctclient_socket, file_type;
@@ -176,7 +178,8 @@ type debugfs_usb20_phy, fs_type, debugfs_type;
 type debugfs_dynamic_debug, fs_type, debugfs_type;
 
 # /sys/kernel/debug/wakeup_sources
-type debugfs_wakeup_sources, fs_type, debugfs_type;
+# Android 12 already exports debugfs_wakeup_sources; reuse that platform type.
+
 # shrinker debugfs file
 type debugfs_shrinker_debug, fs_type, debugfs_type;
 

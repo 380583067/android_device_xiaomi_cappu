@@ -1,3 +1,4 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 # ==============================================
 # MTK Policy Rule
 # ==============================================
@@ -12,5 +13,5 @@ allow mediadrmserver proc_ged:file {open read write ioctl getattr};
 # Date : WK17.28
 # Operation : MT6757 SQC
 # Purpose : Change thermal config
-allow mediaserver mtk_thermal_config_prop:file { getattr open read };
+get_prop(mediaserver, mtk_thermal_config_prop)
 allow mediaserver mtk_thermal_config_prop:property_service set;

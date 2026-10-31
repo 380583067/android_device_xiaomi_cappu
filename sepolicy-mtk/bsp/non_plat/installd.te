@@ -52,12 +52,10 @@ allow installd system_data_file:file open;
 allow installd platform_app:fd use;
 
 
-# Date : WK15.32
-# Operation : Migration
-# Purpose : disable AT_SECURE for LD_PRELOAD
-userdebug_or_eng(`
-  allow installd dex2oat:process noatsecure;
-')
+# Android 12 keeps dex2oat private to platform sepolicy. This legacy
+# userdebug-only AT_SECURE/LD_PRELOAD exception came from a generic MTK
+# migration rule and cannot be referenced by cappu's vendor policy. Leave
+# the platform default intact instead of granting installd a vendor-side rule.
 
 # Date : WK16.09
 # Operation : Migration

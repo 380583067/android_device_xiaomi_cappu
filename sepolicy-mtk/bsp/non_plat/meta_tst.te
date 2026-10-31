@@ -9,12 +9,14 @@
 # Operation : L Migration
 # Purpose : for meta mode driver module operation
 #============= meta_tst ==============
-allow meta_tst mnld_exec:file rx_file_perms;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/domain.te:457, system/sepolicy/public/domain.te:977, system/sepolicy/public/domain.te:996; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow meta_tst mnld_exec:file rx_file_perms;
 
 # Date : 2016/06/01
 # Operation: TEEI integration
 # Purpose: Microtrust service
-allow meta_tst init_thh_service_exec:file { x_file_perms read open };
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/domain.te:457, system/sepolicy/public/domain.te:977, system/sepolicy/public/domain.te:996; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow meta_tst init_thh_service_exec:file { x_file_perms read open };
 allow meta_tst teei_data_file:dir create_dir_perms;
 allow meta_tst teei_data_file:file rw_file_perms;
 allow meta_tst teei_data_file:file create_file_perms;
@@ -53,7 +55,8 @@ allow meta_tst fsck_exec:file { read open execute getattr execute_no_trans };
 allow meta_tst dm_device:blk_file { read open write ioctl read getattr };
 allow meta_tst devpts:chr_file { read write ioctl open getattr};
 allow meta_tst kmsg_device:chr_file { write open };
-allow meta_tst proc:file getattr;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow meta_tst proc:file getattr;
 allow meta_tst dm_device:blk_file { read write ioctl getattr };
 allow meta_tst sysfs_fs_ext4_features:dir search;
 allow meta_tst sysfs_fs_ext4_features:file read;

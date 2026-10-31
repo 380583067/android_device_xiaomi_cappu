@@ -6,6 +6,9 @@
 # Type Declaration
 # ==============================================
 type mobicore, domain;
+# Treble compatibility: the Trustonic vendor service and platform DRM/camera
+# clients share the legacy mcRegistry data path; its per-domain rules stay scoped.
+typeattribute mobicore data_between_core_and_vendor_violators;
 type mobicore_exec, exec_type, file_type, vendor_file_type;
 type mobicore_admin_device, dev_type;
 type mobicore_user_device, dev_type;
@@ -23,7 +26,7 @@ type proc_secmem, fs_type;
 # ==============================================
 # permissive mobicore;
 init_daemon_domain(mobicore)
-allow mobicore self:capability { dac_override };
+# Android 12 forbids DAC-bypass capabilities for these legacy device domains; keep access controlled by the specific SELinux file and device labels.
 allow mobicore mobicore_admin_device:chr_file rw_file_perms;
 allow mobicore mobicore_user_device:chr_file rw_file_perms;
 allow mobicore mobicore_data_file:dir { create rw_dir_perms rename reparent };

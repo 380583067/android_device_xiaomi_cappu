@@ -1,0 +1,37 @@
+# Android 12 Treble compatibility for the Android 8.1 MediaTek userspace.
+# These system and system_ext domains still have narrow, existing set_prop()
+# rules for legacy vendor-owned MTK properties. The platform
+# system_writes_vendor_properties_violators attribute excludes only these
+# known writers from the platform neverallow; it does not grant property
+# access by itself. The individual set_prop()/allow rules remain the source
+# of every permission, so removing an obsolete rule still removes its access.
+# Keep this list tied to domains observed in cappu's precompiled_sepolicy
+# failure rather than disabling Treble property checks for the whole device.
+typeattribute aee_aed system_writes_vendor_properties_violators;
+typeattribute audioserver system_writes_vendor_properties_violators;
+typeattribute bootanim system_writes_vendor_properties_violators;
+typeattribute cameraserver system_writes_vendor_properties_violators;
+typeattribute cmddumper system_writes_vendor_properties_violators;
+typeattribute dumpstate system_writes_vendor_properties_violators;
+typeattribute emdlogger system_writes_vendor_properties_violators;
+typeattribute factory system_writes_vendor_properties_violators;
+typeattribute mdlogger system_writes_vendor_properties_violators;
+typeattribute mediaserver system_writes_vendor_properties_violators;
+typeattribute meta_tst system_writes_vendor_properties_violators;
+typeattribute mobile_log_d system_writes_vendor_properties_violators;
+typeattribute mtkbootanimation system_writes_vendor_properties_violators;
+typeattribute mtkbootvideo system_writes_vendor_properties_violators;
+typeattribute netdiag system_writes_vendor_properties_violators;
+typeattribute platform_app system_writes_vendor_properties_violators;
+typeattribute ppp system_writes_vendor_properties_violators;
+typeattribute radio system_writes_vendor_properties_violators;
+typeattribute shell system_writes_vendor_properties_violators;
+typeattribute system_app system_writes_vendor_properties_violators;
+typeattribute system_server system_writes_vendor_properties_violators;
+typeattribute atci_service system_writes_vendor_properties_violators;
+typeattribute atcid system_writes_vendor_properties_violators;
+typeattribute dm_agent_binder system_writes_vendor_properties_violators;
+typeattribute logd system_writes_vendor_properties_violators;
+typeattribute md_monitor system_writes_vendor_properties_violators;
+typeattribute netd system_writes_vendor_properties_violators;
+typeattribute usp_service system_writes_vendor_properties_violators;

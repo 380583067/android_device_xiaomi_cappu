@@ -1,3 +1,4 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 # ==============================================
 # Policy File of /system/bin/atci_service Executable File
 # ==============================================
@@ -14,7 +15,8 @@ allow atci_service nfc_socket:dir { write add_name remove_name search };
 allow atci_service nfc_socket:sock_file { create write unlink setattr };
 allow atci_service system_file:file execute_no_trans;
 
-allow atci_service self:capability { dac_read_search dac_override net_raw chown fsetid sys_nice net_admin fowner sys_admin };
+# Android 12 forbids DAC-bypass capabilities for these legacy device domains; keep access controlled by the specific SELinux file and device labels.
+allow atci_service self:capability { net_raw chown fsetid sys_nice net_admin fowner sys_admin };
 allow atci_service camera_isp_device:chr_file { read write ioctl open };
 allow atci_service graphics_device:chr_file { read write ioctl open };
 allow atci_service graphics_device:dir search;
@@ -43,7 +45,8 @@ allow atci_service devmap_device:chr_file { open read write ioctl };
 allow atci_service sdcard_type:dir { search write read open add_name remove_name create getattr setattr };
 allow atci_service sdcard_type:file { setattr read create write getattr unlink open append };
 allow atci_service mediaserver:binder call;
-allow atci_service sysfs:file write;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow atci_service sysfs:file write;
 allow atci_service system_server:unix_stream_socket { read write };
 allow atci_service self:capability sys_boot;
 
@@ -114,6 +117,10 @@ allow atci_service factory_data_file:sock_file write;
 # Stage: O Migration, SQC
 # Purpose: Allow to use HAL PQ
 hal_client_domain(atci_service, hal_pq)
+# Android 12 restricts direct HIDL service discovery. The factory command
+# service uses the approved allocator and camera client roles for its tests.
+hal_client_domain(atci_service, hal_allocator)
+hal_client_domain(atci_service, hal_camera)
 
 # Date : WK17.28
 # Purpose : Allow to execute battery command
@@ -125,14 +132,17 @@ allow atci_service CAM_CAL_DRV_device:chr_file rw_file_perms;
 allow atci_service CAM_CAL_DRV1_device:chr_file rw_file_perms;
 allow atci_service CAM_CAL_DRV2_device:chr_file rw_file_perms;
 allow atci_service fwk_sensor_hwservice:hwservice_manager find;
-allow atci_service hidl_allocator_hwservice:hwservice_manager find;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/public/hal_allocator.te:4; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow atci_service hidl_allocator_hwservice:hwservice_manager find;
 allow atci_service hidl_memory_hwservice:hwservice_manager find;
 allow atci_service ion_device:chr_file { read ioctl open };
 allow atci_service mtk_cmdq_device:chr_file { read ioctl open };
 allow atci_service mtk_hal_power:binder call;
 allow atci_service mtk_hal_power_hwservice:hwservice_manager find;
-allow atci_service proc:file { read ioctl open };
-allow atci_service sysfs:file { read open };
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow atci_service proc:file { read ioctl open };
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow atci_service sysfs:file { read open };
 allow atci_service sysfs_power_supply:dir search;
 allow atci_service sysfs_power_supply:file { read getattr open };
 allow atci_service system_data_file:lnk_file read;
@@ -140,8 +150,9 @@ allow atci_service system_file:dir { read open };
 allow atci_service camera_pipemgr_device:chr_file { read ioctl open };
 allow atci_service media_rw_data_file:dir { read getattr open };
 allow atci_service media_rw_data_file:file { getattr setattr };
-allow atci_service mtkcam_prop:file { read getattr open };
+get_prop(atci_service, mtkcam_prop)
 allow atci_service cct_data_file:fifo_file { read write create unlink open };
-allow atci_service hal_camera_hwservice:hwservice_manager find;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/public/hal_camera.te:5; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow atci_service hal_camera_hwservice:hwservice_manager find;
 allow atci_service mtk_hal_camera:binder call;
 allow atci_service debugfs_ion:dir search;

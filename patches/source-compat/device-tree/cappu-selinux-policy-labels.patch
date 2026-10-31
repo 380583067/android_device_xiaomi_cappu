@@ -1,0 +1,22 @@
+diff --git a/sepolicy-mtk/basic/non_plat/file_contexts b/sepolicy-mtk/basic/non_plat/file_contexts
+--- a/sepolicy-mtk/basic/non_plat/file_contexts
++++ b/sepolicy-mtk/basic/non_plat/file_contexts
+@@ -574,3 +574,9 @@
+ 
+ #hidl process merging
+ /(system\/vendor|vendor)/bin/hw/merged_hal_service          u:object_r:merged_hal_service_exec:s0
++# Software Gatekeeper uses a suffix not covered by the platform's generic HAL rule.
++/(vendor|system/vendor)/bin/hw/android\\.hardware\\.gatekeeper@1\\.0-service\\.software u:object_r:hal_gatekeeper_default_exec:s0
++
++# MTK EGL same-process HAL and its exact vendor-library dependency closure.
++/(vendor|system/vendor)/lib(64)?/(libIMGegl|libsrv_um|libusc|libgpu_aux|libgralloc_extra|libglslcompiler|libged|libdrm|libdpframework|libion_mtk|libion_ulit|libm4u|libpq_prot)\\.so u:object_r:same_process_hal_file:s0
++/(vendor|system/vendor)/lib(64)?/vendor\\.mediatek\\.hardware\\.pq@2\\.0_vendor\\.so u:object_r:same_process_hal_file:s0
+diff --git a/sepolicy-mtk/basic/non_plat/surfaceflinger.te b/sepolicy-mtk/basic/non_plat/surfaceflinger.te
+--- a/sepolicy-mtk/basic/non_plat/surfaceflinger.te
++++ b/sepolicy-mtk/basic/non_plat/surfaceflinger.te
+@@ -71,3 +71,5 @@
+ get_prop(surfaceflinger, graphics_hwc_pid_prop)
+ allow surfaceflinger hal_graphics_composer_default:dir search;
+ allow surfaceflinger hal_graphics_composer_default:lnk_file read;
++# SurfaceFlinger is a coredomain and needs the MTK EGL same-process HAL closure.
++allow surfaceflinger same_process_hal_file:file { execute read open getattr map };

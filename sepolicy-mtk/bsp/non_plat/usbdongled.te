@@ -1,3 +1,4 @@
+# Android 12 Treble forbids vendor daemons from executing system files; this daemon already has vendor_shell_exec/vendor_toolbox_exec when needed.
 # usbdongled - usb auto select daemon
 type usbdongled_exec, exec_type, file_type, vendor_file_type;
 type usbdongled, domain;
@@ -5,7 +6,8 @@ type usbdongled, domain;
 init_daemon_domain(usbdongled)
 net_domain(usbdongled)
 
-allow usbdongled self:capability { net_admin net_raw dac_override kill };
+# Android 12 forbids DAC-bypass capabilities for these legacy device domains; keep access controlled by the specific SELinux file and device labels.
+allow usbdongled self:capability { net_admin net_raw kill };
 
 # Allow ril-3gddaemon to create and use netlink sockets.
 allow usbdongled self:netlink_socket create_socket_perms_no_ioctl;
@@ -15,7 +17,8 @@ allow usbdongled netdomain:{tcp_socket udp_socket rawip_socket dccp_socket tun_s
 allow usbdongled netdomain:fd use;
 
 # property service
-set_prop(usbdongled, radio_prop)
+# Android 12 reserves radio_prop writes for the telephony HAL server. This
+# optional USB-dongle helper retains only its vendor-owned control properties.
 set_prop(usbdongled, ctl_ril3gd_prop)
 
 allow usbdongled tedongle_prop:property_service set;
@@ -23,7 +26,6 @@ allow usbdongled init:file { read open getattr };
 allow usbdongled init:dir { read open getattr search };
 allow usbdongled installd:file { read open getattr };
 allow usbdongled servicemanager:file { read open getattr };
-allow usbdongled system_file:file x_file_perms;
 allow usbdongled sysfs:dir { read execute open };
 allow usbdongled sysfs:file { read write open };
 allow usbdongled vendor_file:file execute_no_trans;

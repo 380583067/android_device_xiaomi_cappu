@@ -1,3 +1,4 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 # ==============================================
 # MTK Policy Rule
 # ==============================================
@@ -305,8 +306,10 @@ allow mediaserver camera_tsf_device:chr_file rw_file_perms;
 # Date : WK1631
 # Operation : N Migration
 # Purpose : add permission for thermal manager
-domain_auto_trans(mediaserver, thermal_manager_exec, thermal_manager)
-allow mediaserver thermal_manager_exec:file { read getattr open execute};
+# Android 12 Treble: init.thermal_manager.rc owns the vendor daemon transition; a core media domain must not launch it.
+
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/domain.te:457, system/sepolicy/public/domain.te:977; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow mediaserver thermal_manager_exec:file { read getattr open execute};
 
 # Date : WK16.32
 # Operation : N Migration
@@ -347,7 +350,8 @@ allow mediaserver camera_owe_device:chr_file rw_file_perms;
 # Date : WK17.27
 # Operation : O Migration
 # Purpose : m4u Driver
-allow mediaserver proc:file r_file_perms;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow mediaserver proc:file r_file_perms;
 
 # Date : WK17.30
 # Operation : O Migration
@@ -357,7 +361,7 @@ allow mediaserver mtk_cmdq_device:chr_file { read ioctl open };
 # Date : WK17.12
 # Operation : MT6799 SQC
 # Purpose : Change thermal config
-allow mediaserver mtk_thermal_config_prop:file { getattr open read };
+get_prop(mediaserver, mtk_thermal_config_prop)
 allow mediaserver mtk_thermal_config_prop:property_service set;
 
 # Date : WK17.43

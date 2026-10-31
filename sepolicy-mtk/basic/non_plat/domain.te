@@ -1,3 +1,4 @@
+# Android 12 Treble does not permit blanket coredomain execution of vendor files; each cross-partition client must use an explicitly supported HAL/interface.
 # ==============================================
 # MTK Policy Rule
 # ==============================================
@@ -13,24 +14,21 @@ get_prop(domain, mtk_core_property_type)
 # is also allowed to domain as well in Google default domain.te
 allow domain debugfs_binder:dir search;
 
-# Allow all processes to read /sys/bus/platform/drivers/dev_info/dev_info
-# as it is a public interface for all processes to read some OTP data.
-allow domain sysfs_devinfo:file r_file_perms;
+# Android 12 treats device-info sysfs nodes as sensitive. The old domain-wide
+# grant exposed serial/OTP data to isolated and untrusted processes; readers
+# must now be explicitly authorized by a typed service interface.
 
-# Date:20170519
-# Purpose: Full treble bootup issue, coredomain need to access libudf.so where
-# located on /vendor.
-# TODO:: In O MR1 may need to change design
-allow coredomain vendor_file:dir r_dir_perms;
-allow coredomain vendor_file:file { read open getattr execute };
-allow coredomain vendor_file:lnk_file { getattr read };
+# Android 12 full Treble resolves vendor libraries through linker namespaces.
+# The old blanket coredomain traversal of vendor_file bypassed those boundaries.
 
 # Date:20170630
 # Purpose: allow trusted process to connect aee daemon
 allow {
   coredomain
   -untrusted_app_all
-  -untrusted_v2_app
+  -app_zygote
 } aee_aed:unix_stream_socket connectto;
-allow { domain -coredomain -hal_configstore_server } aee_aedv:unix_stream_socket connectto;
+# Android 12 folds legacy untrusted_v2_app into untrusted_app_all; the
+# remaining exclusion already keeps all untrusted app variants from this socket.
+allow { domain -coredomain -hal_configstore_server -vendor_init } aee_aedv:unix_stream_socket connectto;
 

@@ -1,3 +1,4 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 # ==============================================
 # Policy File of /vendor/bin/volte_rcs_ua Executable File
 
@@ -33,5 +34,5 @@ binder_call(volte_uce_ua, system_app)
 # Date : W17.29
 # Operation : IT
 # Purpose: Presence HIDL Migration
-allow volte_uce_ua hwservicemanager_prop:file { read getattr open };
+get_prop(volte_uce_ua, hwservicemanager_prop)
 allow volte_uce_ua debugfs_tracing:file { write open };

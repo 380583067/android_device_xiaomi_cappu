@@ -7,7 +7,8 @@
 # Operation : Migration 
 # Purpose : for MTK boot performance profiling, for access /proc/bootprof
 allow zygote devmap_device:chr_file { read ioctl open };
-allow zygote proc:file write;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow zygote proc:file write;
 
 # Date : WK14.34
 # Operation : Migration 

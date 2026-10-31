@@ -1,3 +1,4 @@
+# Android 12 blocks system apps from searching shell-owned files or running vendor thermal binaries; the thermal service is init-managed.
 # ==============================================
 # MTK Policy Rule
 # =================
@@ -45,8 +46,6 @@ allow system_app install_data_file:file getattr;
 allow system_app lost_found_data_file:dir getattr;
 allow system_app media_data_file:dir getattr;
 allow system_app property_data_file:dir getattr;
-allow system_app shell_data_file:dir search;
-allow system_app thermal_manager_exec:file { read execute open execute_no_trans getattr};
 allow system_app proc_thermal:dir search;
 allow system_app proc_thermal:file { read getattr open write };
 allow system_app proc_mtkcooler:dir search;

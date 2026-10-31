@@ -1,0 +1,19 @@
+diff --git a/drivers/misc/mediatek/video/mt8173/dispsys/ddp_path.c b/drivers/misc/mediatek/video/mt8173/dispsys/ddp_path.c
+index 58350267..f7411fb0 100644
+--- a/drivers/misc/mediatek/video/mt8173/dispsys/ddp_path.c
++++ b/drivers/misc/mediatek/video/mt8173/dispsys/ddp_path.c
+@@ -1208,6 +1208,14 @@ int ddp_path_top_clock_on(void)
+ #endif
+ 	mtk_smi_larb_clock_on(0, true);
+ 	mtk_smi_larb_clock_on(4, true);
++	/* The display power domain can lose this gate in system suspend while
++	 * the common clock's framework enable count remains nonzero. Restore it
++	 * before starting the display engines so their memory requests can run.
++	 */
++	if (DISP_REG_GET(DISP_REG_CONFIG_MMSYS_CG_CON0) & 1) {
++		DDPMSG("restore SMI common clock after power loss\n");
++		DISP_CPU_REG_SET(DISP_REG_CONFIG_MMSYS_CG_CLR0, 1);
++	}
+ 	ddp_module_clock_enable(MM_CLK_MUTEX_32K, true);
+ 
+ 	DDPMSG("ddp CG100:0x%x CG110:0x%x\n", DISP_REG_GET(DISP_REG_CONFIG_MMSYS_CG_CON0),

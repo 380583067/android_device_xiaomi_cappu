@@ -9,7 +9,8 @@ allow hal_gatekeeper_default mobicore:unix_stream_socket { connectto read write 
 allow hal_gatekeeper_default mobicore_user_device:chr_file { read write open ioctl};
 
 #============= gatekeeperd ==============
-allow gatekeeperd debugfs_tracing:file write;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow gatekeeperd debugfs_tracing:file write;
 
 #============= hal_gatekeeper_default ==============
 allow hal_gatekeeper_default gatekeeper_data_file:dir { add_name remove_name search write };

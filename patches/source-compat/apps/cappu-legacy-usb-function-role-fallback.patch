@@ -1,0 +1,33 @@
+diff --git a/src/com/android/settings/connecteddevice/usb/UsbDetailsFunctionsController.java b/src/com/android/settings/connecteddevice/usb/UsbDetailsFunctionsController.java
+index 006f72a..081290c 100644
+--- a/src/com/android/settings/connecteddevice/usb/UsbDetailsFunctionsController.java
++++ b/src/com/android/settings/connecteddevice/usb/UsbDetailsFunctionsController.java
+@@ -17,6 +17,7 @@
+ package com.android.settings.connecteddevice.usb;
+ 
+ import static android.hardware.usb.UsbPortStatus.DATA_ROLE_DEVICE;
++import static android.hardware.usb.UsbPortStatus.DATA_ROLE_NONE;
+ 
+ import android.content.Context;
+ import android.hardware.usb.UsbManager;
+@@ -102,7 +103,19 @@ public class UsbDetailsFunctionsController extends UsbDetailsController
+             Log.d(TAG, "refresh() connected : " + connected + ", functions : " + functions
+                     + ", powerRole : " + powerRole + ", dataRole : " + dataRole);
+         }
+-        if (!connected || dataRole != DATA_ROLE_DEVICE) {
++        /*
++         * cappu uses the legacy MTK android_usb gadget, driven by sys.usb.config and init
++         * actions, and does not publish an android.hardware.usb IUsb port HAL. In that setup
++         * UsbBackend has no UsbPortStatus and reports DATA_ROLE_NONE even while the tablet is
++         * connected to a computer with MTP/ADB active. Treat an active gadget function as
++         * evidence of device mode only when the port role is unavailable; this keeps the
++         * function chooser usable without enabling it for an OTG host connection, where the
++         * gadget functions are off.
++         */
++        final boolean legacyGadgetDeviceMode = connected
++                && dataRole == DATA_ROLE_NONE
++                && mUsbBackend.getCurrentFunctions() != UsbManager.FUNCTION_NONE;
++        if (!connected || (dataRole != DATA_ROLE_DEVICE && !legacyGadgetDeviceMode)) {
+             mProfilesContainer.setEnabled(false);
+         } else {
+             // Functions are only available in device mode

@@ -1,8 +1,13 @@
+# Android 12 Treble forbids vendor daemons from executing system files in place; launch each helper through its supported vendor service.
+# Android 12 does not allow vendor status services to search every process domain; retain only typed status/property access.
 # ==============================================
 # Policy File of /vendor/bin/statusd Executable File
 
 type statusd_exec, exec_type, file_type, vendor_file_type;
 type statusd, domain;
+# Treble compatibility: this MTK vendor status daemon retains its old
+# /data/system state path while the vendor init scripts are still unchanged.
+typeattribute statusd data_between_core_and_vendor_violators;
 
 # permissive statusd;
 
@@ -11,9 +16,14 @@ init_daemon_domain(statusd)
 allow statusd block_device:dir search;
 allow statusd flashlessd_exec:file rx_file_perms;
 allow statusd init:unix_stream_socket connectto;
+# Android 12 removed system_radio_prop and maps supported RIL properties to
+# radio_prop/net_radio_prop. Keep only those explicit current labels rather
+# than restoring a generic grant to a property class that no longer exists.
 allow statusd mtk_md_prop:property_service set;
 allow statusd net_cdma_mdmstat:property_service set;
-allow statusd net_radio_prop:property_service set;
+# Android 12 keeps net_radio_prop/system_prop system-owned and radio_prop
+# writable only by the telephony HAL server. This vendor helper retains only
+# Cappu/MTK-defined state properties; the HIDL RIL service owns core radio state.
 
 allow statusd nvram_data_file:dir create_dir_perms;
 allow statusd nvram_data_file:file create_file_perms;
@@ -28,7 +38,6 @@ allow statusd system_data_file:lnk_file read;
 #allow statusd bootdevice_block_device:blk_file { read write open };
 allow statusd nvdata_device:blk_file { read write open };
 allow statusd property_socket:sock_file write;
-allow statusd radio_prop:property_service set;
 allow statusd ril_cdma_report_prop:property_service set;
 allow statusd self:capability net_admin;
 allow statusd self:udp_socket { create ioctl }; 
@@ -38,20 +47,14 @@ allow statusd system_data_file:dir { write add_name };
 
 allow statusd c2k_file:dir create_dir_perms;
 allow statusd c2k_file:file create_file_perms;
-allow statusd system_file:file execute_no_trans;
 allow statusd ttyMT_device:chr_file { read write ioctl open };
 allow statusd ttySDIO_device:chr_file { read write open setattr ioctl};
 allow statusd viarild_exec:file rx_file_perms;
 allow statusd vmodem_device:chr_file { read write open setattr ioctl};
 
 # property service
-allow statusd system_prop:property_service set;
-allow statusd system_radio_prop:property_service set;
 allow statusd persist_ril_prop:property_service set;
 allow statusd ril_mux_report_case_prop:property_service set;
 allow statusd cdma_prop:property_service set;
-auditallow statusd net_radio_prop:property_service set;
-auditallow statusd system_radio_prop:property_service set;
 
 #Search permission for findPidByName
-allow statusd domain:dir search;

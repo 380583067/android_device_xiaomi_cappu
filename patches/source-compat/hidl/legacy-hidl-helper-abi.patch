@@ -1,0 +1,434 @@
+diff --git a/audio/2.0/Android.bp b/audio/2.0/Android.bp
+index 2689355..e2475fb 100644
+--- a/audio/2.0/Android.bp
++++ b/audio/2.0/Android.bp
+@@ -27,6 +27,13 @@ hidl_interface {
+         "android.hardware.audio.effect@2.0",
+         "android.hidl.base@1.0",
+     ],
++    // Android 8 MTK audio blobs link against this helper as an exported
++    // function. HIDL 2.0 now emits it as static inline, so retain the legacy
++    // ABI in this interface library while delegating to the generated helper.
++    compat_srcs: [
++        "LegacyAudioTypesCompatImpl.cpp",
++        "LegacyAudioTypesCompatSymbols.cpp",
++    ],
+     gen_java: false,
+     gen_java_constants: true,
+ }
+diff --git a/audio/common/all-versions/default/Android.bp b/audio/common/all-versions/default/Android.bp
+index 8f55744..9fab842 100644
+--- a/audio/common/all-versions/default/Android.bp
++++ b/audio/common/all-versions/default/Android.bp
+@@ -84,7 +84,13 @@ cc_defaults {
+ cc_library_shared {
+     name: "android.hardware.audio.common@2.0-util",
+     defaults: ["android.hardware.audio.common-util_default"],
+-    srcs: [":android.hardware.audio.common-util@2-6"],
++    // Android 8-era MTK HALs import these helpers from android::HidlUtils;
++    // Android 12 moved them into the versioned implementation namespace.
++    // Keep a narrow wrapper in this library so old vendor ABI remains usable.
++    srcs: [
++        ":android.hardware.audio.common-util@2-6",
++        "LegacyAudioCommonAbiCompat.cpp",
++    ],
+     shared_libs: [
+         "android.hardware.audio.common@2.0",
+     ],
+diff --git a/camera/device/3.2/Android.bp b/camera/device/3.2/Android.bp
+index c80538c..55450ad 100644
+--- a/camera/device/3.2/Android.bp
++++ b/camera/device/3.2/Android.bp
+@@ -23,5 +23,10 @@ hidl_interface {
+         "android.hardware.graphics.common@1.0",
+         "android.hidl.base@1.0",
+     ],
++    // Preserve type helper symbols imported by Android 8-era MTK camera blobs.
++    compat_srcs: [
++        "LegacyCameraDevice32CompatImpl.cpp",
++        "LegacyCameraDevice32CompatSymbols.cpp",
++    ],
+     gen_java: false,
+ }
+diff --git a/graphics/composer/2.1/utils/hwc2on1adapter/HWC2On1Adapter.cpp b/graphics/composer/2.1/utils/hwc2on1adapter/HWC2On1Adapter.cpp
+index 3702171..74b243b 100644
+--- a/graphics/composer/2.1/utils/hwc2on1adapter/HWC2On1Adapter.cpp
++++ b/graphics/composer/2.1/utils/hwc2on1adapter/HWC2On1Adapter.cpp
+@@ -30,6 +30,7 @@
+ #include <sstream>
+ 
+ #include <hardware/hwcomposer.h>
++#include <cutils/properties.h>
+ #include <log/log.h>
+ #include <utils/Trace.h>
+ 
+@@ -2268,8 +2269,18 @@ void HWC2On1Adapter::populateCapabilities() {
+     // Some devices might have HWC1 retire fences that accurately emulate
+     // HWC2 present fences when they are deferred, but it's not very reliable.
+     // To be safe, we indicate PresentFenceIsNotReliable for all HWC1 devices.
++    //
++    // Mocha (Tegra K1): the NVIDIA GL composer syncs to vblank and its retire
++    // fences are reliable, so trusting them removes tearing. However, trusting
++    // them changes SurfaceFlinger's buffer release timing and this HWC1 blob
++    // then double-unregisters buffers (SIGSEGV in NvGrUnregisterBuffer). Keep
++    // it opt-in behind a property until the blob's buffer lifecycle is fixed.
++    char reliableFences[PROP_VALUE_MAX] = {0};
++    property_get("debug.mocha.reliable_fences", reliableFences, "0");
++    if (atoi(reliableFences) != 1) {
+     mCapabilities.insert(Capability::PresentFenceIsNotReliable);
+ }
++}
+ 
+ HWC2On1Adapter::Display* HWC2On1Adapter::getDisplay(hwc2_display_t id) {
+     std::unique_lock<std::recursive_timed_mutex> lock(mStateMutex);
+diff --git a/radio/1.0/Android.bp b/radio/1.0/Android.bp
+index cd64bca..75ec46f 100644
+--- a/radio/1.0/Android.bp
++++ b/radio/1.0/Android.bp
+@@ -20,6 +20,12 @@ hidl_interface {
+         "ISap.hal",
+         "ISapCallback.hal",
+     ],
++    // Android 8-era cappu vendor RIL blobs still import these exported helper
++    // symbols. Android 12 HIDL generation makes them static inline in headers.
++    compat_srcs: [
++        "LegacyRadioTypesCompatImpl.cpp",
++        "LegacyRadioTypesCompatSymbols.cpp",
++    ],
+     interfaces: [
+         "android.hidl.base@1.0",
+     ],
+diff --git a/audio/2.0/LegacyAudioTypesCompatImpl.cpp b/audio/2.0/LegacyAudioTypesCompatImpl.cpp
+new file mode 100644
+index 0000000..659ed65
+--- /dev/null
++++ b/audio/2.0/LegacyAudioTypesCompatImpl.cpp
+@@ -0,0 +1,17 @@
++/*
++ * Copyright (C) 2026 The Android Open Source Project
++ * Licensed under the Apache License, Version 2.0
++ */
++
++// HIDL's generated Result::toString helper is inline in current releases.
++// Keep a callable implementation for cappu's Android 8 MTK audio blob, and
++// delegate formatting to the current generated code to avoid divergent text.
++#include <android/hardware/audio/2.0/types.h>
++
++namespace android::hardware::audio::V2_0 {
++
++std::string cappuLegacyToString(Result value) {
++    return toString(value);
++}
++
++}  // namespace android::hardware::audio::V2_0
+diff --git a/audio/2.0/LegacyAudioTypesCompatSymbols.cpp b/audio/2.0/LegacyAudioTypesCompatSymbols.cpp
+new file mode 100644
+index 0000000..8a28e36
+--- /dev/null
++++ b/audio/2.0/LegacyAudioTypesCompatSymbols.cpp
+@@ -0,0 +1,21 @@
++/*
++ * Copyright (C) 2026 The Android Open Source Project
++ * Licensed under the Apache License, Version 2.0
++ */
++
++// Export the historical out-of-line HIDL helper symbol expected by cappu's
++// vendor audio HAL. The generated Android 12 helper has the same behavior but
++// is static inline, so this uniquely named wrapper restores only the old ABI.
++#include <android/hardware/audio/2.0/types.h>
++
++namespace android::hardware::audio::V2_0 {
++
++std::string cappuLegacyToString(Result);
++
++std::string cappuExportToStringResult(Result value)
++        __asm__("_ZN7android8hardware5audio4V2_08toStringENS2_6ResultE");
++std::string cappuExportToStringResult(Result value) {
++    return cappuLegacyToString(value);
++}
++
++}  // namespace android::hardware::audio::V2_0
+diff --git a/audio/common/all-versions/default/LegacyAudioCommonAbiCompat.cpp b/audio/common/all-versions/default/LegacyAudioCommonAbiCompat.cpp
+new file mode 100644
+index 0000000..937e6ed
+--- /dev/null
++++ b/audio/common/all-versions/default/LegacyAudioCommonAbiCompat.cpp
+@@ -0,0 +1,66 @@
++/*
++ * Copyright (C) 2026 The Android Open Source Project
++ * Licensed under the Apache License, Version 2.0
++ */
++
++// Android 8's MTK audio implementation imports these helpers from the old
++// android::HidlUtils class. Android 12 moved HidlUtils into the versioned
++// audio.common implementation namespace and added an isInput argument to
++// audioConfigFromHal. Export only the six legacy signatures observed in the
++// cappu blob, forwarding conversions to the current implementation.
++#include "HidlUtils.h"
++
++namespace android {
++
++using ::android::hardware::audio::common::V2_0::AudioConfig;
++using ::android::hardware::audio::common::V2_0::AudioPort;
++using ::android::hardware::audio::common::V2_0::AudioPortConfig;
++using ::android::hardware::hidl_vec;
++
++// This class declaration reproduces only the old out-of-line ABI entrypoints;
++// callers in the current source tree continue using the versioned HidlUtils.
++struct HidlUtils {
++    static status_t audioConfigFromHal(const audio_config_t&, AudioConfig*);
++    static status_t audioConfigToHal(const AudioConfig&, audio_config_t*);
++    static status_t audioPortFromHal(const audio_port&, AudioPort*);
++    static status_t audioPortToHal(const AudioPort&, audio_port*);
++    static status_t audioPortConfigToHal(const AudioPortConfig&, audio_port_config*);
++    static std::unique_ptr<audio_port_config[]> audioPortConfigsToHal(
++            const hidl_vec<AudioPortConfig>&);
++};
++
++status_t HidlUtils::audioConfigFromHal(const audio_config_t& halConfig, AudioConfig* config) {
++    return ::android::hardware::audio::common::V2_0::implementation::HidlUtils::audioConfigFromHal(
++            halConfig, false, config);
++}
++
++status_t HidlUtils::audioConfigToHal(const AudioConfig& config, audio_config_t* halConfig) {
++    return ::android::hardware::audio::common::V2_0::implementation::HidlUtils::audioConfigToHal(
++            config, halConfig);
++}
++
++status_t HidlUtils::audioPortFromHal(const audio_port& halPort, AudioPort* port) {
++    return ::android::hardware::audio::common::V2_0::implementation::HidlUtils::audioPortFromHal(
++            halPort, port);
++}
++
++status_t HidlUtils::audioPortToHal(const AudioPort& port, audio_port* halPort) {
++    return ::android::hardware::audio::common::V2_0::implementation::HidlUtils::audioPortToHal(
++            port, halPort);
++}
++
++status_t HidlUtils::audioPortConfigToHal(const AudioPortConfig& config,
++                                         audio_port_config* halConfig) {
++    return ::android::hardware::audio::common::V2_0::implementation::HidlUtils::audioPortConfigToHal(
++            config, halConfig);
++}
++
++std::unique_ptr<audio_port_config[]> HidlUtils::audioPortConfigsToHal(
++        const hidl_vec<AudioPortConfig>& configs) {
++    std::unique_ptr<audio_port_config[]> halConfigs;
++    (void)::android::hardware::audio::common::V2_0::implementation::HidlUtils::audioPortConfigsToHal(
++            configs, &halConfigs);
++    return halConfigs;
++}
++
++}  // namespace android
+diff --git a/camera/device/3.2/LegacyCameraDevice32CompatImpl.cpp b/camera/device/3.2/LegacyCameraDevice32CompatImpl.cpp
+new file mode 100644
+index 0000000..efe1c8f
+--- /dev/null
++++ b/camera/device/3.2/LegacyCameraDevice32CompatImpl.cpp
+@@ -0,0 +1,28 @@
++/*
++ * Copyright (C) 2026 The Android Open Source Project
++ * Licensed under the Apache License, Version 2.0
++ */
++
++// Reuse the current generated header implementations behind the legacy ABI
++// symbols required by the cappu MTK device3 camera blob.
++#include <android/hardware/camera/device/3.2/types.h>
++
++namespace android::hardware::camera::device::V3_2 {
++
++std::string cappuLegacyToString(ErrorCode value) {
++    return toString(value);
++}
++
++std::string cappuLegacyToString(const StreamConfiguration& value) {
++    return toString(value);
++}
++
++std::string cappuLegacyToString(const HalStreamConfiguration& value) {
++    return toString(value);
++}
++
++std::string cappuLegacyToString(const Stream& value) {
++    return toString(value);
++}
++
++}  // namespace android::hardware::camera::device::V3_2
+diff --git a/camera/device/3.2/LegacyCameraDevice32CompatSymbols.cpp b/camera/device/3.2/LegacyCameraDevice32CompatSymbols.cpp
+new file mode 100644
+index 0000000..9b82820
+--- /dev/null
++++ b/camera/device/3.2/LegacyCameraDevice32CompatSymbols.cpp
+@@ -0,0 +1,41 @@
++/*
++ * Copyright (C) 2026 The Android Open Source Project
++ * Licensed under the Apache License, Version 2.0
++ */
++
++// Export the Android 8 HIDL helper symbol names required by cappu's camera
++// prebuilt while keeping the current generated inline helpers unchanged.
++#include <android/hardware/camera/device/3.2/types.h>
++
++namespace android::hardware::camera::device::V3_2 {
++
++std::string cappuLegacyToString(ErrorCode);
++std::string cappuLegacyToString(const StreamConfiguration&);
++std::string cappuLegacyToString(const HalStreamConfiguration&);
++std::string cappuLegacyToString(const Stream&);
++
++std::string cappuExportToStringErrorCode(ErrorCode value)
++        __asm__("_ZN7android8hardware6camera6device4V3_28toStringENS3_9ErrorCodeE");
++std::string cappuExportToStringErrorCode(ErrorCode value) {
++    return cappuLegacyToString(value);
++}
++
++std::string cappuExportToStringStreamConfiguration(const StreamConfiguration& value)
++        __asm__("_ZN7android8hardware6camera6device4V3_28toStringERKNS3_19StreamConfigurationE");
++std::string cappuExportToStringStreamConfiguration(const StreamConfiguration& value) {
++    return cappuLegacyToString(value);
++}
++
++std::string cappuExportToStringHalStreamConfiguration(const HalStreamConfiguration& value)
++        __asm__("_ZN7android8hardware6camera6device4V3_28toStringERKNS3_22HalStreamConfigurationE");
++std::string cappuExportToStringHalStreamConfiguration(const HalStreamConfiguration& value) {
++    return cappuLegacyToString(value);
++}
++
++std::string cappuExportToStringStream(const Stream& value)
++        __asm__("_ZN7android8hardware6camera6device4V3_28toStringERKNS3_6StreamE");
++std::string cappuExportToStringStream(const Stream& value) {
++    return cappuLegacyToString(value);
++}
++
++}  // namespace android::hardware::camera::device::V3_2
+diff --git a/radio/1.0/LegacyRadioTypesCompatImpl.cpp b/radio/1.0/LegacyRadioTypesCompatImpl.cpp
+new file mode 100644
+index 0000000..b78d0cc
+--- /dev/null
++++ b/radio/1.0/LegacyRadioTypesCompatImpl.cpp
+@@ -0,0 +1,46 @@
++/*
++ * Copyright (C) 2026 The Android Open Source Project
++ * Licensed under the Apache License, Version 2.0
++ */
++
++// Provide out-of-line implementations that mirror the helpers generated in
++// types.h. These remain separate from the exported ABI aliases so the current
++// generated static-inline definitions cannot collide with their legacy names.
++#include <android/hardware/radio/1.0/types.h>
++
++namespace android::hardware::radio::V1_0 {
++
++std::string cappuLegacyToString(CallForwardInfoStatus value) {
++    return toString(value);
++}
++
++std::string cappuLegacyToString(Clir value) {
++    return toString(value);
++}
++
++std::string cappuLegacyToString(const OperatorInfo& value) {
++    return toString(value);
++}
++
++std::string cappuLegacyToString(const DataProfileInfo& value) {
++    return toString(value);
++}
++
++std::string cappuLegacyToString(const SetupDataCallResult& value) {
++    return toString(value);
++}
++
++bool cappuLegacyNotEqual(const OperatorInfo& lhs, const OperatorInfo& rhs) {
++    return !(lhs == rhs);
++}
++
++bool cappuLegacyNotEqual(const DataProfileInfo& lhs, const DataProfileInfo& rhs) {
++    return !(lhs == rhs);
++}
++
++bool cappuLegacyNotEqual(const SetupDataCallResult& lhs,
++                         const SetupDataCallResult& rhs) {
++    return !(lhs == rhs);
++}
++
++}  // namespace android::hardware::radio::V1_0
+diff --git a/radio/1.0/LegacyRadioTypesCompatSymbols.cpp b/radio/1.0/LegacyRadioTypesCompatSymbols.cpp
+new file mode 100644
+index 0000000..bb5dc83
+--- /dev/null
++++ b/radio/1.0/LegacyRadioTypesCompatSymbols.cpp
+@@ -0,0 +1,73 @@
++/*
++ * Copyright (C) 2026 The Android Open Source Project
++ * Licensed under the Apache License, Version 2.0
++ */
++
++// Keep the historical HIDL 1.0 mangled names needed by Android 8 vendor RIL
++// blobs. The functions delegate to the Android 12 inline implementations.
++#include <android/hardware/radio/1.0/types.h>
++
++namespace android::hardware::radio::V1_0 {
++
++std::string cappuLegacyToString(CallForwardInfoStatus);
++std::string cappuLegacyToString(Clir);
++std::string cappuLegacyToString(const OperatorInfo&);
++std::string cappuLegacyToString(const DataProfileInfo&);
++std::string cappuLegacyToString(const SetupDataCallResult&);
++bool cappuLegacyNotEqual(const OperatorInfo&, const OperatorInfo&);
++bool cappuLegacyNotEqual(const DataProfileInfo&, const DataProfileInfo&);
++bool cappuLegacyNotEqual(const SetupDataCallResult&, const SetupDataCallResult&);
++
++std::string cappuExportToStringCallForwardInfoStatus(CallForwardInfoStatus value)
++        __asm__("_ZN7android8hardware5radio4V1_08toStringENS2_21CallForwardInfoStatusE");
++std::string cappuExportToStringCallForwardInfoStatus(CallForwardInfoStatus value) {
++    return cappuLegacyToString(value);
++}
++
++std::string cappuExportToStringClir(Clir value)
++        __asm__("_ZN7android8hardware5radio4V1_08toStringENS2_4ClirE");
++std::string cappuExportToStringClir(Clir value) {
++    return cappuLegacyToString(value);
++}
++
++std::string cappuExportToStringOperatorInfo(const OperatorInfo& value)
++        __asm__("_ZN7android8hardware5radio4V1_08toStringERKNS2_12OperatorInfoE");
++std::string cappuExportToStringOperatorInfo(const OperatorInfo& value) {
++    return cappuLegacyToString(value);
++}
++
++std::string cappuExportToStringDataProfileInfo(const DataProfileInfo& value)
++        __asm__("_ZN7android8hardware5radio4V1_08toStringERKNS2_15DataProfileInfoE");
++std::string cappuExportToStringDataProfileInfo(const DataProfileInfo& value) {
++    return cappuLegacyToString(value);
++}
++
++std::string cappuExportToStringSetupDataCallResult(const SetupDataCallResult& value)
++        __asm__("_ZN7android8hardware5radio4V1_08toStringERKNS2_19SetupDataCallResultE");
++std::string cappuExportToStringSetupDataCallResult(const SetupDataCallResult& value) {
++    return cappuLegacyToString(value);
++}
++
++bool cappuExportNotEqualOperatorInfo(const OperatorInfo& lhs, const OperatorInfo& rhs)
++        __asm__("_ZN7android8hardware5radio4V1_0neERKNS2_12OperatorInfoES5_");
++bool cappuExportNotEqualOperatorInfo(const OperatorInfo& lhs, const OperatorInfo& rhs) {
++    return cappuLegacyNotEqual(lhs, rhs);
++}
++
++bool cappuExportNotEqualDataProfileInfo(const DataProfileInfo& lhs,
++                                        const DataProfileInfo& rhs)
++        __asm__("_ZN7android8hardware5radio4V1_0neERKNS2_15DataProfileInfoES5_");
++bool cappuExportNotEqualDataProfileInfo(const DataProfileInfo& lhs,
++                                        const DataProfileInfo& rhs) {
++    return cappuLegacyNotEqual(lhs, rhs);
++}
++
++bool cappuExportNotEqualSetupDataCallResult(const SetupDataCallResult& lhs,
++                                            const SetupDataCallResult& rhs)
++        __asm__("_ZN7android8hardware5radio4V1_0neERKNS2_19SetupDataCallResultES5_");
++bool cappuExportNotEqualSetupDataCallResult(const SetupDataCallResult& lhs,
++                                            const SetupDataCallResult& rhs) {
++    return cappuLegacyNotEqual(lhs, rhs);
++}
++
++}  // namespace android::hardware::radio::V1_0

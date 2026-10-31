@@ -1,0 +1,7 @@
+# cappu 的旧 android_usb gadget 在开机早期可按 persist.sys.usb.config 枚举，
+# 但 Android 12 UsbDeviceManager 会在 finishBoot() 恢复“解锁后 USB 功能”偏好；
+# 全新用户数据没有该偏好时，系统主动回退到充电/ADB，覆盖设备树的 MTP 默认值。
+# post-fs-data 早于 system_server 启动，因此在此处仅初始化缺失的偏好文件，
+# 让系统服务按其正常锁屏策略启用 MTP；已有文件绝不覆盖，保留用户后续选择。
+on post-fs-data
+    exec -- /system/bin/sh /vendor/bin/cappu-usb-default.sh

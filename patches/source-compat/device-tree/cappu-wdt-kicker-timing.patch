@@ -1,0 +1,16 @@
+--- a/rootdir/etc/init.mt8173.rc
++++ b/rootdir/etc/init.mt8173.rc
+@@ -180,8 +180,11 @@
+ 
+     chmod 0666 /dev/pmem_multimedia
+ 
+-    # watch dog kicker
+-    write /proc/wdk "0 20 30"
++    # cappu MT8176：大核偶发漏过 20 秒的 watchdog kicker 周期；将间隔收紧到
++    # 10 秒，在 30 秒硬件超时内保留额外重试窗口，避免单次延迟直接触发 AEE 复位。
++    # 驱动 wd_common_drv.c 按 5 个字段解析并总是写入 enable；显式提供
++    # mode、interval、timeout、debug_sleep、enable，避免未初始化的 enable 值。
++    write /proc/wdk "0 10 30 0 1"
+ 
+     # set ptmx group to non-root
+     chown root radio /dev/ptmx

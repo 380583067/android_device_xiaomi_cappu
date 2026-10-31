@@ -1,0 +1,70 @@
+diff --git a/drivers/misc/mediatek/imgsensor/src/mt8173/kd_sensorlist.c b/drivers/misc/mediatek/imgsensor/src/mt8173/kd_sensorlist.c
+--- a/drivers/misc/mediatek/imgsensor/src/mt8173/kd_sensorlist.c
++++ b/drivers/misc/mediatek/imgsensor/src/mt8173/kd_sensorlist.c
+@@ -2108,6 +2108,7 @@
+ 	case SENSOR_FEATURE_GET_SENSOR_PDAF_CAPACITY:
+ 	case SENSOR_FEATURE_SET_ISO:
+ 	case SENSOR_FEATURE_SET_PDAF:
++	case SENSOR_FEATURE_SET_SHUTTER_FRAME_TIME:
+ 		/*  */
+ 		if (copy_from_user
+ 		    ((void *)pFeaturePara, (void *)pFeatureCtrl->pFeaturePara, FeatureParaLen)) {
+diff --git a/drivers/misc/mediatek/imgsensor/src/mt8173/s5k3l8_mipi_raw/s5k3l8mipiraw_Sensor.c b/drivers/misc/mediatek/imgsensor/src/mt8173/s5k3l8_mipi_raw/s5k3l8mipiraw_Sensor.c
+--- a/drivers/misc/mediatek/imgsensor/src/mt8173/s5k3l8_mipi_raw/s5k3l8mipiraw_Sensor.c
++++ b/drivers/misc/mediatek/imgsensor/src/mt8173/s5k3l8_mipi_raw/s5k3l8mipiraw_Sensor.c
+@@ -460,6 +460,40 @@
+ 	write_cmos_sensor(0X0202, shutter & 0xFFFF);
+ 	LOG_INF("Exit! shutter =%d, framelength =%d\n", shutter, imgsensor.frame_length);
+ 
++}
++
++static void set_shutter_frame_length(unsigned long long shutter,
++				     unsigned long long frame_length)
++{
++	unsigned long flags;
++	kal_uint32 shutter_lines;
++	kal_uint32 frame_lines;
++
++	shutter_lines = shutter > imgsensor_info.max_frame_length - imgsensor_info.margin ?
++		imgsensor_info.max_frame_length - imgsensor_info.margin : shutter;
++	if (shutter_lines < imgsensor_info.min_shutter)
++		shutter_lines = imgsensor_info.min_shutter;
++
++	spin_lock_irqsave(&imgsensor_drv_lock, flags);
++	frame_lines = imgsensor.min_frame_length;
++	if (frame_length > 1) {
++		if (frame_length > imgsensor_info.max_frame_length)
++			frame_lines = imgsensor_info.max_frame_length;
++		else if (frame_length > frame_lines)
++			frame_lines = (kal_uint32)frame_length;
++	}
++	if (shutter_lines > frame_lines - imgsensor_info.margin)
++		frame_lines = shutter_lines + imgsensor_info.margin;
++	if (frame_lines > imgsensor_info.max_frame_length)
++		frame_lines = imgsensor_info.max_frame_length;
++
++	imgsensor.shutter = shutter_lines;
++	imgsensor.frame_length = frame_lines;
++	imgsensor.dummy_line = frame_lines - imgsensor.min_frame_length;
++	spin_unlock_irqrestore(&imgsensor_drv_lock, flags);
++
++	write_cmos_sensor(0x0340, frame_lines & 0xFFFF);
++	write_cmos_sensor(0x0202, shutter_lines & 0xFFFF);
+ }
+ 
+ static kal_uint16 gain2reg(const kal_uint16 gain)
+@@ -2270,6 +2304,14 @@
+ 	case SENSOR_FEATURE_SET_GAIN:
+ 		set_gain((UINT16) *feature_data);
+ 		break;
++	case SENSOR_FEATURE_SET_SHUTTER_FRAME_TIME:
++		if (*feature_para_len < sizeof(*feature_data))
++			return ERROR_INVALID_PARA;
++		if (*feature_para_len >= sizeof(*feature_data) * 2)
++			set_shutter_frame_length(feature_data[0], feature_data[1]);
++		else
++			set_shutter((kal_uint16)feature_data[0]);
++		break;
+ 	case SENSOR_FEATURE_SET_FLASHLIGHT:
+ 		break;
+ 	case SENSOR_FEATURE_SET_ISP_MASTER_CLOCK_FREQ:

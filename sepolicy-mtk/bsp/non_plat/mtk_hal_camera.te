@@ -1,3 +1,4 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 # ==============================================
 # MTK Policy Rule
 # ==============================================
@@ -24,7 +25,7 @@ set_prop(mtk_hal_camera,logmuch_prop)
 # Purpose: camera notifies its status to thermal module
 allow mtk_hal_camera proc_thermal:file { read write getattr open };
 allow mtk_hal_camera proc_mtktz:file { read write open};
-allow mtk_hal_camera mtk_thermal_config_prop:file { read getattr open };
+get_prop(mtk_hal_camera, mtk_thermal_config_prop)
 allow mtk_hal_camera init:unix_stream_socket connectto;
 allow mtk_hal_camera proc_mtkcooler:file { read write open };
 
@@ -41,7 +42,7 @@ allow mtk_hal_camera flashlight_device:chr_file { read write open ioctl };
 # Stage: O1 Migration, SQC
 # Purpose : Update camera Vcodec device file
 allow mtk_hal_camera Vcodec_device:chr_file { read write open ioctl };
-allow mtk_hal_camera mtk_em_video_log_vdec_prop:file r_file_perms;
+get_prop(mtk_hal_camera, mtk_em_video_log_vdec_prop)
 
 # Date : WK17.42
 # Operation : Migration

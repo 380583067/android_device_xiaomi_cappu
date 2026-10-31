@@ -3,8 +3,7 @@
 # ============
 
 #============= healthd ==============
-allow healthd self:capability dac_override;
-
+# Android 12 forbids DAC-bypass capabilities for these legacy device domains; keep access controlled by the specific SELinux file and device labels.
 #TODO:: MTK need to remove later
 not_full_treble(`
     allow healthd mtkrild:unix_stream_socket connectto;

@@ -1,0 +1,63 @@
+diff --git a/drivers/misc/mediatek/imgsensor/src/mt8173/kd_sensorlist.c b/drivers/misc/mediatek/imgsensor/src/mt8173/kd_sensorlist.c
+index a431c152..c7458d33 100644
+--- a/drivers/misc/mediatek/imgsensor/src/mt8173/kd_sensorlist.c
++++ b/drivers/misc/mediatek/imgsensor/src/mt8173/kd_sensorlist.c
+@@ -3198,8 +3303,48 @@ static long CAMERA_HW_Ioctl_Compat(struct file *filp, unsigned int cmd, unsigned
+ 	if (!filp->f_op || !filp->f_op->unlocked_ioctl)
+ 		return -ENOTTY;
+ 
+ 	switch (cmd) {
++	case COMPAT_KDIMGSENSORIOC_X_GETINFO:
++		{
++			COMPAT_ACDK_SENSOR_GETINFO_STRUCT __user *data32;
++			ACDK_SENSOR_GETINFO_STRUCT __user *data;
++			COMPAT_ACDK_SENSOR_GETINFO_STRUCT compat_info;
++			ACDK_SENSOR_GETINFO_STRUCT native_info;
++			unsigned int i;
++			int err;
++
++			/*
++			 * A 32-bit camera HAL passes 32-bit pointers in GETINFO. The
++			 * native ioctl embeds 64-bit pointers and has a different encoded
++			 * size; forwarding cmd unchanged falls through to -EPERM.
++			 */
++			data32 = compat_ptr(arg);
++			data = compat_alloc_user_space(sizeof(*data));
++			if (!data)
++				return -EFAULT;
++
++			err = copy_from_user(&compat_info, data32,
++					     sizeof(compat_info));
++			if (err)
++				return -EFAULT;
++
++			memset(&native_info, 0, sizeof(native_info));
++			memcpy(native_info.ScenarioId, compat_info.ScenarioId,
++			       sizeof(native_info.ScenarioId));
++			for (i = 0; i < sizeof(native_info.pInfo) /
++				     sizeof(native_info.pInfo[0]); i++) {
++				native_info.pInfo[i] = compat_ptr(compat_info.pInfo[i]);
++				native_info.pConfig[i] = compat_ptr(compat_info.pConfig[i]);
++			}
++
++			if (copy_to_user(data, &native_info, sizeof(native_info)))
++				return -EFAULT;
++
++			return filp->f_op->unlocked_ioctl(
++				filp, KDIMGSENSORIOC_X_GETINFO,
++				(unsigned long)data);
++		}
+ 		/*case COMPAT_KDIMGSENSORIOC_X_GETINFO:
+ 		   {
+ 		   PK_DBG_FUNC("[CAMERA SENSOR] CAOMPAT_KDIMGSENSORIOC_X_GETINFO E\n");
+ 
+@@ -3338,9 +3483,8 @@ static long CAMERA_HW_Ioctl_Compat(struct file *filp, unsigned int cmd, unsigned
+ 				    ("[CAMERA SENSOR] compat_get_Acdk_sensor_resolution_info_struct failed\n");
+ 			return ret;
+ 		}
+ 		/* Data in the following commands is not required to be converted to kernel 64-bit & user 32-bit */
+-	case COMPAT_KDIMGSENSORIOC_X_GETINFO:
+ 	case KDIMGSENSORIOC_T_OPEN:
+ 	case KDIMGSENSORIOC_T_CLOSE:
+ 	case KDIMGSENSORIOC_T_CHECK_IS_ALIVE:
+ 	case KDIMGSENSORIOC_X_SET_DRIVER:

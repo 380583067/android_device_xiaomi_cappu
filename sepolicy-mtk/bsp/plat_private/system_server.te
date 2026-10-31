@@ -10,7 +10,9 @@ allow system_server aal_service:service_manager find;
 # Operation: BSP C2K(for LG) test case support
 # Purpose: allow atci to use NSIOT firewall
 # Package: com.mediatek.atci.service
-allow system_app netd_socket:sock_file write;
+# Android 12 no longer exports the legacy netd_socket SELinux type or
+# /dev/socket/netd label. Network control is provided through INetd Binder;
+# remove this Android 7-era direct socket grant so policy can compile on 12.
 # Date : 2016/11/11
 # Purpose : Add permission for aee socket access to report Java Layer Exception
 allow system_server aee_aed:unix_stream_socket connectto;

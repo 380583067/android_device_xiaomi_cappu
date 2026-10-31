@@ -1,0 +1,5 @@
+// cappu 专用 NetworkStack 资源覆盖层；实际 URL 配置位于 res/values/config.xml。
+runtime_resource_overlay {
+    name: "CappuNetworkStackOverlay",
+    product_specific: true,
+}

@@ -1,3 +1,4 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 # ==============================================
 # Policy File of /system/bin/vtservice Executable File
 
@@ -9,7 +10,8 @@
 # "mtkimsapdomain" is for IMS repo phase 3, mean all permiton for IMCB/UA
 # ==============================================
 
-type vtservice_exec , exec_type, file_type;
+# Android 12 Treble: the matching file_contexts path is /system/bin/vtservice.
+type vtservice_exec, system_file_type, exec_type, file_type;
 type vtservice ,domain;
 typeattribute vtservice coredomain;
 
@@ -39,7 +41,7 @@ init_daemon_domain(vtservice_hidl)
 # Operation : VT development
 # Purpose : Add vtservice to support video telephony functionality
 #           3G VT/ViLTE both use this service which will also communication with IMCB/Rild
-allow vtservice self:capability dac_override;
+# Android 12 forbids DAC-bypass capabilities for these legacy device domains; keep access controlled by the specific SELinux file and device labels.
 allow vtservice soc_vt_svc_socket:sock_file write;
 allow vtservice soc_vt_tcv_socket:sock_file write;
 allow vtservice rild_oem_socket:sock_file write;
@@ -65,7 +67,8 @@ allow vtservice mediaserver_service:service_manager find;
 allow vtservice power_service:service_manager find;
 allow vtservice batterystats_service:service_manager find;
 
-allow vtservice_hidl vtservice_service:service_manager add;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/public/domain.te:648; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow vtservice_hidl vtservice_service:service_manager add;
 unix_socket_connect(vtservice_hidl, rild_oem, mtkrild)
 allow vtservice_hidl mtkrild:unix_stream_socket connectto;
 
@@ -148,10 +151,16 @@ allow vtservice cameraserver:fd use;
 #============= vtservice ==============
 #Change VTS uid to media
 #=====================================
-allow vtservice mediacodec_service:service_manager find;
+# Android 12 removed the legacy media.codec service_contexts entry; Codec2
+# discovery uses its HAL service, while this MTK client already has the
+# direct mediacodec binder permission below. Do not reference the removed
+# private mediacodec_service type from vendor policy.
 allow vtservice mediacodec:binder call;
 allow vtservice qtaguid_device:chr_file r_file_perms;
-allow vtservice qtaguid_proc:file rw_file_perms;
+# cappu Android 12: qtaguid_proc became separate ctrl and stats labels; retain
+# the existing service access across those two exact proc entries.
+allow vtservice proc_qtaguid_ctrl:file rw_file_perms;
+allow vtservice proc_qtaguid_stat:file rw_file_perms;
 allow vtservice priv_app:binder call;
 
 #============= vtservice ==============
@@ -184,6 +193,10 @@ hal_client_domain(vtservice, hal_pq)
 # Stage: O Migration, SQC
 # Purpose: Allow to use shared memory for HAL PQ
 hal_client_domain(vtservice, hal_allocator)
+# Video telephony obtains OMX and graphics buffers only through the designated
+# Android 12 HAL client attributes, replacing its old direct lookups.
+hal_client_domain(vtservice, hal_omx)
+hal_client_domain(vtservice, hal_graphics_allocator)
 
 # Date : WK17.28
 # Stage: O Migration, SQC
@@ -195,11 +208,13 @@ allow vtservice vtservice_service:service_manager add;
 # HiDL porting
 #=====================================
 allow vtservice hwservicemanager:binder call;
-allow vtservice hwservicemanager_prop:file { getattr open read }; 
-allow vtservice debugfs_tracing:file write;
+get_prop(vtservice, hwservicemanager_prop)
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow vtservice debugfs_tracing:file write;
 allow vtservice system_file:dir read;
 allow vtservice system_file:dir open; 
-allow vtservice debugfs_tracing:file open;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow vtservice debugfs_tracing:file open;
 
 # give permission for hal client
 allow vtservice mtk_hal_videotelephony_hwservice :hwservice_manager find;
@@ -213,9 +228,9 @@ hwbinder_use(vtservice_hidl)
 binder_call(vtservice, vtservice_hidl)
 binder_call(vtservice_hidl, vtservice)
 
-allow vtservice_hidl hwservicemanager_prop:file open;
-allow vtservice_hidl hwservicemanager_prop:file read;
-allow vtservice_hidl hwservicemanager_prop:file getattr;
+get_prop(vtservice_hidl, hwservicemanager_prop)
+get_prop(vtservice_hidl, hwservicemanager_prop)
+get_prop(vtservice_hidl, hwservicemanager_prop)
 
 allow vtservice_hidl debugfs_tracing:file open;
 allow vtservice_hidl debugfs_tracing:file write;
@@ -226,36 +241,43 @@ allow vtservice_hidl rild:unix_stream_socket connectto;
 net_domain(vtservice_hidl)
 
 # for codec acces dev/ion
-allow aee_aedv vtservice_exec:file read;
+# Android 12 Treble: AEE is vendor-side and cannot read an executable labeled in /system.
+# The crash collector should use its exported dump/log interfaces instead.
+
 allow vtservice ion_device:chr_file { open read };
 
 # for MA socket rebind
-allow vtservice hal_omx_hwservice:hwservice_manager find;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/public/hal_omx.te:21; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow vtservice hal_omx_hwservice:hwservice_manager find;
 allow vtservice mediametrics_service:service_manager find;
-allow vtservice mtk_em_video_log_acodec_prop:file read;
-allow vtservice mtk_em_video_log_sf_postbuffer_prop:file r_file_perms;
+get_prop(vtservice, mtk_em_video_log_acodec_prop)
+get_prop(vtservice, mtk_em_video_log_sf_postbuffer_prop)
 allow vtservice mediametrics:binder call;
 
 allow vtservice self:udp_socket { bind create read write connect getattr setopt};
 allow vtservice node:udp_socket node_bind;
-allow vtservice mtk_em_video_log_acodec_prop:file r_file_perms;
+get_prop(vtservice, mtk_em_video_log_acodec_prop)
 
 allow vtservice debugfs_ion:dir search;
 allow vtservice fwmarkd_socket:sock_file write;
 allow vtservice hal_graphics_allocator_default:binder call;
 allow vtservice hal_graphics_allocator_default:fd use;
-allow vtservice hal_graphics_allocator_hwservice:hwservice_manager find;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/public/hal_graphics_allocator.te:4; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow vtservice hal_graphics_allocator_hwservice:hwservice_manager find;
 allow vtservice hal_graphics_mapper_hwservice:hwservice_manager find;
 allow vtservice netd:unix_stream_socket connectto;
-allow vtservice proc:file { ioctl open read };
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow vtservice proc:file { ioctl open read };
 allow vtservice ion_device:chr_file ioctl;
 allow vtservice MTK_SMI_device:chr_file { read write ioctl open };
-allow vtservice mtk_em_video_venc_h264_prop:file read;
-allow vtservice proc:file getattr;
-allow vtservice sysfs:file rw_file_perms;
+get_prop(vtservice, mtk_em_video_venc_h264_prop)
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow vtservice proc:file getattr;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow vtservice sysfs:file rw_file_perms;
 allow vtservice mtk_cmdq_device:chr_file { read ioctl open };
 allow vtservice_hidl proc:file read;
-allow vtservice mtk_em_video_venc_h264_prop:file r_file_perms;
+get_prop(vtservice, mtk_em_video_venc_h264_prop)
 allow vtservice merged_hal_service:fd use;
 allow vtservice merged_hal_service:binder call;
 

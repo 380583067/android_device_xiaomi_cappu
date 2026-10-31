@@ -1,3 +1,4 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 # ==============================================
 # Policy File of /system/bin/thermal_manager Executable File
 
@@ -19,7 +20,8 @@ allow thermal_manager proc_mtkcooler:file rw_file_perms;
 allow thermal_manager proc_mtktz:file rw_file_perms;
 allow thermal_manager proc_thermal:file rw_file_perms;
 allow thermal_manager system_data_file:dir { write add_name };
-allow thermal_manager self:capability { fowner chown fsetid dac_override };
+# Android 12 forbids DAC-bypass capabilities for these legacy device domains; keep access controlled by the specific SELinux file and device labels.
+allow thermal_manager self:capability { fowner chown fsetid };
 
 # Date : WK15.30
 # Operation : Migration
@@ -48,5 +50,5 @@ allow thermal_manager sysfs:file write;
 # Date : WK17.12
 # Operation : Migration
 # Purpose : Allow thermal_manager to notify SPA.
-allow thermal_manager mtk_thermal_config_prop:file { getattr open read };
+get_prop(thermal_manager, mtk_thermal_config_prop)
 allow thermal_manager mtk_thermal_config_prop:property_service set;

@@ -45,7 +45,9 @@ TARGET_KERNEL_ARCH := arm64
 #Kernel Build
 TARGET_KERNEL_SOURCE := kernel/xiaomi/cappu
 TARGET_KERNEL_CONFIG := cappu_defconfig
-TARGET_KERNEL_CROSS_COMPILE_PREFIX := aarch64-linux-android-
+# cappu 的 MT8173 3.18 内核使用原有 GCC 4.9；Android 12 默认 Clang 不适用。
+# 使用构建系统自带绝对工具链路径，避免依赖主机 PATH 中同名编译器。
+TARGET_KERNEL_CLANG_COMPILE := false
 BOARD_KERNEL_IMAGE_NAME := Image.gz-dtb
 MTK_APPENDED_DTB_SUPPORT := yes
 
@@ -98,7 +100,15 @@ TARGET_USE_CUSTOM_LUN_FILE_PATH := /sys/devices/soc/11270000.usb/gadget/lun%d/fi
 # Treble
 PRODUCT_FULL_TREBLE_OVERRIDE := true
 PRODUCT_VENDOR_MOVE_ENABLED := true
-PRODUCT_COMPATIBILITY_MATRIX_LEVEL_OVERRIDE := 27
+# Android 12 linkerconfig only exposes the system-side `sphal` namespace when
+# the matching VNDK APEX is present. cappu's Android 7 vendor image predates
+# VNDK, so build the platform's current VNDK package for its MTK EGL SP-HAL and
+# VNDK-SP dependencies. The build system converts `current` to the platform's
+# numeric runtime ro.vndk.version and auto-includes vndk_package; do not hardcode
+# the string `current` as a runtime property in system.prop.
+BOARD_VNDK_VERSION := current
+# cappu Android 12：FCM level 在 manifest.xml 的 target-level 设置。
+# 旧产品变量已被构建系统移除；API 27 对应 FCM 2。
 
 # Graphics
 TARGET_USES_HWC2 := true
@@ -114,6 +124,11 @@ PRESENT_TIME_OFFSET_FROM_VSYNC_NS := 0
 BOARD_SECCOMP_POLICY += $(DEVICE_PATH)/seccomp
 
 # SELinux
+# Xiaomi Mi Pad 3 shipped with Android Nougat (PRODUCT_SHIPPING_API_LEVEL=24).
+# Android 12's S-launch-only property-owner check is not applicable to this
+# legacy device; retain Treble property neverallows and partition boundaries.
+BUILD_BROKEN_ENFORCE_SYSPROP_OWNER := true
+
 BOARD_SEPOLICY_DIRS += \
         $(DEVICE_PATH)/sepolicy-mtk/basic/non_plat \
         $(DEVICE_PATH)/sepolicy-mtk/bsp/non_plat \
@@ -121,11 +136,12 @@ BOARD_SEPOLICY_DIRS += \
         $(DEVICE_PATH)/sepolicy-mt8173/bsp \
         $(DEVICE_PATH)/sepolicy
 
-BOARD_PLAT_PUBLIC_SEPOLICY_DIR += \
+# cappu Android 12：旧平台扩展策略归入 system_ext，保持与 vendor 策略分区。
+SYSTEM_EXT_PUBLIC_SEPOLICY_DIRS += \
         $(DEVICE_PATH)/sepolicy-mtk/basic/plat_public \
         $(DEVICE_PATH)/sepolicy-mtk/bsp/plat_public
 
-BOARD_PLAT_PRIVATE_SEPOLICY_DIR += \
+SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS += \
         $(DEVICE_PATH)/sepolicy-mtk/basic/plat_private \
         $(DEVICE_PATH)/sepolicy-mtk/bsp/plat_private
 
@@ -143,3 +159,6 @@ WIFI_DRIVER_FW_PATH_P2P := "/vendor/firmware/fw_bcmdhd.bin"
 
 BOARD_USE_SOFT_GATEKEEPER := true
 OVERRIDE_RS_DRIVER := libRSDriver_mtk.so
+
+# cappu 内核已回移 memfd_create（mm/shmem.c），告知旧内核版本探测的客户端。
+TARGET_HAS_MEMFD_BACKPORT := true

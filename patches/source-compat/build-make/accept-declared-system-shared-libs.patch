@@ -1,0 +1,37 @@
+diff --git a/tools/check_elf_file.py b/tools/check_elf_file.py
+index 1ff8e65..8de399f 100755
+--- a/tools/check_elf_file.py
++++ b/tools/check_elf_file.py
+@@ -404,13 +404,27 @@ class Checker(object):
+     missing_shared_libs = False
+ 
+     # Collect the DT_SONAMEs from shared libs specified in the build system.
+-    specified_sonames = {lib.dt_soname for lib in self._shared_libs}
+-
+-    # Chech whether all DT_NEEDED entries are specified.
++    # LOCAL_SYSTEM_SHARED_LIBRARIES has no shared-object path to inspect, but
++    # its explicit names are still valid DT_NEEDED declarations.
++    def normalize_name(name):
++      return name.decode('utf-8') if hasattr(name, 'decode') else name
++
++    specified_sonames = {
++        normalize_name(lib.dt_soname) for lib in self._shared_libs
++    }
++    declared_system_shared_lib_names = {
++        (name if name.endswith('.so') else name + '.so')
++        for name in (normalize_name(value)
++                     for value in system_shared_lib_names)
++    }
++
++    # Check whether all DT_NEEDED entries are specified by either mechanism.
+     for lib in self._file_under_test.dt_needed:
+-      if lib not in specified_sonames:
++      lib_name = normalize_name(lib)
++      if (lib_name not in specified_sonames and
++          lib_name not in declared_system_shared_lib_names):
+         self._error('DT_NEEDED "{}" is not specified in shared_libs.'
+-                    .format(lib.decode('utf-8')))
++                    .format(lib_name))
+         missing_shared_libs = True
+ 
+     if missing_shared_libs:

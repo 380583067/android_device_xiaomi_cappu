@@ -18,10 +18,8 @@ allow kernel vold_device:blk_file rw_file_perms;
 # Purpose :  Access to nvarm for reading MAC. (LOS WIFI feature)
 allow kernel system_data_file:lnk_file r_file_perms;
 
-# Date : WK14.31
-# Operation : Migration
-# Purpose : transit from kernel to aee_core_forwarder domain when executing aee_core_forwarder
-domain_auto_trans(kernel, aee_core_forwarder_exec, aee_core_forwarder)
+# Android 12 starts aee_core_forwarder through its init service transition.
+# A kernel-to-vendor executable transition violates Treble and is unnecessary.
 
 # Date : WK14.43
 # Operation : Migration

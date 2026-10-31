@@ -1,3 +1,4 @@
+# Android 12 app sandboxing forbids reading media/vendor daemon executable labels; clients use Binder APIs instead.
 # ==============================================
 # MTK Policy Rule
 # ==============================================
@@ -49,9 +50,7 @@ userdebug_or_eng(`
 # Operation: Migration
 # Purpose : Move from tk sepolicy for ViLTE
 allow untrusted_app vtservice:dir search;
-allow untrusted_app vtservice:file { read getattr open };
 allow untrusted_app mediaserver:dir search;
-allow untrusted_app mediaserver:file read;
 
 # finger
 allow untrusted_app goodix_fingerprint_service:service_manager { find };

@@ -6,7 +6,8 @@
 # Type Declaration
 # ==============================================
 
-type sn_exec , exec_type, file_type;
+# Android 12 Treble: matching file_contexts labels a /system path; mark this executable as system_file_type so coredomain entrypoints remain in the system partition.
+type sn_exec , system_file_type, exec_type, file_type;
 type sn ,domain;
 
 # New added for move to /system
@@ -31,9 +32,10 @@ init_daemon_domain(sn)
 # Purpose : for L early bring up
 allow sn sdcard_type:dir search;
 allow sn sdcard_type:file { read getattr open };
-allow sn sysfs:file rw_file_perms;
+# Android 12 forbids generic sysfs traversal from coredomains; add a precise
+# exported node label only if this optional service is restored.
 #allow sn tmpfs:lnk_file read;
-allow sn self:capability { dac_read_search dac_override };
+# Android 12 neverallows DAC-bypass capabilities for coredomains.
 allow sn mnt_user_file:dir search;
 allow sn mnt_user_file:lnk_file read;
 #allow sn storage_file:dir search;

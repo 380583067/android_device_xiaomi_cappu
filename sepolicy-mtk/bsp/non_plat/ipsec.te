@@ -56,7 +56,8 @@ allow wo_ipsec wo_charon_exec:file execute_no_trans;
 allow wo_ipsec fwmarkd_socket:sock_file write;
 
 # Purpose :  kernel ip/route operations
-allow wo_ipsec self:capability { net_admin net_bind_service dac_override kill };
+# Android 12 forbids DAC-bypass capabilities for these legacy device domains; keep access controlled by the specific SELinux file and device labels.
+allow wo_ipsec self:capability { net_admin net_bind_service kill };
 
 # Purpose :  send/receive packet to/from peer
 allow wo_ipsec self:tcp_socket { write getattr connect read getopt create };
@@ -89,7 +90,9 @@ allow wo_ipsec proc_net:file { getattr open };
 allow wo_ipsec vendor_configs_file:file ioctl;
 allow wo_ipsec vendor_shell_exec:file { execute read open execute_no_trans getattr };
 allow wo_ipsec netd:unix_stream_socket connectto;
-allow wo_ipsec netd_socket:sock_file write;
+# Android 12 removed the legacy /dev/socket/netd netd_socket label. Drop this
+# obsolete Android 7-era socket-file grant; keep the separate stream rule above
+# until runtime logs can establish whether this vendor IPsec daemon still uses it.
 
 allow wo_ipsec system_data_file:dir getattr;
 allow wo_ipsec vendor_toolbox_exec:file { getattr execute execute_no_trans };

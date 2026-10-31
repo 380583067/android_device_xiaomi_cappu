@@ -11,23 +11,24 @@
 # Access to wake locks
 wakelock_use(rild)
 # Trigger module auto-load.
+# Android 12 removed system_radio_prop and maps supported RIL properties to
+# radio_prop/net_radio_prop. Keep only those explicit current labels rather
+# than restoring a generic grant to a property class that no longer exists.
 allow rild kernel:system module_request;
 
 # Capabilities assigned for rild
 allow rild self:capability { setuid net_admin net_raw };
-allow rild self:capability dac_override;
-
+# Android 12 forbids DAC-bypass capabilities for these legacy device domains; keep access controlled by the specific SELinux file and device labels.
 # Control cgroups
 allow rild cgroup:dir create_dir_perms;
 
 # Property service
 # allow set RIL related properties (radio./net./system./etc)
 set_prop(rild, radio_prop)
-set_prop(rild, net_radio_prop)
-set_prop(rild, system_radio_prop)
+# Android 12 keeps net_radio_prop system-owned. The vendor RIL talks to the
+# framework through the telephony HAL; retain only its AOSP-supported
+# radio_prop and device-owned MTK property access.
 set_prop(rild, persist_ril_prop)
-auditallow rild net_radio_prop:property_service set;
-auditallow rild system_radio_prop:property_service set;
 set_prop(rild, ril_active_md_prop)
 # allow set muxreport control properties
 set_prop(rild, ril_cdma_report_prop)
@@ -50,7 +51,8 @@ allow rild radio_data_file:file create_file_perms;
 allow rild sdcard_type:dir r_dir_perms;
 allow rild system_data_file:dir r_dir_perms;
 allow rild system_data_file:file r_file_perms;
-allow rild system_file:file x_file_perms;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/public/domain.te:1007, system/sepolicy/public/domain.te:939; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow rild system_file:file x_file_perms;
 allow rild proc:file rw_file_perms;
 allow rild proc_net:file w_file_perms;
 
@@ -66,10 +68,11 @@ allow rild self:netlink_route_socket nlmsg_write;
 #allow rild self:socket create_socket_perms;
 
 # Allow read/write to devices/files
-allow rild alarm_device:chr_file rw_file_perms;
+# Android 12's cappu kernel has no legacy /dev/alarm character device.
 allow rild radio_device:chr_file rw_file_perms;
 allow rild radio_device:blk_file r_file_perms;
-allow rild mtd_device:dir search;
+# cappu Android 12: the old MTK mtd_device type was removed; use the exported board type for legacy rules and labels.
+allow rild cappu_mtd_device:dir search;
 # Allow read/write to uart driver (for GPS)
 #allow rild gps_device:chr_file rw_file_perms;
 # Allow read/write to tty devices

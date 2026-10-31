@@ -4,7 +4,8 @@
 # ==============================================
 # Type Declaration
 # ==============================================
-type usp_service_exec , exec_type, file_type;
+# Android 12 Treble: matching file_contexts labels a /system path; mark this executable as system_file_type so coredomain entrypoints remain in the system partition.
+type usp_service_exec , system_file_type, exec_type, file_type;
 typeattribute usp_service coredomain;
 # ==============================================
 # MTK Policy Rule

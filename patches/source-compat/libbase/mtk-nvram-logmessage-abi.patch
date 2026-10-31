@@ -1,0 +1,57 @@
+diff --git a/logging.cpp b/logging.cpp
+index 4942e2f..c048e99 100644
+--- a/logging.cpp
++++ b/logging.cpp
+@@ -36,6 +36,7 @@
+ #include <iostream>
+ #include <limits>
+ #include <mutex>
++#include <new>
+ #include <optional>
+ #include <sstream>
+ #include <string>
+@@ -574,3 +575,44 @@ ScopedLogSeverity::~ScopedLogSeverity() {
+ 
+ }  // namespace base
+ }  // namespace android
++
++// Compatibility-only entry points for Android 8 MTK NVRAM blobs. Keep these
++// assembler-labeled functions out of logging.h so the device-specific legacy
++// overload does not become part of the public VNDK header ABI for every client.
++// Their old constructor symbols delegate to the supported Android 12 overload,
++// preserving the original null-tag behavior while keeping the ABI bridge local.
++namespace {
++void CappuLegacyLogMessageConstructor(android::base::LogMessage* self, const char* file,
++                                      unsigned int line, android::base::LogId log_id,
++                                      android::base::LogSeverity severity, int error) {
++  new (self) android::base::LogMessage(file, line, log_id, severity, nullptr, error);
++}
++}  // namespace
++
++extern "C" __attribute__((visibility("default")))
++void cappu_legacy_logmessage_ctor_complete(android::base::LogMessage* self, const char* file,
++                                           unsigned int line, android::base::LogId log_id,
++                                           android::base::LogSeverity severity, int error)
++    __asm__("_ZN7android4base10LogMessageC1EPKcjNS0_5LogIdENS0_11LogSeverityEi");
++
++extern "C" void cappu_legacy_logmessage_ctor_complete(android::base::LogMessage* self,
++                                                       const char* file, unsigned int line,
++                                                       android::base::LogId log_id,
++                                                       android::base::LogSeverity severity,
++                                                       int error) {
++  CappuLegacyLogMessageConstructor(self, file, line, log_id, severity, error);
++}
++
++extern "C" __attribute__((visibility("default")))
++void cappu_legacy_logmessage_ctor_base(android::base::LogMessage* self, const char* file,
++                                       unsigned int line, android::base::LogId log_id,
++                                       android::base::LogSeverity severity, int error)
++    __asm__("_ZN7android4base10LogMessageC2EPKcjNS0_5LogIdENS0_11LogSeverityEi");
++
++extern "C" void cappu_legacy_logmessage_ctor_base(android::base::LogMessage* self,
++                                                   const char* file, unsigned int line,
++                                                   android::base::LogId log_id,
++                                                   android::base::LogSeverity severity,
++                                                   int error) {
++  CappuLegacyLogMessageConstructor(self, file, line, log_id, severity, error);
++}

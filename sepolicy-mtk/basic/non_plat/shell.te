@@ -12,7 +12,8 @@ get_prop(shell, graphics_config_prop)
 
 # Date : WK17.35
 # Purpose : allow shell to dump the debugging information of camera hal.
-allow shell hal_camera_hwservice:hwservice_manager { find };
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/public/hal_camera.te:5; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow shell hal_camera_hwservice:hwservice_manager { find };
 binder_call(shell, mtk_hal_camera)
 
 # Date : WK17.35

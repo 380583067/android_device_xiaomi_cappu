@@ -1,3 +1,5 @@
+# cappu Android 12：使用内核真实 MMC 控制器路径，第一阶段没有旧 init 创建的别名。
+# system/cust 必须 first_stage_mount；protect/nvdata 不允许因启动失败自动格式化。
 # 1 "vendor/mediatek/proprietary/hardware/fstab/mt8173/fstab.in"
 # 1 "<built-in>"
 # 1 "<command-line>"
@@ -5,28 +7,28 @@
 # 1 "<command-line>" 2
 # 1 "vendor/mediatek/proprietary/hardware/fstab/mt8173/fstab.in"
 # 42 "vendor/mediatek/proprietary/hardware/fstab/mt8173/fstab.in"
-/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/system /system ext4 ro wait,recoveryonly
+/dev/block/platform/soc/11230000.mmc/by-name/system /system ext4 ro wait,first_stage_mount
 # 53 "vendor/mediatek/proprietary/hardware/fstab/mt8173/fstab.in"
-/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/cust /vendor ext4 ro wait,recoveryonly
+/dev/block/platform/soc/11230000.mmc/by-name/cust /vendor ext4 ro wait,first_stage_mount
 # 70 "vendor/mediatek/proprietary/hardware/fstab/mt8173/fstab.in"
-/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/userdata   /data        ext4   noatime,nosuid,nodev,noauto_da_alloc               wait,check
-/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/cache /cache ext4 noatime,nosuid,nodev,noauto_da_alloc,discard wait,check
-/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/protect1 /vendor/protect_f ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable,
-/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/protect2 /vendor/protect_s ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable,
-/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/nvdata /vendor/nvdata ext4 noatime,nosuid,nodev,noauto_da_alloc,discard wait,check,formattable,
-#/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/persist /vendor/persist ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable,
-/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/frp /persistent emmc defaults defaults
-/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/nvram /nvram emmc defaults defaults
-/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/proinfo /proinfo emmc defaults defaults
-/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/lk /bootloader emmc defaults defaults
-/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/boot /boot emmc defaults defaults
+/dev/block/platform/soc/11230000.mmc/by-name/userdata   /data        ext4   noatime,nosuid,nodev,noauto_da_alloc               wait,check
+/dev/block/platform/soc/11230000.mmc/by-name/cache /cache ext4 noatime,nosuid,nodev,noauto_da_alloc,discard wait,check
+/dev/block/platform/soc/11230000.mmc/by-name/protect1 /vendor/protect_f ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check
+/dev/block/platform/soc/11230000.mmc/by-name/protect2 /vendor/protect_s ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check
+/dev/block/platform/soc/11230000.mmc/by-name/nvdata /vendor/nvdata ext4 noatime,nosuid,nodev,noauto_da_alloc,discard wait,check
+#/dev/block/platform/soc/11230000.mmc/by-name/persist /vendor/persist ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check
+/dev/block/platform/soc/11230000.mmc/by-name/frp /persistent emmc defaults defaults
+/dev/block/platform/soc/11230000.mmc/by-name/nvram /nvram emmc defaults defaults
+/dev/block/platform/soc/11230000.mmc/by-name/proinfo /proinfo emmc defaults defaults
+/dev/block/platform/soc/11230000.mmc/by-name/lk /bootloader emmc defaults defaults
+/dev/block/platform/soc/11230000.mmc/by-name/boot /boot emmc defaults defaults
 # 111 "vendor/mediatek/proprietary/hardware/fstab/mt8173/fstab.in"
-/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/para /misc emmc defaults defaults
-/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/recovery /recovery emmc defaults defaults
-/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/logo /logo emmc defaults defaults
-/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/expdb /expdb emmc defaults defaults
-/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/secro /secro emmc defaults defaults
-/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/seccfg /seccfg emmc defaults defaults
-/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/tee1 /tee1 emmc defaults defaults
-/dev/block/platform/mtk-msdc.0/11230000.MSDC0/by-name/tee2 /tee2 emmc defaults defaults
+/dev/block/platform/soc/11230000.mmc/by-name/para /misc emmc defaults defaults
+/dev/block/platform/soc/11230000.mmc/by-name/recovery /recovery emmc defaults defaults
+/dev/block/platform/soc/11230000.mmc/by-name/logo /logo emmc defaults defaults
+/dev/block/platform/soc/11230000.mmc/by-name/expdb /expdb emmc defaults defaults
+/dev/block/platform/soc/11230000.mmc/by-name/secro /secro emmc defaults defaults
+/dev/block/platform/soc/11230000.mmc/by-name/seccfg /seccfg emmc defaults defaults
+/dev/block/platform/soc/11230000.mmc/by-name/tee1 /tee1 emmc defaults defaults
+/dev/block/platform/soc/11230000.mmc/by-name/tee2 /tee2 emmc defaults defaults
 /devices/soc/11270000.usb* auto vfat defaults voldmanaged=usbotg:auto

@@ -7,7 +7,7 @@ init_daemon_domain(mtk_hal_gnss)
 #TODO:: work around solution, wait for correct solution from google
 vndbinder_use(mtk_hal_gnss)
 
-r_dir_file(mtk_hal_gnss, system_file)
+# Android 12 Treble: GNSS runtime data and libraries belong to the vendor partition.
 
 # Communicate over a socket created by mnld process.
 #allow mtk_hal_gnss debuggerd:fd use;

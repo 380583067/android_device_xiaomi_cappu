@@ -1,3 +1,4 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 # ==============================================
 # MTK Policy Rule
 # ==============================================
@@ -45,13 +46,13 @@ allow mediacodec proc_mtktz:file { read open };
 # Date : WK17.07
 # Operation : N Migration
 # Purpose: For engineermode setting video log
-allow mediacodec mtk_em_video_log_acodec_prop:file r_file_perms;
-allow mediacodec mtk_em_video_log_sf_postbuffer_prop:file r_file_perms;
-allow mediacodec mtk_em_video_log_omx_prop:file r_file_perms;
-allow mediacodec mtk_em_video_log_vdec_prop:file r_file_perms;
-allow mediacodec mtk_em_video_log_svp_prop:file r_file_perms;
-allow mediacodec mtk_em_video_log_mjc_prop:file r_file_perms;
-allow mediacodec mtk_em_video_venc_h264_prop:file r_file_perms;
+get_prop(mediacodec, mtk_em_video_log_acodec_prop)
+get_prop(mediacodec, mtk_em_video_log_sf_postbuffer_prop)
+get_prop(mediacodec, mtk_em_video_log_omx_prop)
+get_prop(mediacodec, mtk_em_video_log_vdec_prop)
+get_prop(mediacodec, mtk_em_video_log_svp_prop)
+get_prop(mediacodec, mtk_em_video_log_mjc_prop)
+get_prop(mediacodec, mtk_em_video_venc_h264_prop)
 
 # Date : WK17.23
 # Stage: O Migration, SQC

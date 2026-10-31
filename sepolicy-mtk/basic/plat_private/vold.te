@@ -5,4 +5,5 @@
 # volume manager
 
 #============= vold ==============
-allow vold debugfs_tracing:file write;
+# Android 12 keeps tracefs/debugfs private to approved tracing services; vold
+# performs storage management through its platform and vendor interfaces.

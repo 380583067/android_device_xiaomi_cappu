@@ -1,0 +1,13 @@
+# cappu Android 7 的 MTK HWC 直接依赖非 VNDK 的 system/lib64/libgui.so。
+# 本服务覆盖平台 composer rc，仅对 HWC 进程设置 LD_LIBRARY_PATH；Android 12
+# linker 会优先搜索此路径并保留默认 linkerconfig/APEX namespace 给其他进程。
+service vendor.hwcomposer-2-1 /vendor/bin/hw/android.hardware.graphics.composer@2.1-service
+    override
+    interface android.hardware.graphics.composer@2.1::IComposer default
+    class hal animation
+    user system
+    group graphics drmrpc
+    capabilities SYS_NICE
+    setenv LD_LIBRARY_PATH /system/lib64
+    onrestart restart surfaceflinger
+    writepid /dev/cpuset/system-background/tasks

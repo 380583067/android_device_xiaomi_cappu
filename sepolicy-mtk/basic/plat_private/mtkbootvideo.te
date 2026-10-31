@@ -6,7 +6,8 @@ typeattribute mtkbootvideo coredomain;
 
 init_daemon_domain(mtkbootvideo)
 
-type mtkbootvideo_exec, exec_type, file_type;
+# Android 12 Treble: matching file_contexts labels a /system path; mark this executable as system_file_type so coredomain entrypoints remain in the system partition.
+type mtkbootvideo_exec, system_file_type, exec_type, file_type;
 
 # Date W17.39
 # Operation Migration
@@ -38,10 +39,9 @@ allow mtkbootvideo hal_graphics_allocator:fd use;
 # Fences
 allow mtkbootvideo hal_graphics_composer:fd use;
 
-# Read access to pseudo filesystems.
-r_dir_file(mtkbootvideo, proc)
+# Android 12 rejects unrestricted proc/sysfs access from coredomains. Keep only
+# the explicitly labelled proc_meminfo input and cgroup access required here.
 allow mtkbootvideo proc_meminfo:file r_file_perms;
-r_dir_file(mtkbootvideo, sysfs)
 r_dir_file(mtkbootvideo, cgroup)
 
 # System file accesses.
@@ -89,7 +89,6 @@ allow mtkbootvideo gpu_device:dir search;
 
 
 #============= bootanim ==============
-allow mtkbootvideo debugfs_tracing:file write;
+# Android 12 keeps tracefs/debugfs private to approved tracing services.
 
 #============= bootanim ==============
-allow mtkbootvideo debugfs_tracing:file open;

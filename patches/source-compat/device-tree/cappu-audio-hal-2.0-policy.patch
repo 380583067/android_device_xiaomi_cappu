@@ -1,0 +1,33 @@
+diff --git a/audio/audio_policy.conf b/audio/audio_policy.conf
+index fe97e9a..93fdf2b 100644
+--- a/audio/audio_policy.conf
++++ b/audio/audio_policy.conf
+@@ -86,7 +86,8 @@ audio_hw_modules {
+       attached_output_devices AUDIO_DEVICE_OUT_SPEAKER
+       default_output_device AUDIO_DEVICE_OUT_SPEAKER
+       attached_input_devices AUDIO_DEVICE_IN_BUILTIN_MIC
+-      audio_hal_version 3.0
++      # Match the MT8173 vendor audio service, which exposes HIDL HAL 2.0.
++      audio_hal_version 2.0
+     }
+     outputs {
+       primary {
+diff --git a/audio/audio_policy_configuration.xml b/audio/audio_policy_configuration.xml
+index d3e960c..4aa9d10 100644
+--- a/audio/audio_policy_configuration.xml
++++ b/audio/audio_policy_configuration.xml
+@@ -44,7 +44,13 @@
+     -->
+     <modules>
+         <!-- Primary Audio HAL -->
+-        <module name="primary" halVersion="3.0">
++        <!--
++            cappu uses the legacy MT8173 vendor audio service, which registers
++            android.hardware.audio@2.0::IDevicesFactory/default. Keep the
++            policy declaration at HAL 2.0 so AudioPolicyManager selects the
++            interface that this vendor implementation actually provides.
++        -->
++        <module name="primary" halVersion="2.0">
+             <attachedDevices>
+                 <item>Speaker</item>
+                 <item>Built-In Mic</item>

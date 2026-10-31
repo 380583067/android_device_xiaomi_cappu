@@ -1,0 +1,3819 @@
+diff --git a/0001-Add-support-for-getting-updates-for-theme-color-chan.patch b/0001-Add-support-for-getting-updates-for-theme-color-chan.patch
+index a0aae3f505de33999577eb3e720522f3db16e60d..7066dbd261177212e48845c134e5e0e1ba6baf83 100644
+--- a/0001-Add-support-for-getting-updates-for-theme-color-chan.patch
++++ b/0001-Add-support-for-getting-updates-for-theme-color-chan.patch
+@@ -1,7 +1,7 @@
+-From 06afa32a6e8149dbdd3238341cd0c5653ff65f8c Mon Sep 17 00:00:00 2001
++From 83e74875fa43751de5e1a0cb4a1a16253f54aabf Mon Sep 17 00:00:00 2001
+ From: Danny Baumann <dannybaumann@web.de>
+ Date: Thu, 18 May 2017 11:04:40 +0200
+-Subject: [PATCH 01/13] Add support for getting updates for theme color
++Subject: [PATCH 01/12] Add support for getting updates for theme color
+  changes.
+ 
+ ---
+@@ -14,10 +14,10 @@ Subject: [PATCH 01/13] Add support for getting updates for theme color
+  6 files changed, 75 insertions(+)
+ 
+ diff --git a/android_webview/glue/java/src/com/android/webview/chromium/WebViewChromium.java b/android_webview/glue/java/src/com/android/webview/chromium/WebViewChromium.java
+-index 64e72fac680bd..3f3542900663b 100644
++index f2eaa10d6c5ee..5a554452d2c33 100644
+ --- a/android_webview/glue/java/src/com/android/webview/chromium/WebViewChromium.java
+ +++ b/android_webview/glue/java/src/com/android/webview/chromium/WebViewChromium.java
+-@@ -94,6 +94,7 @@ import org.chromium.components.embedder_support.application.ClassLoaderContextWr
++@@ -90,6 +90,7 @@ import org.chromium.components.embedder_support.application.ClassLoaderContextWr
+  import org.chromium.content_public.browser.MessagePayload;
+  import org.chromium.content_public.browser.NavigationHistory;
+  import org.chromium.content_public.browser.SmartClipProvider;
+@@ -25,7 +25,7 @@ index 64e72fac680bd..3f3542900663b 100644
+  import org.chromium.url.GURL;
+  
+  import java.io.BufferedWriter;
+-@@ -1414,6 +1415,13 @@ class WebViewChromium
++@@ -2511,6 +2512,13 @@ class WebViewChromium
+          }
+      }
+  
+@@ -40,10 +40,10 @@ index 64e72fac680bd..3f3542900663b 100644
+      public int getContentHeight() {
+          // This is an inspectable property and a ViewDebug exported property - don't forbid builder.
+ diff --git a/android_webview/glue/java/src/com/android/webview/chromium/WebViewContentsClientAdapter.java b/android_webview/glue/java/src/com/android/webview/chromium/WebViewContentsClientAdapter.java
+-index d8fc5c353b1ea..81804ba3b1baf 100644
++index a76418fcec396..1dcafd344872f 100644
+ --- a/android_webview/glue/java/src/com/android/webview/chromium/WebViewContentsClientAdapter.java
+ +++ b/android_webview/glue/java/src/com/android/webview/chromium/WebViewContentsClientAdapter.java
+-@@ -64,6 +64,8 @@ import org.chromium.components.embedder_support.util.WebResourceResponseInfo;
++@@ -63,6 +63,8 @@ import org.chromium.components.embedder_support.util.WebResourceResponseInfo;
+  import org.chromium.content_public.browser.util.DialogTypeRecorder;
+  
+  import java.lang.ref.WeakReference;
+@@ -52,7 +52,7 @@ index d8fc5c353b1ea..81804ba3b1baf 100644
+  import java.security.Principal;
+  import java.security.PrivateKey;
+  import java.security.cert.X509Certificate;
+-@@ -105,6 +107,9 @@ class WebViewContentsClientAdapter extends SharedWebViewContentsClientAdapter {
++@@ -106,6 +108,9 @@ class WebViewContentsClientAdapter extends SharedWebViewContentsClientAdapter {
+      private WeakHashMap<AwPermissionRequest, WeakReference<PermissionRequestAdapter>>
+              mOngoingPermissionRequests;
+  
+@@ -62,8 +62,8 @@ index d8fc5c353b1ea..81804ba3b1baf 100644
+      /**
+       * Adapter constructor.
+       *
+-@@ -115,6 +120,17 @@ class WebViewContentsClientAdapter extends SharedWebViewContentsClientAdapter {
+-         super(awContents, webViewDelegate);
++@@ -117,6 +122,17 @@ class WebViewContentsClientAdapter extends SharedWebViewContentsClientAdapter {
++         super(webView, webViewDelegate, context);
+          try (ScopedSysTraceEvent event =
+                  ScopedSysTraceEvent.scoped("WebView.APICallback.WebViewClient.constructor")) {
+ +
+@@ -80,7 +80,7 @@ index d8fc5c353b1ea..81804ba3b1baf 100644
+              // See //android_webview/docs/how-does-on-create-window-work.md for more details.
+              mUiThreadHandler =
+                      new Handler() {
+-@@ -1070,6 +1086,24 @@ class WebViewContentsClientAdapter extends SharedWebViewContentsClientAdapter {
++@@ -1083,6 +1099,24 @@ class WebViewContentsClientAdapter extends SharedWebViewContentsClientAdapter {
+          }
+      }
+  
+@@ -93,7 +93,7 @@ index d8fc5c353b1ea..81804ba3b1baf 100644
+ +            TraceEvent.begin("WebViewContentsClientAdapter.onThemeColorChanged");
+ +            if (mWebChromeClient != null && sWebChromeClientThemeColorMethod != null) {
+ +                if (TRACE) Log.d(TAG, "onThemeColorChanged=" + color);
+-+                sWebChromeClientThemeColorMethod.invoke(mWebChromeClient, getWebView(), color);
+++                sWebChromeClientThemeColorMethod.invoke(mWebChromeClient, mWebView, color);
+ +            }
+ +        } catch (IllegalAccessException | InvocationTargetException e) {
+ +            // ignored
+@@ -102,14 +102,14 @@ index d8fc5c353b1ea..81804ba3b1baf 100644
+ +        }
+ +    }
+ +
+-     private static class AwHttpAuthHandlerAdapter extends HttpAuthHandler {
++     private static class AwHttpAuthHandlerAdapter extends android.webkit.HttpAuthHandler {
+          private final AwHttpAuthHandler mAwHandler;
+  
+ diff --git a/android_webview/java/src/org/chromium/android_webview/AwContentsClient.java b/android_webview/java/src/org/chromium/android_webview/AwContentsClient.java
+-index a7e8406938a33..c2402ece6e8ee 100644
++index 5dd2766f4b087..df4a84742af1a 100644
+ --- a/android_webview/java/src/org/chromium/android_webview/AwContentsClient.java
+ +++ b/android_webview/java/src/org/chromium/android_webview/AwContentsClient.java
+-@@ -151,6 +151,8 @@ public abstract class AwContentsClient {
++@@ -138,6 +138,8 @@ public abstract class AwContentsClient {
+  
+      public abstract void onProgressChanged(int progress);
+  
+@@ -156,12 +156,12 @@ index 6ec0565b748a8..974b94a7b64f2 100644
+          DoUpdateVisitedHistoryInfo info = new DoUpdateVisitedHistoryInfo(url, isReload);
+          mHandler.sendMessage(mHandler.obtainMessage(MSG_DO_UPDATE_VISITED_HISTORY, info));
+ diff --git a/android_webview/java/src/org/chromium/android_webview/AwWebContentsObserver.java b/android_webview/java/src/org/chromium/android_webview/AwWebContentsObserver.java
+-index 214e3aafc6516..ac73da6ae931f 100644
++index e7d0814121d7c..9b9b0a4c1a926 100644
+ --- a/android_webview/java/src/org/chromium/android_webview/AwWebContentsObserver.java
+ +++ b/android_webview/java/src/org/chromium/android_webview/AwWebContentsObserver.java
+-@@ -275,6 +275,14 @@ public class AwWebContentsObserver extends WebContentsObserver {
+-                             0, new PageCommitVisibleCallback(navigation));
+-                 });
++@@ -227,6 +227,14 @@ public class AwWebContentsObserver extends WebContentsObserver {
++                     });
++         }
+  
+ +        if (client != null) {
+ +            AwContents awContents = mAwContents.get();
+@@ -174,7 +174,7 @@ index 214e3aafc6516..ac73da6ae931f 100644
+          if (client != null && navigation.isPrimaryMainFrameFragmentNavigation()) {
+              // Note fragment navigations do not have a matching onPageStarted.
+              client.getCallbackHelper().postOnPageFinished(url);
+-@@ -293,6 +301,13 @@ public class AwWebContentsObserver extends WebContentsObserver {
++@@ -245,6 +253,13 @@ public class AwWebContentsObserver extends WebContentsObserver {
+          }
+      }
+  
+@@ -204,5 +204,5 @@ index c56d85c5c0551..807fb795d1ecc 100644
+      public WebResourceResponseInfo shouldInterceptRequest(AwWebResourceRequest request) {
+          return null;
+ -- 
+-2.53.0
++2.43.0
+ 
+diff --git a/0002-Add-xxxhdpi-icon_webview.png-to-BUILD.gn.patch b/0002-Add-xxxhdpi-icon_webview.png-to-BUILD.gn.patch
+index 1adcc098083daa0fcfb78a1f8a1bf1825e530e1e..2398a145134e4ac37a2a357a9f90a401db6f1edc 100644
+--- a/0002-Add-xxxhdpi-icon_webview.png-to-BUILD.gn.patch
++++ b/0002-Add-xxxhdpi-icon_webview.png-to-BUILD.gn.patch
+@@ -1,17 +1,17 @@
+-From 370dc271ca7619a1d3453fc749e0fb42dafb5a40 Mon Sep 17 00:00:00 2001
++From 2dd6d29c49ce8b53599129eb46a42c97560f965e Mon Sep 17 00:00:00 2001
+ From: "Kevin F. Haggerty" <haggertk@lineageos.org>
+ Date: Tue, 19 May 2020 17:21:42 -0600
+-Subject: [PATCH 02/13] Add xxxhdpi icon_webview.png to BUILD.gn
++Subject: [PATCH 02/12] Add xxxhdpi icon_webview.png to BUILD.gn
+ 
+ ---
+  android_webview/nonembedded/BUILD.gn | 1 +
+  1 file changed, 1 insertion(+)
+ 
+ diff --git a/android_webview/nonembedded/BUILD.gn b/android_webview/nonembedded/BUILD.gn
+-index d43d8d9b9bda8..936d0bec9fadd 100644
++index 195412cd100e7..b7e5029225592 100644
+ --- a/android_webview/nonembedded/BUILD.gn
+ +++ b/android_webview/nonembedded/BUILD.gn
+-@@ -197,6 +197,7 @@ android_resources("icon_resources") {
++@@ -232,6 +232,7 @@ android_resources("icon_resources") {
+      "java/res_icon/drawable-mdpi/icon_webview.png",
+      "java/res_icon/drawable-xhdpi/icon_webview.png",
+      "java/res_icon/drawable-xxhdpi/icon_webview.png",
+@@ -20,5 +20,5 @@ index d43d8d9b9bda8..936d0bec9fadd 100644
+  }
+  
+ -- 
+-2.53.0
++2.43.0
+ 
+diff --git a/0003-webview-Hard-no-to-persistent-histograms.patch b/0003-webview-Hard-no-to-persistent-histograms.patch
+index 3689b6c766628a22ce39b29774b65f5addc58e92..d39ae3a396c5a84fb2099f20aa286550b32b3b4a 100644
+--- a/0003-webview-Hard-no-to-persistent-histograms.patch
++++ b/0003-webview-Hard-no-to-persistent-histograms.patch
+@@ -1,7 +1,7 @@
+-From 0b154489de4f3f2ff598a5a8103e782ae3ab0d72 Mon Sep 17 00:00:00 2001
++From ce3679e65507fdc96fc85988b13341759dba5c36 Mon Sep 17 00:00:00 2001
+ From: "Kevin F. Haggerty" <haggertk@lineageos.org>
+ Date: Sun, 27 Dec 2020 09:42:54 -0700
+-Subject: [PATCH 03/13] webview: Hard no to persistent histograms
++Subject: [PATCH 03/12] webview: Hard no to persistent histograms
+ 
+ * It's probably some kind of bug somewhere that these are never
+   deleted, but they don't really add value to us in the first
+@@ -15,7 +15,7 @@ Subject: [PATCH 03/13] webview: Hard no to persistent histograms
+  1 file changed, 2 insertions(+)
+ 
+ diff --git a/android_webview/browser/aw_field_trials.cc b/android_webview/browser/aw_field_trials.cc
+-index 35180d58ae39c..3f7f41b343b72 100644
++index cd77dcfb39448..8191b68146acc 100644
+ --- a/android_webview/browser/aw_field_trials.cc
+ +++ b/android_webview/browser/aw_field_trials.cc
+ @@ -37,12 +37,14 @@
+@@ -34,5 +34,5 @@ index 35180d58ae39c..3f7f41b343b72 100644
+  
+  // TODO(crbug.com/40271903): Consider to migrate all WebView feature overrides
+ -- 
+-2.53.0
++2.43.0
+ 
+diff --git a/0004-disable-autofill-server-communication-by-default.patch b/0004-disable-autofill-server-communication-by-default.patch
+index fb9a03cefe4148ca6ae818e6afac3058a4c27d9c..d84dc842f66717130991eaef5fd132dc28af8d0a 100644
+--- a/0004-disable-autofill-server-communication-by-default.patch
++++ b/0004-disable-autofill-server-communication-by-default.patch
+@@ -1,25 +1,25 @@
+-From d901fa64f2c5fdb0dda558eef356e73dce8bf93c Mon Sep 17 00:00:00 2001
++From 67afa8b4a529500992406c412f36872dbd8c7524 Mon Sep 17 00:00:00 2001
+ From: Daniel Micay <danielmicay@gmail.com>
+ Date: Tue, 1 Dec 2020 00:56:57 -0500
+-Subject: [PATCH 04/13] disable autofill server communication by default
++Subject: [PATCH 04/12] disable autofill server communication by default
+ 
+ ---
+  components/autofill/core/common/autofill_debug_features.cc | 2 +-
+  1 file changed, 1 insertion(+), 1 deletion(-)
+ 
+ diff --git a/components/autofill/core/common/autofill_debug_features.cc b/components/autofill/core/common/autofill_debug_features.cc
+-index d39c959b0829c..e3415df651252 100644
++index 50fdb872e42d0..024c2a07705eb 100644
+ --- a/components/autofill/core/common/autofill_debug_features.cc
+ +++ b/components/autofill/core/common/autofill_debug_features.cc
+-@@ -134,7 +134,7 @@ BASE_FEATURE_PARAM(std::string,
++@@ -110,7 +110,7 @@ BASE_FEATURE_PARAM(std::string,
+  // autofill server API url up to the parent "directory" of the "query" and
+  // "upload" resources.
+  // i.e., https://other.autofill.server:port/tbproxy/af/
+ -BASE_FEATURE(kAutofillServerCommunication, base::FEATURE_ENABLED_BY_DEFAULT);
+ +BASE_FEATURE(kAutofillServerCommunication, base::FEATURE_DISABLED_BY_DEFAULT);
+  
+- // When set to a non-zero value, the value is attached as an experiment ID to
+- // all predictions requests to the Autofill server, as if it were an active GWS
++ // Controls attaching the autofill type predictions to their respective
++ // element in the DOM.
+ -- 
+-2.53.0
++2.43.0
+ 
+diff --git a/0005-webview-Disable-autofill-metadata-uploads-by-default.patch b/0005-webview-Disable-autofill-metadata-uploads-by-default.patch
+index 094a54bb4e152eb8585951f4a18328cd347a9e49..de8a2627de6910b99589a444d6eacc942fe02897 100644
+--- a/0005-webview-Disable-autofill-metadata-uploads-by-default.patch
++++ b/0005-webview-Disable-autofill-metadata-uploads-by-default.patch
+@@ -1,7 +1,7 @@
+-From 7941da1f823581784e406d2d100a85a47b889577 Mon Sep 17 00:00:00 2001
++From 0c029ebc93d53b13127b37200a1b87c865ffdce8 Mon Sep 17 00:00:00 2001
+ From: "Kevin F. Haggerty" <haggertk@lineageos.org>
+ Date: Tue, 28 Sep 2021 08:43:01 -0600
+-Subject: [PATCH 05/13] webview: Disable autofill metadata uploads by default
++Subject: [PATCH 05/12] webview: Disable autofill metadata uploads by default
+ 
+ * [haggertk - 2021-11-16] - Update per d85f6c03db147
+   (Reland "[Autofill] Inline kAutofillMetadataUploads")
+@@ -10,10 +10,10 @@ Subject: [PATCH 05/13] webview: Disable autofill metadata uploads by default
+  1 file changed, 1 insertion(+), 1 deletion(-)
+ 
+ diff --git a/components/autofill/core/browser/crowdsourcing/randomized_encoder.cc b/components/autofill/core/browser/crowdsourcing/randomized_encoder.cc
+-index 2ef3fc88e47ec..bc7cbe0655c63 100644
++index 348ccdec09abf..b6c77d5d552d0 100644
+ --- a/components/autofill/core/browser/crowdsourcing/randomized_encoder.cc
+ +++ b/components/autofill/core/browser/crowdsourcing/randomized_encoder.cc
+-@@ -125,7 +125,7 @@ std::string GetEncodingSeed(PrefService* pref_service) {
++@@ -117,7 +117,7 @@ std::string GetEncodingSeed(PrefService* pref_service) {
+  std::optional<RandomizedEncoder> RandomizedEncoder::Create(
+      PrefService* pref_service) {
+    // Early abort if metadata uploads are not enabled.
+@@ -23,5 +23,5 @@ index 2ef3fc88e47ec..bc7cbe0655c63 100644
+    }
+  
+ -- 
+-2.53.0
++2.43.0
+ 
+diff --git a/0006-disable-WebView-variations-support.patch b/0006-disable-WebView-variations-support.patch
+index 09d3e5bd7ce08653a83637d5433b966ec08232ce..ca0aa77677c3fe4d0785ea76f29e6e9aa8a9e48e 100644
+--- a/0006-disable-WebView-variations-support.patch
++++ b/0006-disable-WebView-variations-support.patch
+@@ -1,42 +1,46 @@
+-From 20e328bc75c929325669ba82ce8874ee22eb56a8 Mon Sep 17 00:00:00 2001
++From 19485d6810268a281d54fe99092481f66c4cd925 Mon Sep 17 00:00:00 2001
+ From: Daniel Micay <danielmicay@gmail.com>
+ Date: Thu, 10 Dec 2020 10:09:18 -0500
+-Subject: [PATCH 06/13] disable WebView variations support
++Subject: [PATCH 06/12] disable WebView variations support
+ 
+ ---
+- .../com/android/webview/chromium/WebViewChromiumAwInit.java  | 5 -----
+- .../webview/chromium/WebViewChromiumFactoryProvider.java     | 2 --
+- 2 files changed, 7 deletions(-)
++ .../android/webview/chromium/WebViewChromiumAwInit.java    | 7 -------
++ .../webview/chromium/WebViewChromiumFactoryProvider.java   | 4 ----
++ 2 files changed, 11 deletions(-)
+ 
+ diff --git a/android_webview/glue/java/src/com/android/webview/chromium/WebViewChromiumAwInit.java b/android_webview/glue/java/src/com/android/webview/chromium/WebViewChromiumAwInit.java
+-index 144719cb1a5d8..d77d95921ec55 100644
++index 1cd00fde54f04..ede70ef3154cd 100644
+ --- a/android_webview/glue/java/src/com/android/webview/chromium/WebViewChromiumAwInit.java
+ +++ b/android_webview/glue/java/src/com/android/webview/chromium/WebViewChromiumAwInit.java
+-@@ -367,11 +367,6 @@ public class WebViewChromiumAwInit {
++@@ -678,13 +678,6 @@ public class WebViewChromiumAwInit {
++                     }
+  
+-         AwBrowserProcess.configureChildProcessLauncher(
+-                 mStartupDelegate.shouldForceNativeSandboxedServices());
++                     AwBrowserProcess.configureChildProcessLauncher();
+ -
+--        // finishVariationsInit() must precede native initialization so
+--        // the seed is available when AwFeatureListCreator::SetUpFieldTrials()
+--        // runs.
+--        AwBrowserProcess.finishVariationsInit();
+-     }
++-                    // finishVariationsInitLocked() must precede native initialization so
++-                    // the seed is available when AwFeatureListCreator::SetUpFieldTrials()
++-                    // runs.
++-                    if (!FastVariationsSeedSafeModeAction.hasRun()) {
++-                        finishVariationsInitLocked();
++-                    }
++                 });
+  
+-     private void postBrowserProcessStartTask() {
++         addBrowserProcessStartTasksToQueue(
+ diff --git a/android_webview/glue/java/src/com/android/webview/chromium/WebViewChromiumFactoryProvider.java b/android_webview/glue/java/src/com/android/webview/chromium/WebViewChromiumFactoryProvider.java
+-index 72d9410073214..a47ab8d2487ad 100644
++index ad0ad885249c0..f21c3d13c3113 100644
+ --- a/android_webview/glue/java/src/com/android/webview/chromium/WebViewChromiumFactoryProvider.java
+ +++ b/android_webview/glue/java/src/com/android/webview/chromium/WebViewChromiumFactoryProvider.java
+-@@ -670,8 +670,6 @@ public class WebViewChromiumFactoryProvider implements WebViewFactoryProvider {
++@@ -691,10 +691,6 @@ public class WebViewChromiumFactoryProvider implements WebViewFactoryProvider {
+              // This must happen after pref value has been read and SafeMode setup has completed.
+              setupStartupTaskExperiments(androidXConfig);
+  
+--            AwBrowserProcess.startVariationsInit();
++-            if (!FastVariationsSeedSafeModeAction.hasRun()) {
++-                mAwInit.startVariationsInit();
++-            }
+ -
+              if (WebViewCachedFlags.get()
+-                             .isCachedFeatureEnabled(AwFeatures.WEBVIEW_MOVE_WORK_TO_PROVIDER_INIT)
+-                     && !WebViewCachedFlags.get()
++                     .isCachedFeatureEnabled(AwFeatures.WEBVIEW_MOVE_WORK_TO_PROVIDER_INIT)) {
++                 mAwInit.runNonUiThreadCapableStartupTasks();
+ -- 
+-2.53.0
++2.43.0
+ 
+diff --git a/0007-disable-component-updater-pings-by-default.patch b/0007-disable-component-updater-pings-by-default.patch
+index 816605348f57e8634a3851066c285c2f946526d7..f572edd7a2a18b8703495e9aa0b2f58a3b8ff18a 100644
+--- a/0007-disable-component-updater-pings-by-default.patch
++++ b/0007-disable-component-updater-pings-by-default.patch
+@@ -1,7 +1,7 @@
+-From 5cf65cef737500ee7d67f8dc844cf3cad681701c Mon Sep 17 00:00:00 2001
++From 51800c93632471bc36e2e0f3694d92bcb9811e3c Mon Sep 17 00:00:00 2001
+ From: Daniel Micay <danielmicay@gmail.com>
+ Date: Fri, 27 Nov 2020 03:56:29 -0500
+-Subject: [PATCH 07/13] disable component updater pings by default
++Subject: [PATCH 07/12] disable component updater pings by default
+ 
+ ---
+  .../component_updater_command_line_config_policy.h              | 2 +-
+@@ -21,5 +21,5 @@ index 6c16b4e37a753..a627cb7ffd59c 100644
+  
+    // If non-zero, time interval until the first component update check.
+ -- 
+-2.53.0
++2.43.0
+ 
+diff --git a/0008-Revert-Allow-uses-library-android.ext.adservices.patch b/0008-Revert-Allow-uses-library-android.ext.adservices.patch
+index 7ad0e5ab8bb06d1c4b76cb9b872c6723e6e5f763..0c2bc2da50103e0a735cb8a7bf493c3323cd0478 100644
+--- a/0008-Revert-Allow-uses-library-android.ext.adservices.patch
++++ b/0008-Revert-Allow-uses-library-android.ext.adservices.patch
+@@ -1,7 +1,7 @@
+-From dbee1b8844da14e034f936636a5997a4b1d03ee3 Mon Sep 17 00:00:00 2001
++From b6f0ade0a37f6b5cc9b16006f73789af3cac81d3 Mon Sep 17 00:00:00 2001
+ From: "Kevin F. Haggerty" <haggertk@lineageos.org>
+ Date: Sat, 2 Mar 2024 08:55:45 -0700
+-Subject: [PATCH 08/13] Revert "Allow uses-library android.ext.adservices"
++Subject: [PATCH 08/12] Revert "Allow uses-library android.ext.adservices"
+ 
+ This reverts commit 0c3ae92dd16b763625a4d8c3f05012d9813dee2d.
+ ---
+@@ -16,12 +16,12 @@ This reverts commit 0c3ae92dd16b763625a4d8c3f05012d9813dee2d.
+  ...webview_64_bundle.AndroidManifest.expected |  1 -
+  ...me_webview_bundle.AndroidManifest.expected |  1 -
+  .../0_privacysandbox_AndroidManifest.xml      | 19 +++++++++++++++++++
+- third_party/androidx/customizations.gni       |  3 +++
+- 12 files changed, 22 insertions(+), 10 deletions(-)
++ third_party/androidx/customizations.gni       |  6 ++++++
++ 12 files changed, 25 insertions(+), 10 deletions(-)
+  create mode 100644 third_party/androidx/0_privacysandbox_AndroidManifest.xml
+ 
+ diff --git a/android_webview/expectations/system_webview_32_64_bundle.AndroidManifest.expected b/android_webview/expectations/system_webview_32_64_bundle.AndroidManifest.expected
+-index 8d32b0d9ad424..72b2a5e992935 100644
++index ca072e61ee689..ce8dfe792259b 100644
+ --- a/android_webview/expectations/system_webview_32_64_bundle.AndroidManifest.expected
+ +++ b/android_webview/expectations/system_webview_32_64_bundle.AndroidManifest.expected
+ @@ -509,7 +509,6 @@
+@@ -33,7 +33,7 @@ index 8d32b0d9ad424..72b2a5e992935 100644
+      <uses-library android:name="androidx.window.extensions" android:required="false"/>
+    </application>
+ diff --git a/android_webview/expectations/system_webview_32_bundle.AndroidManifest.expected b/android_webview/expectations/system_webview_32_bundle.AndroidManifest.expected
+-index ebc3e25d79ae3..76f1e0c14e6e4 100644
++index 359a3c539d65c..d0d36cd75da1f 100644
+ --- a/android_webview/expectations/system_webview_32_bundle.AndroidManifest.expected
+ +++ b/android_webview/expectations/system_webview_32_bundle.AndroidManifest.expected
+ @@ -508,7 +508,6 @@
+@@ -45,7 +45,7 @@ index ebc3e25d79ae3..76f1e0c14e6e4 100644
+      <uses-library android:name="androidx.window.extensions" android:required="false"/>
+    </application>
+ diff --git a/android_webview/expectations/system_webview_64_32_bundle.AndroidManifest.expected b/android_webview/expectations/system_webview_64_32_bundle.AndroidManifest.expected
+-index f0783715c7ba7..c3d610c9299a9 100644
++index a6b568486d3f1..72ac6f25bdb38 100644
+ --- a/android_webview/expectations/system_webview_64_32_bundle.AndroidManifest.expected
+ +++ b/android_webview/expectations/system_webview_64_32_bundle.AndroidManifest.expected
+ @@ -508,7 +508,6 @@
+@@ -57,7 +57,7 @@ index f0783715c7ba7..c3d610c9299a9 100644
+      <uses-library android:name="androidx.window.extensions" android:required="false"/>
+    </application>
+ diff --git a/android_webview/expectations/system_webview_64_bundle.AndroidManifest.expected b/android_webview/expectations/system_webview_64_bundle.AndroidManifest.expected
+-index ef6de19b36436..11aa88625bcfa 100644
++index 5859daad6936c..56fb6fc00f9e3 100644
+ --- a/android_webview/expectations/system_webview_64_bundle.AndroidManifest.expected
+ +++ b/android_webview/expectations/system_webview_64_bundle.AndroidManifest.expected
+ @@ -508,7 +508,6 @@
+@@ -69,10 +69,10 @@ index ef6de19b36436..11aa88625bcfa 100644
+      <uses-library android:name="androidx.window.extensions" android:required="false"/>
+    </application>
+ diff --git a/android_webview/expectations/system_webview_bundle.AndroidManifest.expected b/android_webview/expectations/system_webview_bundle.AndroidManifest.expected
+-index 2244ae9f0f14c..f3c9d0864071b 100644
++index 41a26c8ba9e66..39261ba5fc662 100644
+ --- a/android_webview/expectations/system_webview_bundle.AndroidManifest.expected
+ +++ b/android_webview/expectations/system_webview_bundle.AndroidManifest.expected
+-@@ -485,6 +485,5 @@
++@@ -497,6 +497,5 @@
+          android:process=":sandboxed_process9"
+          android:visibleToInstantApps="true">
+      </service>  # DIFF-ANCHOR: e2f3bbbd
+@@ -80,7 +80,7 @@ index 2244ae9f0f14c..f3c9d0864071b 100644
+    </application>
+  </manifest>
+ diff --git a/android_webview/expectations/trichrome_webview_32_64_bundle.AndroidManifest.expected b/android_webview/expectations/trichrome_webview_32_64_bundle.AndroidManifest.expected
+-index e891081578c35..19a1a159d4dbb 100644
++index 0412da609d380..d8d27ed36c186 100644
+ --- a/android_webview/expectations/trichrome_webview_32_64_bundle.AndroidManifest.expected
+ +++ b/android_webview/expectations/trichrome_webview_32_64_bundle.AndroidManifest.expected
+ @@ -508,7 +508,6 @@
+@@ -92,7 +92,7 @@ index e891081578c35..19a1a159d4dbb 100644
+      <uses-static-library android:name="org.chromium.trichromelibrary" android:certDigest="32a2fc74d731105859e5a85df16d95f102d85b22099b8064c5d8915c61dad1e0" android:version="OFFSET=31"/>
+    </application>
+ diff --git a/android_webview/expectations/trichrome_webview_32_bundle.AndroidManifest.expected b/android_webview/expectations/trichrome_webview_32_bundle.AndroidManifest.expected
+-index bf3f3e2ca9043..73b8ddbc40b44 100644
++index c2208400206c0..919b3a5ffcc0f 100644
+ --- a/android_webview/expectations/trichrome_webview_32_bundle.AndroidManifest.expected
+ +++ b/android_webview/expectations/trichrome_webview_32_bundle.AndroidManifest.expected
+ @@ -507,7 +507,6 @@
+@@ -104,7 +104,7 @@ index bf3f3e2ca9043..73b8ddbc40b44 100644
+      <uses-static-library android:name="org.chromium.trichromelibrary" android:certDigest="32a2fc74d731105859e5a85df16d95f102d85b22099b8064c5d8915c61dad1e0" android:version="OFFSET=30"/>
+    </application>
+ diff --git a/android_webview/expectations/trichrome_webview_64_32_bundle.AndroidManifest.expected b/android_webview/expectations/trichrome_webview_64_32_bundle.AndroidManifest.expected
+-index 62a8b6252adaa..abdbc49141729 100644
++index 7dc832d57d4d7..28708e306df1d 100644
+ --- a/android_webview/expectations/trichrome_webview_64_32_bundle.AndroidManifest.expected
+ +++ b/android_webview/expectations/trichrome_webview_64_32_bundle.AndroidManifest.expected
+ @@ -507,7 +507,6 @@
+@@ -116,7 +116,7 @@ index 62a8b6252adaa..abdbc49141729 100644
+      <uses-static-library android:name="org.chromium.trichromelibrary" android:certDigest="32a2fc74d731105859e5a85df16d95f102d85b22099b8064c5d8915c61dad1e0" android:version="OFFSET=33"/>
+    </application>
+ diff --git a/android_webview/expectations/trichrome_webview_64_bundle.AndroidManifest.expected b/android_webview/expectations/trichrome_webview_64_bundle.AndroidManifest.expected
+-index fee986ff01313..08f72b3d3306c 100644
++index 7fc1bab963334..f472084db1d42 100644
+ --- a/android_webview/expectations/trichrome_webview_64_bundle.AndroidManifest.expected
+ +++ b/android_webview/expectations/trichrome_webview_64_bundle.AndroidManifest.expected
+ @@ -507,7 +507,6 @@
+@@ -128,10 +128,10 @@ index fee986ff01313..08f72b3d3306c 100644
+      <uses-static-library android:name="org.chromium.trichromelibrary" android:certDigest="32a2fc74d731105859e5a85df16d95f102d85b22099b8064c5d8915c61dad1e0" android:version="OFFSET=34"/>
+    </application>
+ diff --git a/android_webview/expectations/trichrome_webview_bundle.AndroidManifest.expected b/android_webview/expectations/trichrome_webview_bundle.AndroidManifest.expected
+-index fa80fecc19455..c9397b0030cbe 100644
++index d873ece60663a..bcd903033aaa5 100644
+ --- a/android_webview/expectations/trichrome_webview_bundle.AndroidManifest.expected
+ +++ b/android_webview/expectations/trichrome_webview_bundle.AndroidManifest.expected
+-@@ -485,7 +485,6 @@
++@@ -497,7 +497,6 @@
+          android:process=":sandboxed_process9"
+          android:visibleToInstantApps="true">
+      </service>  # DIFF-ANCHOR: e2f3bbbd
+@@ -165,19 +165,22 @@ index 0000000000000..da6c78ff7b0cc
+ +    </application>
+ +</manifest>
+ diff --git a/third_party/androidx/customizations.gni b/third_party/androidx/customizations.gni
+-index 7a5baf7618cd2..0b763a2699670 100644
++index 334001bfedf8b..cebd24d1c4330 100644
+ --- a/third_party/androidx/customizations.gni
+ +++ b/third_party/androidx/customizations.gni
+-@@ -118,6 +118,9 @@ template("_androidx_prebuilt") {
++@@ -85,6 +85,12 @@ template("_androidx_prebuilt") {
+        # Replace broad library -keep rules with a more limited set in
+        # chrome/android/java/proguard.flags instead.
+        ignore_proguard_configs = true
+ +    } else if (target_name ==
+ +               "androidx_privacysandbox_ads_ads_adservices_java") {
+-+      mergeable_android_manifests = [ "0_privacysandbox_AndroidManifest.xml" ]
+++      if (!is_high_end_android) {
+++        # https://crbug.com/1448095
+++        mergeable_android_manifests = [ "0_privacysandbox_AndroidManifest.xml" ]
+++      }
+      } else if (target_name == "androidx_startup_startup_runtime_java") {
+        # Keeps emoji2 code. See http://crbug.com/1205141
+        ignore_proguard_configs = true
+ -- 
+-2.53.0
++2.43.0
+ 
+diff --git a/0009-bromite-build-utils.patch b/0009-bromite-build-utils.patch
+index 94de4bc59b291ef730f548fc9119f638a373cb52..542fb663d239cee1600d8dfb04e1ec831a541b91 100644
+--- a/0009-bromite-build-utils.patch
++++ b/0009-bromite-build-utils.patch
+@@ -1,10 +1,10 @@
+-From d8d4ce5df475974d89420286ad25eba6b60cfcba Mon Sep 17 00:00:00 2001
++From 030df79895625669a82fb28abd4f2ab6477d46f8 Mon Sep 17 00:00:00 2001
+ From: uazo <uazo@users.noreply.github.com>
+ Date: Fri, 9 Jun 2023 15:11:46 +0000
+-Subject: [PATCH 09/13] bromite build utils
++Subject: [PATCH 09/12] bromite build utils
+ 
+ ---
+- build/android/gyp/java_cpp_enum.py            |  41 ++++++-
++ build/android/gyp/java_cpp_enum.py            |  37 +++++-
+  build/android/gyp/util/build_utils.py         |  25 +++-
+  build/bromite/bromite_utils.gni               |  79 +++++++++++++
+  build/bromite/gyp/cpp_bromite_include.py      |  35 ++++++
+@@ -22,7 +22,7 @@ Subject: [PATCH 09/13] bromite build utils
+  tools/grit/grit/grd_reader.py                 |  27 ++++-
+  tools/grit/grit_rule.gni                      |   2 +-
+  tools/grit/preprocess_if_expr.py              |  32 +++++-
+- 18 files changed, 543 insertions(+), 20 deletions(-)
++ 18 files changed, 539 insertions(+), 20 deletions(-)
+  create mode 100644 build/bromite/bromite_utils.gni
+  create mode 100644 build/bromite/gyp/cpp_bromite_include.py
+  create mode 100644 build/bromite/gyp/cpp_bromite_include.pydeps
+@@ -33,140 +33,134 @@ Subject: [PATCH 09/13] bromite build utils
+  create mode 100755 chrome/browser/flags/android/java/src/org/chromium/chrome/browser/flags/CromiteNativeUtils.java
+ 
+ diff --git a/build/android/gyp/java_cpp_enum.py b/build/android/gyp/java_cpp_enum.py
+-index 6b8f5c89f173e..a8036d5e5bcd5 100755
++index b2eb26354318e..b3091d9beb45a 100755
+ --- a/build/android/gyp/java_cpp_enum.py
+ +++ b/build/android/gyp/java_cpp_enum.py
+-@@ -244,6 +244,7 @@ class DirectiveSet:
++@@ -208,6 +208,7 @@ class DirectiveSet:
+  
+  
+  class HeaderParser:
+-+    include_re = re.compile(r'#include "(.*)"')
+-     single_line_comment_re = re.compile(r'\s*//\s*([^\n]*)')
+-     multi_line_comment_start_re = re.compile(r'\s*/\*')
+-     enum_line_re = re.compile(r'^\s*(\w+)(\s*\=\s*([^,\n]+))?,?')
+-@@ -274,7 +275,7 @@ class HeaderParser:
+-         r'^\s*(?:\[cpp.*\])?\s*enum.*{(?P<enum_entries>.*)}.*$'
+-     )
+- 
+--    def __init__(self, lines, path=''):
+-+    def __init__(self, lines, options, path=''):
+-         self._lines = java_cpp_utils.PreprocessIfBlocks(lines)
+-         self._path = path
+-         self._enum_definitions = []
+-@@ -284,6 +285,7 @@ class HeaderParser:
+-         self._generator_directives = DirectiveSet()
+-         self._multi_line_generator_directive = None
+-         self._current_enum_entry = ''
+-+        self._options = options
+- 
+-     def _ApplyGeneratorDirectives(self):
+-         self._generator_directives.UpdateDefinition(self._current_definition)
+-@@ -312,6 +314,24 @@ class HeaderParser:
+-                 + self._path
+-             )
+- 
+-+        # handles the management of #include files
+-+        include_line = HeaderParser.include_re.match(line)
+-+        if include_line:
+-+            include_file = include_line.groups()[0];
+-+            if not include_file.endswith(".inc"):
+-+                raise Exception('Include file \"' + include_file + '\" must ends with .inc')
+-+
+-+            file_to_include = os.path.join(self._options.gen_dir, include_file)
+-+            if not os.path.exists(file_to_include):
+-+                file_to_include = os.path.join(self._options.root_dir, include_file)
+-+            lines = []
+-+            with open(file_to_include) as include_file_handle:
+-+                lines = include_file_handle.readlines()
+-+
+-+            for new_line in lines:
+-+                self._ParseEnumLine(new_line)
+-+            return
+-+
+-         enum_comment = HeaderParser.single_line_comment_re.match(line)
+-         if enum_comment:
+-             comment = enum_comment.groups()[0]
+-@@ -429,9 +449,9 @@ class HeaderParser:
+-                 )
+++  include_re = re.compile(r'#include "(.*)"')
++   single_line_comment_re = re.compile(r'\s*//\s*([^\n]*)')
++   multi_line_comment_start_re = re.compile(r'\s*/\*')
++   enum_line_re = re.compile(r'^\s*(\w+)(\s*\=\s*([^,\n]+))?,?')
++@@ -230,7 +231,7 @@ class HeaderParser:
++   enum_single_line_re = re.compile(
++       r'^\s*(?:\[cpp.*\])?\s*enum.*{(?P<enum_entries>.*)}.*$')
++ 
++-  def __init__(self, lines, path=''):
+++  def __init__(self, lines, options, path=''):
++     self._lines = java_cpp_utils.PreprocessIfBlocks(lines)
++     self._path = path
++     self._enum_definitions = []
++@@ -240,6 +241,7 @@ class HeaderParser:
++     self._generator_directives = DirectiveSet()
++     self._multi_line_generator_directive = None
++     self._current_enum_entry = ''
+++    self._options = options
++ 
++   def _ApplyGeneratorDirectives(self):
++     self._generator_directives.UpdateDefinition(self._current_definition)
++@@ -266,6 +268,24 @@ class HeaderParser:
++       raise Exception('Multi-line comments in enums are not supported in ' +
++                       self._path)
++ 
+++    # handles the management of #include files
+++    include_line = HeaderParser.include_re.match(line)
+++    if include_line:
+++      include_file = include_line.groups()[0];
+++      if not include_file.endswith(".inc"):
+++        raise Exception('Include file \"' + include_file + '\" must ends with .inc')
+++
+++      file_to_include = os.path.join(self._options.gen_dir, include_file)
+++      if not os.path.exists(file_to_include):
+++        file_to_include = os.path.join(self._options.root_dir, include_file)
+++      lines = []
+++      with open(file_to_include) as include_file_handle:
+++        lines = include_file_handle.readlines()
+++
+++      for new_line in lines:
+++        self._ParseEnumLine(new_line)
+++      return
+++
++     enum_comment = HeaderParser.single_line_comment_re.match(line)
++     if enum_comment:
++       comment = enum_comment.groups()[0]
++@@ -367,9 +387,9 @@ class HeaderParser:
++         self._ParseSingleLineEnum(single_line_enum.group('enum_entries'))
+  
+  
+ -def DoGenerate(source_paths):
+ +def DoGenerate(source_paths, options):
+-     for source_path in source_paths:
+--        enum_definitions = DoParseHeaderFile(source_path)
+-+        enum_definitions = DoParseHeaderFile(source_path, options)
+-         if not enum_definitions:
+-             raise Exception(
+-                 'No enums found in %s\n'
+-@@ -446,11 +466,11 @@ def DoGenerate(source_paths):
+-             yield output_path, output
++   for source_path in source_paths:
++-    enum_definitions = DoParseHeaderFile(source_path)
+++    enum_definitions = DoParseHeaderFile(source_path, options)
++     if not enum_definitions:
++       raise Exception('No enums found in %s\n'
++                       'Did you forget prefixing enums with '
++@@ -382,9 +402,9 @@ def DoGenerate(source_paths):
++       yield output_path, output
+  
+  
+ -def DoParseHeaderFile(path):
+ +def DoParseHeaderFile(path, options):
+-     with open(path, encoding='utf-8') as f:
+-         lines = f.readlines()
+-         preprocessed_lines = java_cpp_utils.ProcessListMacros(lines)
+--        return HeaderParser(preprocessed_lines, path).ParseDefinitions()
+-+        return HeaderParser(preprocessed_lines, options, path).ParseDefinitions()
++   with open(path, encoding='utf-8') as f:
++-    return HeaderParser(f.readlines(), path).ParseDefinitions()
+++    return HeaderParser(f.readlines(), options, path).ParseDefinitions()
+  
+  
+  def GenerateOutput(source_path, enum_definition):
+-@@ -542,11 +562,20 @@ def DoMain(argv):
+-         'input_paths', nargs='+', help='Path to at least one input file.'
+-     )
++@@ -470,11 +490,16 @@ def DoMain(argv):
++                       nargs='+',
++                       help='Path to at least one input file.')
+  
+-+    parser.add_argument(
+-+        '--gen_dir',
+-+        help='Indicates the path to the generated file'
+-+    )
+-+    parser.add_argument(
+-+        '--root_dir',
+-+        help='Indicates the path to the build root'
+-+    )
+++  parser.add_argument('--gen_dir',
+++                      help='Indicates the path to the generated file')
+++  parser.add_argument('--root_dir',
+++                      help='Indicates the path to the build root')
+ +
+-     options = parser.parse_args(argv)
++   options = parser.parse_args(argv)
+  
+-     with action_helpers.atomic_output(options.srcjar) as f:
+-         with zipfile.ZipFile(f, 'w', zipfile.ZIP_STORED) as srcjar:
+--            for output_path, data in DoGenerate(options.input_paths):
+-+            for output_path, data in DoGenerate(options.input_paths, options):
+-                 zip_helpers.add_to_zip_hermetic(srcjar, output_path, data=data)
++   with action_helpers.atomic_output(options.srcjar) as f:
++     with zipfile.ZipFile(f, 'w', zipfile.ZIP_STORED) as srcjar:
++-      for output_path, data in DoGenerate(options.input_paths):
+++      for output_path, data in DoGenerate(options.input_paths, options):
++         zip_helpers.add_to_zip_hermetic(srcjar, output_path, data=data)
+  
+  
+ diff --git a/build/android/gyp/util/build_utils.py b/build/android/gyp/util/build_utils.py
+-index 7fff72d3a08a9..100e5e98c3f78 100644
++index f6f2fd6543bfa..5abb1c86cf3fb 100644
+ --- a/build/android/gyp/util/build_utils.py
+ +++ b/build/android/gyp/util/build_utils.py
+-@@ -438,4 +438,27 @@ def ReadSourcesList(sources_list_file_name):
+-     Note that this function should not be used to parse response files.
+-     """
+-     with open(sources_list_file_name, encoding='utf-8') as f:
+--        return [file_name.strip() for file_name in f]
+-+        files = [file_name.strip() for file_name in f]
+-+        # allows inclusion of all files in the indicated folder
+-+        # in the sources of java-related gn targets.
+-+        # "include_all_directory.java" is a special name and must exist in the
+-+        # folder since gn checks for its existence, but it will not be
+-+        # included in the list.
+-+        # example:
+-+        #
+-+        #   sources += [
+-+        #     "java/src/org/chromium/components/browser_ui/site_settings/impl/include_all_directory.java",
+-+        #   ]
+-+        #
+-+        # will include in source all files found in
+-+        #   "java/src/org/chromium/components/browser_ui/site_settings/impl"
+-+        include_dirs = [f for f in files if f.endswith('include_all_directory.java')]
+-+        for include_file in include_dirs:
+-+            directory = os.path.dirname(include_file)
+-+            for root, dirs, directory_files in os.walk(directory):
+-+                for directory_file in directory_files:
+-+                    files.append(os.path.join(directory, directory_file))
+-+            files = [f for f in files if not f.endswith('include_all_directory.java')
+-+                                     and not f.endswith('.java.tmpl')]
+-+
+-+        return files
++@@ -404,4 +404,27 @@ def ReadSourcesList(sources_list_file_name):
++   Note that this function should not be used to parse response files.
++   """
++   with open(sources_list_file_name, encoding='utf-8') as f:
++-    return [file_name.strip() for file_name in f]
+++    files = [file_name.strip() for file_name in f]
+++    # allows inclusion of all files in the indicated folder
+++    # in the sources of java-related gn targets.
+++    # "include_all_directory.java" is a special name and must exist in the
+++    # folder since gn checks for its existence, but it will not be
+++    # included in the list.
+++    # example:
+++    #
+++    #   sources += [
+++    #     "java/src/org/chromium/components/browser_ui/site_settings/impl/include_all_directory.java",
+++    #   ]
+++    #
+++    # will include in source all files found in
+++    #   "java/src/org/chromium/components/browser_ui/site_settings/impl"
+++    include_dirs = [f for f in files if f.endswith('include_all_directory.java')]
+++    for include_file in include_dirs:
+++      directory = os.path.dirname(include_file)
+++      for root, dirs, directory_files in os.walk(directory):
+++        for directory_file in directory_files:
+++          files.append(os.path.join(directory, directory_file))
+++      files = [f for f in files if not f.endswith('include_all_directory.java')
+++                               and not f.endswith('.java.tmpl')]
+++
+++    return files
+ diff --git a/build/bromite/bromite_utils.gni b/build/bromite/bromite_utils.gni
+ new file mode 100644
+ index 0000000000000..114b812e4c4be
+@@ -437,20 +431,20 @@ index 0000000000000..cfaccd9373e45
+ +../../zip_helpers.py
+ +java_bromite_impl.py
+ diff --git a/build/config/BUILDCONFIG.gn b/build/config/BUILDCONFIG.gn
+-index 2bd205bd7e85f..37b710cb9200c 100644
++index 4d1ac59b9b7dc..48ee6a27d0389 100644
+ --- a/build/config/BUILDCONFIG.gn
+ +++ b/build/config/BUILDCONFIG.gn
+-@@ -871,3 +871,5 @@ if (is_component_build) {
++@@ -829,3 +829,5 @@ if (is_component_build) {
+  set_defaults("component") {
+    configs = default_component_configs
+  }
+ +
+ +import("//build/bromite/bromite_utils.gni")
+ diff --git a/build/config/android/rules.gni b/build/config/android/rules.gni
+-index 757bcaaf69864..08567ba73f2b6 100644
++index 18867073f2af6..851bcf77263f2 100644
+ --- a/build/config/android/rules.gni
+ +++ b/build/config/android/rules.gni
+-@@ -234,6 +234,10 @@ if (!is_robolectric && enable_java_templates) {
++@@ -224,6 +224,10 @@ if (!is_robolectric && enable_java_templates) {
+        _rebased_sources = rebase_path(invoker.sources, root_build_dir)
+  
+        args = [ "--srcjar=$_rebased_srcjar_path" ] + _rebased_sources
+@@ -461,7 +455,7 @@ index 757bcaaf69864..08567ba73f2b6 100644
+        outputs = [ _srcjar_path ]
+      }
+    }
+-@@ -288,7 +292,7 @@ if (!is_robolectric && enable_java_templates) {
++@@ -278,7 +282,7 @@ if (!is_robolectric && enable_java_templates) {
+    #   my.java.package.
+    template("java_cpp_strings") {
+      action_with_pydeps(target_name) {
+@@ -471,10 +465,10 @@ index 757bcaaf69864..08567ba73f2b6 100644
+        # The sources aren't compiled so don't check their dependencies.
+        check_includes = false
+ diff --git a/chrome/android/java/src/org/chromium/chrome/browser/accessibility/settings/ChromeAccessibilitySettingsDelegate.java b/chrome/android/java/src/org/chromium/chrome/browser/accessibility/settings/ChromeAccessibilitySettingsDelegate.java
+-index 80774dba5e3ba..cec824c96051d 100644
++index 2b01d8e45dfcd..1ded065400f79 100644
+ --- a/chrome/android/java/src/org/chromium/chrome/browser/accessibility/settings/ChromeAccessibilitySettingsDelegate.java
+ +++ b/chrome/android/java/src/org/chromium/chrome/browser/accessibility/settings/ChromeAccessibilitySettingsDelegate.java
+-@@ -16,6 +16,11 @@ import org.chromium.components.dom_distiller.core.DistilledPagePrefs;
++@@ -17,6 +17,11 @@ import org.chromium.components.dom_distiller.core.DistilledPagePrefs;
+  import org.chromium.components.user_prefs.UserPrefs;
+  import org.chromium.content_public.browser.BrowserContextHandle;
+  
+@@ -487,7 +481,7 @@ index 80774dba5e3ba..cec824c96051d 100644
+  @NullMarked
+  public class ChromeAccessibilitySettingsDelegate implements AccessibilitySettingsDelegate {
+ diff --git a/chrome/browser/flags/BUILD.gn b/chrome/browser/flags/BUILD.gn
+-index 3d980909ef3fb..8db73f0085e19 100644
++index 8300668495992..dc4bbedae805e 100644
+ --- a/chrome/browser/flags/BUILD.gn
+ +++ b/chrome/browser/flags/BUILD.gn
+ @@ -7,7 +7,8 @@ import("//extensions/buildflags/buildflags.gni")
+@@ -692,7 +686,7 @@ index 0000000000000..e3ed27bc71054
+ +    }
+ +}
+ diff --git a/mojo/public/tools/mojom/mojom_parser.py b/mojo/public/tools/mojom/mojom_parser.py
+-index 557da1bcb141b..0c23a0f669a3d 100755
++index 37f6a0d4af9e3..0d4f166ff65ee 100755
+ --- a/mojo/public/tools/mojom/mojom_parser.py
+ +++ b/mojo/public/tools/mojom/mojom_parser.py
+ @@ -20,6 +20,7 @@ import os
+@@ -703,7 +697,7 @@ index 557da1bcb141b..0c23a0f669a3d 100755
+  from collections import defaultdict
+  
+  from mojom.generate import module
+-@@ -202,15 +203,30 @@ def _CollectAllowedImportsFromBuildMetadata(build_metadata_filename):
++@@ -180,11 +181,26 @@ def _CollectAllowedImportsFromBuildMetadata(build_metadata_filename):
+    collect(build_metadata_filename)
+    return allowed_imports
+  
+@@ -723,33 +717,29 @@ index 557da1bcb141b..0c23a0f669a3d 100755
+ +  return "\n".join(lines)
+  
+  # multiprocessing helper.
+--def _ParseAstHelper(mojom_abspath, mojom_path, enabled_features):
+-+def _ParseAstHelper(mojom_abspath, mojom_path, enabled_features, input_root_paths):
++-def _ParseAstHelper(mojom_abspath, enabled_features):
+++def _ParseAstHelper(mojom_abspath, enabled_features, input_root_paths):
+    with open(mojom_abspath, encoding='utf-8') as f:
+-     # Label the AST with the relative mojom_path, not the absolute path. This
+-     # filename is baked into the serialized .mojom-module (via source
+-     # locations), so an abspath would make the module vary by build root and
+-     # break remote-cache hits for downstream bindings actions.
+--    ast = parser.Parse(f.read(), mojom_path)
+-+    src = _ResolveInclude(mojom_path, input_root_paths)
+-+    ast = parser.Parse(src, mojom_path)
++-    ast = parser.Parse(f.read(), mojom_abspath)
+++    src = _ResolveInclude(mojom_abspath, input_root_paths)
+++    ast = parser.Parse(src, mojom_abspath)
+      conditional_features.RemoveDisabledDefinitions(ast, enabled_features)
+      return mojom_abspath, ast
+  
+-@@ -336,7 +352,7 @@ def _ParseMojoms(
++@@ -304,7 +320,7 @@ def _ParseMojoms(mojom_files,
++       (path, abs_path) for abs_path, path in mojom_files_to_parse.items())
+  
+    logging.info('Parsing %d .mojom into ASTs', len(mojom_files_to_parse))
+-   map_args = (
+--    (mojom_abspath, mojom_path, enabled_features)
+-+    (mojom_abspath, mojom_path, enabled_features, input_root_paths)
+-     for mojom_abspath, mojom_path in mojom_files_to_parse.items()
+-   )
++-  map_args = ((mojom_abspath, enabled_features)
+++  map_args = ((mojom_abspath, enabled_features, input_root_paths)
++               for mojom_abspath in mojom_files_to_parse)
+    for mojom_abspath, ast in _Shard(_ParseAstHelper, map_args):
++     loaded_mojom_asts[mojom_abspath] = ast
+ diff --git a/tools/grit/grit/grd_reader.py b/tools/grit/grit/grd_reader.py
+-index 6a9f69e8c14f8..03d16ada29366 100755
++index 16397abea2a82..c088207169e5a 100755
+ --- a/tools/grit/grit/grd_reader.py
+ +++ b/tools/grit/grit/grd_reader.py
+-@@ -106,11 +106,28 @@ class GrdContentHandler(xml.sax.handler.ContentHandler):
++@@ -96,11 +96,28 @@ class GrdContentHandler(xml.sax.handler.ContentHandler):
+          raise exception.FileNotFound(partname)
+        # Exceptions propagate to the handler in grd_reader.Parse().
+        oldsource = self.source
+@@ -784,7 +774,7 @@ index 6a9f69e8c14f8..03d16ada29366 100755
+      if self.debug:
+        print("End parsing of element %s" % name)
+ diff --git a/tools/grit/grit_rule.gni b/tools/grit/grit_rule.gni
+-index 50a68716e60bf..b0bad928006fa 100644
++index 581027382d400..78e60c75a9a2d 100644
+ --- a/tools/grit/grit_rule.gni
+ +++ b/tools/grit/grit_rule.gni
+ @@ -360,7 +360,7 @@ template("grit") {
+@@ -797,7 +787,7 @@ index 50a68716e60bf..b0bad928006fa 100644
+    }
+  
+ diff --git a/tools/grit/preprocess_if_expr.py b/tools/grit/preprocess_if_expr.py
+-index 37ae315a57098..54207aa6c7e58 100644
++index 35c1b20bc2c83..6a600ee42da7b 100644
+ --- a/tools/grit/preprocess_if_expr.py
+ +++ b/tools/grit/preprocess_if_expr.py
+ @@ -8,6 +8,7 @@ import io
+@@ -808,7 +798,7 @@ index 37ae315a57098..54207aa6c7e58 100644
+  
+  # For Node, EvaluateExpression
+  import grit.node.base
+-@@ -74,6 +75,35 @@ def ExtensionForComments(input_file):
++@@ -71,6 +72,35 @@ def ExtensionForComments(input_file):
+      extension = '.html'
+    return extension
+  
+@@ -844,7 +834,7 @@ index 37ae315a57098..54207aa6c7e58 100644
+  
+  def main(argv):
+    parser = argparse.ArgumentParser()
+-@@ -98,7 +128,7 @@ def main(argv):
++@@ -95,7 +125,7 @@ def main(argv):
+      in_path = os.path.join(in_folder, input_file)
+      content = ""
+      with open(in_path, encoding='utf-8') as f:
+@@ -854,5 +844,5 @@ index 37ae315a57098..54207aa6c7e58 100644
+      removal_comments_extension = None  # None means no removal comments
+      if args.enable_removal_comments:
+ -- 
+-2.53.0
++2.43.0
+ 
+diff --git a/0010-Add-cromite-flags-support.patch b/0010-Add-cromite-flags-support.patch
+index 7b9ce26a23fb45b9f3707cdfc44ab38aad4f133e..c21a3a16774f5c4f31ca1db65001a065efdfa434 100644
+--- a/0010-Add-cromite-flags-support.patch
++++ b/0010-Add-cromite-flags-support.patch
+@@ -1,7 +1,7 @@
+-From 39d7e01a500440f82d5923be55a55e48c240396b Mon Sep 17 00:00:00 2001
++From 01172ce2b0821699c27b6a3770a35a738c049faf Mon Sep 17 00:00:00 2001
+ From: uazo <uazo@users.noreply.github.com>
+ Date: Sat, 18 Nov 2023 09:41:28 +0000
+-Subject: [PATCH 10/13] Add cromite flags support
++Subject: [PATCH 10/12] Add cromite flags support
+ 
+ Add SET_CROMITE_FEATURE_ENABLED*, SET_CROMITE_FEATURE_DISABLED*
+ and CROMITE_FEATURE macros, logic has been adapted from that found
+@@ -19,9 +19,8 @@ License: GPL-2.0-or-later - https://spdx.org/licenses/GPL-2.0-or-later.html
+  .../src/org/chromium/base/FeatureMap.java     |   5 +
+  .../base/ImmutableFlagWithDefault.java        |  25 +++
+  .../base/cached_flags/ValuesReturned.java     |   2 +-
+- base/feature.h                                | 102 +++++++++-
+  base/feature_list.cc                          |  76 ++++++++
+- base/feature_list.h                           |   5 +
++ base/feature_list.h                           |  98 +++++++++-
+  build/android/gyp/java_cpp_features.py        |  15 ++
+  chrome/android/java/res/values/values.xml     |   3 +
+  .../java/res/xml/privacy_preferences.xml      |   4 +
+@@ -100,7 +99,7 @@ License: GPL-2.0-or-later - https://spdx.org/licenses/GPL-2.0-or-later.html
+  .../blink/common/features_h/placeholder.txt   |   1 +
+  .../ui/base/features_cc/placeholder.txt       |   1 +
+  .../ui/base/features_h/placeholder.txt        |   1 +
+- media/base/media_switches.cc                  |   1 +
++ media/base/media_switches.cc                  |   2 +-
+  media/base/media_switches.h                   |   2 +-
+  net/base/features.cc                          |   1 +
+  net/base/features.h                           |   1 +
+@@ -110,7 +109,7 @@ License: GPL-2.0-or-later - https://spdx.org/licenses/GPL-2.0-or-later.html
+  third_party/blink/public/common/features.h    |   1 +
+  ui/base/ui_base_features.cc                   |   1 +
+  ui/base/ui_base_features.h                    |   1 +
+- 96 files changed, 892 insertions(+), 32 deletions(-)
++ 95 files changed, 885 insertions(+), 31 deletions(-)
+  create mode 100644 base/android/java/src/org/chromium/base/ImmutableFlagWithDefault.java
+  create mode 100644 chrome/browser/flags/android/java/src/org/chromium/chrome/browser/flags/cromite/include_all_directory.java
+  create mode 100644 chrome/browser/flags/android/java/src/org/chromium/chrome/browser/flags/cromite/java_template/CromiteCachedFlag.java.tmpl
+@@ -146,10 +145,10 @@ License: GPL-2.0-or-later - https://spdx.org/licenses/GPL-2.0-or-later.html
+  create mode 100755 cromite_flags/ui/base/features_h/placeholder.txt
+ 
+ diff --git a/base/BUILD.gn b/base/BUILD.gn
+-index 37e006910a1bb..cf8e51a11ef57 100644
++index c9811ba7835ed..d643b4ace4a53 100644
+ --- a/base/BUILD.gn
+ +++ b/base/BUILD.gn
+-@@ -242,6 +242,8 @@ source_set("asan_raw_ptr_service") {
++@@ -190,6 +190,8 @@ generate_allowlist_from_histograms_file("memory_dump_provider_name_variants") {
+  # This does not include test code (test support and anything in the test
+  # directory) which should use source_set as is recommended for GN targets).
+  component("base") {
+@@ -158,7 +157,7 @@ index 37e006910a1bb..cf8e51a11ef57 100644
+    sources = [
+      "allocator/allocator_check.cc",
+      "allocator/allocator_check.h",
+-@@ -1134,7 +1136,7 @@ component("base") {
++@@ -1069,7 +1071,7 @@ component("base") {
+      "//build/config/compiler:wglobal_constructors",
+    ]
+  
+@@ -167,7 +166,7 @@ index 37e006910a1bb..cf8e51a11ef57 100644
+      ":check_version_internal",
+      ":simdutf_shim",
+      "//base/allocator:buildflags",
+-@@ -5261,6 +5263,7 @@ if (is_android) {
++@@ -4959,6 +4961,7 @@ if (is_android) {
+        "android/java/src/org/chromium/base/Flag.java",
+        "android/java/src/org/chromium/base/MutableBooleanParamWithSafeDefault.java",
+        "android/java/src/org/chromium/base/MutableFlagWithSafeDefault.java",
+@@ -176,10 +175,10 @@ index 37e006910a1bb..cf8e51a11ef57 100644
+        "android/java/src/org/chromium/base/MutableParamWithSafeDefault.java",
+      ]
+ diff --git a/base/android/feature_map.cc b/base/android/feature_map.cc
+-index 0f0ca8a2092f7..91f7c4199c7d6 100644
++index 6ecd4e2fc2a04..2ba7ed7968fa2 100644
+ --- a/base/android/feature_map.cc
+ +++ b/base/android/feature_map.cc
+-@@ -47,6 +47,11 @@ const Feature* FeatureMap::FindFeatureExposedToJava(
++@@ -46,6 +46,11 @@ const Feature* FeatureMap::FindFeatureExposedToJava(
+  
+  static bool JNI_FeatureMap_IsEnabled(int64_t jfeature_map,
+                                       const std::string& feature_name) {
+@@ -192,10 +191,10 @@ index 0f0ca8a2092f7..91f7c4199c7d6 100644
+    const base::Feature* feature =
+        feature_map->FindFeatureExposedToJava(feature_name);
+ diff --git a/base/android/java/src/org/chromium/base/FeatureMap.java b/base/android/java/src/org/chromium/base/FeatureMap.java
+-index 75cf442d57ddb..3096d1a1f21b6 100644
++index 562bd9048a338..f1f73696aedba 100644
+ --- a/base/android/java/src/org/chromium/base/FeatureMap.java
+ +++ b/base/android/java/src/org/chromium/base/FeatureMap.java
+-@@ -383,6 +383,11 @@ public abstract class FeatureMap {
++@@ -159,6 +159,11 @@ public abstract class FeatureMap {
+          return new MutableFlagWithSafeDefault(this, featureName, defaultValue);
+      }
+  
+@@ -205,8 +204,8 @@ index 75cf442d57ddb..3096d1a1f21b6 100644
+ +    }
+ +
+      private void ensureNativeMapInit() {
+-         if (mNativeMapPtr == 0) {
+-             mNativeMapPtr = getNativeMap();
++         assert FeatureList.isNativeInitialized();
++ 
+ diff --git a/base/android/java/src/org/chromium/base/ImmutableFlagWithDefault.java b/base/android/java/src/org/chromium/base/ImmutableFlagWithDefault.java
+ new file mode 100644
+ index 0000000000000..39b4247404928
+@@ -251,156 +250,11 @@ index 55d33b29a0a30..7a1e9f7e1335a 100644
+  
+      @GuardedBy("sStringValues")
+      private static final Map<String, String> sStringValues = new HashMap<>();
+-diff --git a/base/feature.h b/base/feature.h
+-index be01a04d8d7f8..27506b1ce5512 100644
+---- a/base/feature.h
+-+++ b/base/feature.h
+-@@ -226,12 +226,15 @@ struct BASE_EXPORT LOGICALLY_CONST Feature {
+-   constexpr Feature(const char* name,
+-                     FeatureState default_state,
+-                     bool is_runtime_mutable,
+--                    internal::FeatureMacroHandshake handshake)
+-+                    internal::FeatureMacroHandshake handshake,
+-+                    bool cromite = false, bool is_new_flag = false)
+-       : Feature(name,
+-                 default_state,
+-                 is_runtime_mutable,
+-                 handshake,
+--                /*is_country_specific=*/false) {}
+-+                /*is_country_specific=*/false,
+-+                cromite,
+-+                is_new_flag) {}
+- 
+-   // Non-copyable since:
+-   // - there should be only one `Feature` instance per unique name.
+-@@ -260,6 +263,9 @@ struct BASE_EXPORT LOGICALLY_CONST Feature {
+-   // command line switch.
+-   const FeatureState default_state;
+- 
+-+  const bool is_cromite = false;
+-+  const bool is_new = false;
+-+
+-  protected:
+-   // Base constructor that performs initialization and checks, with an option to
+-   // bypass the country-specific state check for subclasses.
+-@@ -267,9 +273,11 @@ struct BASE_EXPORT LOGICALLY_CONST Feature {
+-                     FeatureState default_state,
+-                     bool is_runtime_mutable,
+-                     internal::FeatureMacroHandshake handshake,
+--                    bool is_country_specific)
+-+                    bool is_country_specific,
+-+                    bool cromite = false, bool is_new_flag = false)
+-       : name(name),
+-         default_state(default_state),
+-+        is_cromite(cromite), is_new(is_new_flag),
+-         cached_value(is_runtime_mutable ? kRuntimeMutabilityMask : 0) {
+-     if (is_country_specific != IsCountrySpecificFeatureState(default_state)) {
+-       LOG(FATAL) << "Pass a country-specific default state if and only if you "
+-@@ -355,7 +363,9 @@ struct BASE_EXPORT LOGICALLY_CONST FeatureWithCountryRestriction
+-                 feature_default_state,
+-                 /*is_runtime_mutable=*/false,
+-                 handshake,
+--                /*is_country_specific=*/true),
+-+                /*is_country_specific=*/true,
+-+                /*cromite=*/false,
+-+                /*is_new_flag=*/false),
+-         countries(countries_list) {}
+- 
+-   FeatureWithCountryRestriction(const FeatureWithCountryRestriction&) = delete;
+-@@ -370,4 +380,88 @@ struct BASE_EXPORT LOGICALLY_CONST FeatureWithCountryRestriction
+- 
+- }  // namespace base
+- 
+-+namespace base {
+-+namespace internal {
+-+
+-+// Perform base::Feature duplicates check and fills overriden states into a
+-+// map that is used at runtime to get an override if available.
+-+class BASE_EXPORT FeatureDefaultStateOverrider {
+-+ public:
+-+  using FeatureOverrideInfo =
+-+      std::pair<std::reference_wrapper<const Feature>, FeatureState>;
+-+
+-+  FeatureDefaultStateOverrider(
+-+      const Feature& feature, FeatureState state);
+-+};
+-+
+-+}  // namespace internal
+-+}  // namespace base
+-+
+-+#define CROMITE_FEATURE(feature, name, default_state) \
+-+  constinit const base::Feature feature(name, default_state, base::internal::FeatureMacroHandshake::kSecret, true, true); \
+-+  _Pragma("clang diagnostic push")                              \
+-+  _Pragma("clang diagnostic ignored \"-Wglobal-constructors\"") \
+-+  static const ::base::internal::FeatureDefaultStateOverrider   \
+-+      g_feature_default_state_overrider_ ##feature {feature, default_state}; \
+-+  _Pragma("clang diagnostic pop")                               \
+-+  static_assert(true, "") /* for a semicolon requirement */
+-+
+-+#define SET_CROMITE_FEATURE_ENABLED(feature) \
+-+  _Pragma("clang diagnostic push")                              \
+-+  _Pragma("clang diagnostic ignored \"-Wglobal-constructors\"") \
+-+  static const ::base::internal::FeatureDefaultStateOverrider   \
+-+      g_feature_default_state_overrider_ ##feature {feature, base::FEATURE_ENABLED_BY_DEFAULT}; \
+-+  _Pragma("clang diagnostic pop")                               \
+-+  static_assert(true, "") /* for a semicolon requirement */
+-+
+-+#define SET_CROMITE_FEATURE_DISABLED(feature) \
+-+  _Pragma("clang diagnostic push")                              \
+-+  _Pragma("clang diagnostic ignored \"-Wglobal-constructors\"") \
+-+  static const ::base::internal::FeatureDefaultStateOverrider   \
+-+      g_feature_default_state_overrider_ ##feature {feature, base::FEATURE_DISABLED_BY_DEFAULT}; \
+-+  _Pragma("clang diagnostic pop")                               \
+-+  static_assert(true, "") /* for a semicolon requirement */
+-+
+-+#define SET_CROMITE_FEATURE_ENABLED_W_NAMESPACE(namespace_value, feature) \
+-+  _Pragma("clang diagnostic push")                              \
+-+  _Pragma("clang diagnostic ignored \"-Wglobal-constructors\"") \
+-+  static const ::base::internal::FeatureDefaultStateOverrider   \
+-+      g_feature_default_state_overrider_ ##feature {namespace_value::feature, base::FEATURE_ENABLED_BY_DEFAULT}; \
+-+  _Pragma("clang diagnostic pop")                               \
+-+  static_assert(true, "") /* for a semicolon requirement */
+-+
+-+#define SET_CROMITE_FEATURE_DISABLED_W_NAMESPACE(namespace_value, feature) \
+-+  _Pragma("clang diagnostic push")                              \
+-+  _Pragma("clang diagnostic ignored \"-Wglobal-constructors\"") \
+-+  static const ::base::internal::FeatureDefaultStateOverrider   \
+-+      g_feature_default_state_overrider_ ##feature {namespace_value::feature, base::FEATURE_DISABLED_BY_DEFAULT}; \
+-+  _Pragma("clang diagnostic pop")                               \
+-+  static_assert(true, "") /* for a semicolon requirement */
+-+
+-+#define BASE_FEATURE_DISABLED_3_ARGS(feature, name, default_state) \
+-+  BASE_FEATURE(feature, name, default_state); \
+-+  static_assert(default_state == base::FEATURE_DISABLED_BY_DEFAULT, "Check default state")
+-+
+-+#define BASE_FEATURE_DISABLED_2_ARGS(name, default_state) \
+-+  BASE_FEATURE(name, default_state); \
+-+  static_assert(default_state == base::FEATURE_DISABLED_BY_DEFAULT, "Check default state")
+-+
+-+#define GET_BASE_FEATURE_DISABLED_MACRO(_1, _2, _3, NAME, ...) NAME
+-+#define BASE_FEATURE_DISABLED(...)                                            \
+-+  GET_BASE_FEATURE_DISABLED_MACRO(__VA_ARGS__, BASE_FEATURE_DISABLED_3_ARGS,  \
+-+                                 BASE_FEATURE_DISABLED_2_ARGS)(__VA_ARGS__)
+-+
+-+#define BASE_FEATURE_ENABLED_3_ARGS(feature, name, default_state) \
+-+  BASE_FEATURE(feature, name, default_state); \
+-+  static_assert(default_state == base::FEATURE_ENABLED_BY_DEFAULT, "Check default state")
+-+
+-+#define BASE_FEATURE_ENABLED_2_ARGS(name, default_state) \
+-+  BASE_FEATURE(name, default_state); \
+-+  static_assert(default_state == base::FEATURE_ENABLED_BY_DEFAULT, "Check default state")
+-+
+-+#define GET_BASE_FEATURE_ENABLED_MACRO(_1, _2, _3, NAME, ...) NAME
+-+#define BASE_FEATURE_ENABLED(...)                                            \
+-+  GET_BASE_FEATURE_ENABLED_MACRO(__VA_ARGS__, BASE_FEATURE_ENABLED_3_ARGS,  \
+-+                                 BASE_FEATURE_ENABLED_2_ARGS)(__VA_ARGS__)
+-+
+- #endif  // BASE_FEATURE_H_
+ diff --git a/base/feature_list.cc b/base/feature_list.cc
+-index e41b0ac1f7a98..e0c6870997054 100644
++index 08f919cf37be9..f13c076c8549d 100644
+ --- a/base/feature_list.cc
+ +++ b/base/feature_list.cc
+-@@ -43,6 +43,31 @@
++@@ -39,6 +39,31 @@
+  
+  namespace base {
+  
+@@ -432,7 +286,7 @@ index e41b0ac1f7a98..e0c6870997054 100644
+  namespace {
+  
+  // Pointer to the FeatureList instance singleton that was set via
+-@@ -770,6 +795,46 @@ bool FeatureList::IsEnabled(const Feature& feature) {
++@@ -501,6 +526,46 @@ bool FeatureList::IsEnabled(const Feature& feature) {
+    return g_feature_list_instance->IsFeatureEnabled(feature);
+  }
+  
+@@ -479,7 +333,7 @@ index e41b0ac1f7a98..e0c6870997054 100644
+  // static
+  bool FeatureList::IsValidFeatureOrFieldTrialName(std::string_view name) {
+    return IsStringASCII(name) && name.find_first_of(",<*") == std::string::npos;
+-@@ -1081,6 +1146,17 @@ void FeatureList::RegisterFeatureAccess(
++@@ -768,6 +833,17 @@ void FeatureList::VisitFeaturesAndParams(FeatureVisitor& visitor,
+  
+  void FeatureList::FinalizeInitialization() {
+    DCHECK(!initialized_);
+@@ -498,11 +352,34 @@ index e41b0ac1f7a98..e0c6870997054 100644
+    field_trial_list_ = FieldTrialList::GetInstance();
+    initialized_ = true;
+ diff --git a/base/feature_list.h b/base/feature_list.h
+-index b78d8a3cb2cab..86a85db0b3eb1 100644
++index 63f62e12f106a..fea1df230c13e 100644
+ --- a/base/feature_list.h
+ +++ b/base/feature_list.h
+-@@ -406,6 +406,11 @@ class BASE_EXPORT FeatureList {
+-   // are effectively constants, and can be queried from any thread.
++@@ -231,8 +231,10 @@ StringStorage(const char (&feature)[N]) -> StringStorage<N - 1>;
++ struct BASE_EXPORT LOGICALLY_CONST Feature {
++   constexpr Feature(const char* name,
++                     FeatureState default_state,
++-                    internal::FeatureMacroHandshake)
++-      : name(name), default_state(default_state) {
+++                    internal::FeatureMacroHandshake,
+++                    bool cromite = false, bool is_new_flag = false)
+++      : name(name), default_state(default_state),
+++        is_cromite(cromite), is_new(is_new_flag) {
++ #if BUILDFLAG(ENABLE_BANNED_BASE_FEATURE_PREFIX)
++     if (std::string_view(name).find(BUILDFLAG(BANNED_BASE_FEATURE_PREFIX)) ==
++         0) {
++@@ -259,6 +261,9 @@ struct BASE_EXPORT LOGICALLY_CONST Feature {
++   // command line switch.
++   const FeatureState default_state;
++ 
+++  const bool is_cromite = false;
+++  const bool is_new = false;
+++
++  private:
++   friend class FeatureList;
++ 
++@@ -539,6 +544,11 @@ class BASE_EXPORT FeatureList {
++   // instance, which is checked in builds with DCHECKs enabled.
+    static bool IsEnabled(const Feature& feature);
+  
+ +  static bool IsCromiteFlag(const std::string& featureName);
+@@ -513,41 +390,130 @@ index b78d8a3cb2cab..86a85db0b3eb1 100644
+    // Some characters are not allowed to appear in feature names or the
+    // associated field trial names, as they are used as special characters for
+    // command-line serialization. This function checks that the strings are ASCII
++@@ -808,4 +818,88 @@ class BASE_EXPORT FeatureList {
++ 
++ }  // namespace base
++ 
+++namespace base {
+++namespace internal {
+++
+++// Perform base::Feature duplicates check and fills overriden states into a
+++// map that is used at runtime to get an override if available.
+++class BASE_EXPORT FeatureDefaultStateOverrider {
+++ public:
+++  using FeatureOverrideInfo =
+++      std::pair<std::reference_wrapper<const Feature>, FeatureState>;
+++
+++  FeatureDefaultStateOverrider(
+++      const Feature& feature, FeatureState state);
+++};
+++
+++}  // namespace internal
+++}  // namespace base
+++
+++#define CROMITE_FEATURE(feature, name, default_state) \
+++  constinit const base::Feature feature(name, default_state, base::internal::FeatureMacroHandshake::kSecret, true, true); \
+++  _Pragma("clang diagnostic push")                              \
+++  _Pragma("clang diagnostic ignored \"-Wglobal-constructors\"") \
+++  static const ::base::internal::FeatureDefaultStateOverrider   \
+++      g_feature_default_state_overrider_ ##feature {feature, default_state}; \
+++  _Pragma("clang diagnostic pop")                               \
+++  static_assert(true, "") /* for a semicolon requirement */
+++
+++#define SET_CROMITE_FEATURE_ENABLED(feature) \
+++  _Pragma("clang diagnostic push")                              \
+++  _Pragma("clang diagnostic ignored \"-Wglobal-constructors\"") \
+++  static const ::base::internal::FeatureDefaultStateOverrider   \
+++      g_feature_default_state_overrider_ ##feature {feature, base::FEATURE_ENABLED_BY_DEFAULT}; \
+++  _Pragma("clang diagnostic pop")                               \
+++  static_assert(true, "") /* for a semicolon requirement */
+++
+++#define SET_CROMITE_FEATURE_DISABLED(feature) \
+++  _Pragma("clang diagnostic push")                              \
+++  _Pragma("clang diagnostic ignored \"-Wglobal-constructors\"") \
+++  static const ::base::internal::FeatureDefaultStateOverrider   \
+++      g_feature_default_state_overrider_ ##feature {feature, base::FEATURE_DISABLED_BY_DEFAULT}; \
+++  _Pragma("clang diagnostic pop")                               \
+++  static_assert(true, "") /* for a semicolon requirement */
+++
+++#define SET_CROMITE_FEATURE_ENABLED_W_NAMESPACE(namespace_value, feature) \
+++  _Pragma("clang diagnostic push")                              \
+++  _Pragma("clang diagnostic ignored \"-Wglobal-constructors\"") \
+++  static const ::base::internal::FeatureDefaultStateOverrider   \
+++      g_feature_default_state_overrider_ ##feature {namespace_value::feature, base::FEATURE_ENABLED_BY_DEFAULT}; \
+++  _Pragma("clang diagnostic pop")                               \
+++  static_assert(true, "") /* for a semicolon requirement */
+++
+++#define SET_CROMITE_FEATURE_DISABLED_W_NAMESPACE(namespace_value, feature) \
+++  _Pragma("clang diagnostic push")                              \
+++  _Pragma("clang diagnostic ignored \"-Wglobal-constructors\"") \
+++  static const ::base::internal::FeatureDefaultStateOverrider   \
+++      g_feature_default_state_overrider_ ##feature {namespace_value::feature, base::FEATURE_DISABLED_BY_DEFAULT}; \
+++  _Pragma("clang diagnostic pop")                               \
+++  static_assert(true, "") /* for a semicolon requirement */
+++
+++#define BASE_FEATURE_DISABLED_3_ARGS(feature, name, default_state) \
+++  BASE_FEATURE(feature, name, default_state); \
+++  static_assert(default_state == base::FEATURE_DISABLED_BY_DEFAULT, "Check default state")
+++
+++#define BASE_FEATURE_DISABLED_2_ARGS(name, default_state) \
+++  BASE_FEATURE(name, default_state); \
+++  static_assert(default_state == base::FEATURE_DISABLED_BY_DEFAULT, "Check default state")
+++
+++#define GET_BASE_FEATURE_DISABLED_MACRO(_1, _2, _3, NAME, ...) NAME
+++#define BASE_FEATURE_DISABLED(...)                                            \
+++  GET_BASE_FEATURE_DISABLED_MACRO(__VA_ARGS__, BASE_FEATURE_DISABLED_3_ARGS,  \
+++                                 BASE_FEATURE_DISABLED_2_ARGS)(__VA_ARGS__)
+++
+++#define BASE_FEATURE_ENABLED_3_ARGS(feature, name, default_state) \
+++  BASE_FEATURE(feature, name, default_state); \
+++  static_assert(default_state == base::FEATURE_ENABLED_BY_DEFAULT, "Check default state")
+++
+++#define BASE_FEATURE_ENABLED_2_ARGS(name, default_state) \
+++  BASE_FEATURE(name, default_state); \
+++  static_assert(default_state == base::FEATURE_ENABLED_BY_DEFAULT, "Check default state")
+++
+++#define GET_BASE_FEATURE_ENABLED_MACRO(_1, _2, _3, NAME, ...) NAME
+++#define BASE_FEATURE_ENABLED(...)                                            \
+++  GET_BASE_FEATURE_ENABLED_MACRO(__VA_ARGS__, BASE_FEATURE_ENABLED_3_ARGS,  \
+++                                 BASE_FEATURE_ENABLED_2_ARGS)(__VA_ARGS__)
+++
++ #endif  // BASE_FEATURE_LIST_H_
+ diff --git a/build/android/gyp/java_cpp_features.py b/build/android/gyp/java_cpp_features.py
+-index 620371c33982a..18132a18916eb 100755
++index 4e4f422ccea5d..aba6037b3281b 100755
+ --- a/build/android/gyp/java_cpp_features.py
+ +++ b/build/android/gyp/java_cpp_features.py
+-@@ -24,6 +24,11 @@ class FeatureParserDelegate(java_cpp_utils.CppConstantParser.Delegate):
+-     # TODO(crbug.com/482451012): Support parsing `BASE_RUNTIME_MUTABLE_FEATURE`
+-     # macros with mutabilty support in the generated Java code.
+-     _FEATURE_RE = re.compile(r'BASE_FEATURE\(\s*(k\w+),')
+-+    _FEATURE_RE1 = re.compile(r'CROMITE_FEATURE\(\s*(k\w+),')
+-+    _FEATURE_RE2 = re.compile(r'BASE_FEATURE_DISABLED\(\s*(k\w+),')
+-+    _FEATURE_RE3 = re.compile(r'CROMITE_FEATURE_DISABLED\(\s*(k\w+),')
+-+    _FEATURE_RE4 = re.compile(r'BASE_FEATURE_ENABLED\(\s*(k\w+),')
+-+    _FEATURE_RE5 = re.compile(r'CROMITE_FEATURE_ENABLED\(\s*(k\w+),')
+-     _STRING_LITERAL_RE = re.compile(r'"(?:\\"|[^"])*"')
+-     _constant_name = None  # The name of the current macro.
+-     _comma_count = 0  # Number of commas seen in the current macro.
+-@@ -36,6 +41,16 @@ class FeatureParserDelegate(java_cpp_utils.CppConstantParser.Delegate):
+-         self._constant_name = None
+- 
+-         match = self._FEATURE_RE.match(line)
+-+        if match is None:
+-+          match = self._FEATURE_RE1.match(line)
+-+        if match is None:
+-+          match = self._FEATURE_RE2.match(line)
+-+        if match is None:
+-+          match = self._FEATURE_RE3.match(line)
+-+        if match is None:
+-+          match = self._FEATURE_RE4.match(line)
+-+        if match is None:
+-+          match = self._FEATURE_RE5.match(line)
+-         if match:
+-             # The regex ensures that the feature name starts with 'k'.
+-             feature_name = match.group(1)
++@@ -22,6 +22,11 @@ class FeatureParserDelegate(java_cpp_utils.CppConstantParser.Delegate):
++   #   ExtractConstantName() -> 'ConstantName'
++   #   ExtractValue() -> '"StringNameOfTheFeature"' or '"ConstantName"'
++   _FEATURE_RE = re.compile(r'BASE_FEATURE\(\s*(k\w+),')
+++  _FEATURE_RE1 = re.compile(r'CROMITE_FEATURE\(\s*(k\w+),')
+++  _FEATURE_RE2 = re.compile(r'BASE_FEATURE_DISABLED\(\s*(k\w+),')
+++  _FEATURE_RE3 = re.compile(r'CROMITE_FEATURE_DISABLED\(\s*(k\w+),')
+++  _FEATURE_RE4 = re.compile(r'BASE_FEATURE_ENABLED\(\s*(k\w+),')
+++  _FEATURE_RE5 = re.compile(r'CROMITE_FEATURE_ENABLED\(\s*(k\w+),')
++   _STRING_LITERAL_RE = re.compile(r'"(?:\\"|[^"])*"')
++   _constant_name = None  # The name of the current macro.
++   _comma_count = 0  # Number of commas seen in the current macro.
++@@ -34,6 +39,16 @@ class FeatureParserDelegate(java_cpp_utils.CppConstantParser.Delegate):
++     self._constant_name = None
++ 
++     match = self._FEATURE_RE.match(line)
+++    if match is None:
+++      match = self._FEATURE_RE1.match(line)
+++    if match is None:
+++      match = self._FEATURE_RE2.match(line)
+++    if match is None:
+++      match = self._FEATURE_RE3.match(line)
+++    if match is None:
+++      match = self._FEATURE_RE4.match(line)
+++    if match is None:
+++      match = self._FEATURE_RE5.match(line)
++     if match:
++       # The regex ensures that the feature name starts with 'k'.
++       feature_name = match.group(1)
+ diff --git a/chrome/android/java/res/values/values.xml b/chrome/android/java/res/values/values.xml
+-index a36b0f6ab2b81..9b153995deb24 100644
++index ff31f0f2db984..ad9290a7d29d9 100644
+ --- a/chrome/android/java/res/values/values.xml
+ +++ b/chrome/android/java/res/values/values.xml
+ @@ -9,6 +9,9 @@ found in the LICENSE file.
+@@ -561,10 +527,10 @@ index a36b0f6ab2b81..9b153995deb24 100644
+      <!-- These constants were chosen empirically for their visually pleasant behavior.
+           Contact tedchoc@chromium.org or dtrainor@chromium.org for questions about
+ diff --git a/chrome/android/java/res/xml/privacy_preferences.xml b/chrome/android/java/res/xml/privacy_preferences.xml
+-index b121452ff5ce0..68be69cdbdc2d 100644
++index 1f4c79ab791ef..1cf95117e63cc 100644
+ --- a/chrome/android/java/res/xml/privacy_preferences.xml
+ +++ b/chrome/android/java/res/xml/privacy_preferences.xml
+-@@ -28,6 +28,10 @@ found in the LICENSE file.
++@@ -32,6 +32,10 @@ found in the LICENSE file.
+          android:key="do_not_track"
+          android:title="@string/do_not_track_title"
+          android:fragment="org.chromium.chrome.browser.privacy.settings.DoNotTrackSettings" />
+@@ -589,10 +555,10 @@ index 9ad14f4ba95f0..dd64685ab25ab 100644
+  
+          mPageTitle.set(getString(R.string.options_homepage_title));
+ diff --git a/chrome/android/java/src/org/chromium/chrome/browser/privacy/settings/PrivacySettings.java b/chrome/android/java/src/org/chromium/chrome/browser/privacy/settings/PrivacySettings.java
+-index 3aae34cd07fca..cfe25c2eae480 100644
++index fd566ce93a14e..86b81a57f37ec 100644
+ --- a/chrome/android/java/src/org/chromium/chrome/browser/privacy/settings/PrivacySettings.java
+ +++ b/chrome/android/java/src/org/chromium/chrome/browser/privacy/settings/PrivacySettings.java
+-@@ -136,7 +136,7 @@ public class PrivacySettings extends ChromeBaseSettingsFragment
++@@ -134,7 +134,7 @@ public class PrivacySettings extends ChromeBaseSettingsFragment
+      }
+  
+      @Override
+@@ -602,10 +568,10 @@ index 3aae34cd07fca..cfe25c2eae480 100644
+  
+          SettingsUtils.addPreferencesFromResource(this, R.xml.privacy_preferences);
+ diff --git a/chrome/android/java/src/org/chromium/chrome/browser/settings/FragmentDependencyProvider.java b/chrome/android/java/src/org/chromium/chrome/browser/settings/FragmentDependencyProvider.java
+-index a5a3f1c90470f..33d7705be3e20 100644
++index eb854ad350651..4a1efe9bff427 100644
+ --- a/chrome/android/java/src/org/chromium/chrome/browser/settings/FragmentDependencyProvider.java
+ +++ b/chrome/android/java/src/org/chromium/chrome/browser/settings/FragmentDependencyProvider.java
+-@@ -11,6 +11,7 @@ import android.os.Bundle;
++@@ -13,6 +13,7 @@ import android.os.Bundle;
+  import androidx.fragment.app.Fragment;
+  import androidx.fragment.app.FragmentManager;
+  
+@@ -613,7 +579,7 @@ index a5a3f1c90470f..33d7705be3e20 100644
+  import org.chromium.base.supplier.MonotonicObservableSupplier;
+  import org.chromium.base.supplier.OneshotSupplier;
+  import org.chromium.build.annotations.NullMarked;
+-@@ -79,6 +80,7 @@ public class FragmentDependencyProvider extends FragmentManager.FragmentLifecycl
++@@ -82,6 +83,7 @@ public class FragmentDependencyProvider extends FragmentManager.FragmentLifecycl
+      // TODO(crbug.com/469772349): Simplify to Supplier<@Nullable ModalDialogManagerSupplier>
+      private final MonotonicObservableSupplier<ModalDialogManager> mModalDialogManagerSupplier;
+      private final Supplier<@Nullable SettingsSearchCoordinator> mSearchCoordinatorSupplier;
+@@ -621,7 +587,7 @@ index a5a3f1c90470f..33d7705be3e20 100644
+  
+      public FragmentDependencyProvider(
+              Activity activity,
+-@@ -88,7 +90,8 @@ public class FragmentDependencyProvider extends FragmentManager.FragmentLifecycl
++@@ -91,7 +93,8 @@ public class FragmentDependencyProvider extends FragmentManager.FragmentLifecycl
+              OneshotSupplier<SnackbarManager> snackbarManagerSupplier,
+              OneshotSupplier<BottomSheetController> bottomSheetControllerSupplier,
+              MonotonicObservableSupplier<ModalDialogManager> modalDialogManagerSupplier,
+@@ -631,7 +597,7 @@ index a5a3f1c90470f..33d7705be3e20 100644
+          mActivity = activity;
+          mProfile = profile;
+          mWindowAndroidSupplier = windowAndroidSupplier;
+-@@ -97,6 +100,7 @@ public class FragmentDependencyProvider extends FragmentManager.FragmentLifecycl
++@@ -100,12 +103,17 @@ public class FragmentDependencyProvider extends FragmentManager.FragmentLifecycl
+          mBottomSheetControllerSupplier = bottomSheetControllerSupplier;
+          mModalDialogManagerSupplier = modalDialogManagerSupplier;
+          mSearchCoordinatorSupplier = searchCoordinatorSupplier;
+@@ -639,9 +605,8 @@ index a5a3f1c90470f..33d7705be3e20 100644
+      }
+  
+      @Override
+-@@ -108,6 +112,10 @@ public class FragmentDependencyProvider extends FragmentManager.FragmentLifecycl
+-     /** Attaches dependencies to a fragment. */
+-     public void attachDependencies(FragmentManager fragmentManager, Fragment fragment) {
++     public void onFragmentAttached(
++             FragmentManager fragmentManager, Fragment fragment, Context unusedContext) {
+          // Common dependencies attachments.
+ +        if (fragment instanceof ChromeBaseSettingsFragment) {
+ +            ((ChromeBaseSettingsFragment)fragment).setRequestRestartDelegateSupplier(
+@@ -651,27 +616,27 @@ index a5a3f1c90470f..33d7705be3e20 100644
+              ((ProfileDependentSetting) fragment).setProfile(mProfile);
+          }
+ diff --git a/chrome/android/java/src/org/chromium/chrome/browser/settings/SettingsActivity.java b/chrome/android/java/src/org/chromium/chrome/browser/settings/SettingsActivity.java
+-index 040ad923ca7a1..196095705f0aa 100644
++index 7209768dd31ec..33f2e9c291e7b 100644
+ --- a/chrome/android/java/src/org/chromium/chrome/browser/settings/SettingsActivity.java
+ +++ b/chrome/android/java/src/org/chromium/chrome/browser/settings/SettingsActivity.java
+-@@ -10,6 +10,7 @@ import static org.chromium.chrome.browser.settings.SettingsIntentUtil.EXTRA_SHOW
+- import static org.chromium.chrome.browser.settings.SettingsIntentUtil.EXTRA_SHOW_FRAGMENT_ARGUMENTS;
+- import static org.chromium.chrome.browser.settings.SettingsIntentUtil.EXTRA_SHOW_FRAGMENT_STANDALONE;
++@@ -7,6 +7,7 @@ package org.chromium.chrome.browser.settings;
++ import static org.chromium.build.NullUtil.assertNonNull;
++ import static org.chromium.build.NullUtil.assumeNonNull;
+  
+ +import android.app.Activity;
+  import android.annotation.SuppressLint;
+  import android.app.ActivityManager;
+  import android.content.Context;
+-@@ -45,6 +46,7 @@ import org.chromium.base.Log;
+- import org.chromium.base.metrics.RecordHistogram;
++@@ -45,6 +46,7 @@ import org.chromium.base.metrics.RecordHistogram;
++ import org.chromium.base.metrics.RecordUserAction;
+  import org.chromium.base.supplier.MonotonicObservableSupplier;
+  import org.chromium.base.supplier.ObservableSuppliers;
+ +import org.chromium.base.supplier.OneshotSupplier;
+  import org.chromium.base.supplier.OneshotSupplierImpl;
++ import org.chromium.base.supplier.SettableMonotonicObservableSupplier;
+  import org.chromium.build.annotations.NullMarked;
+- import org.chromium.build.annotations.Nullable;
+-@@ -61,12 +63,14 @@ import org.chromium.chrome.browser.flags.ChromeFeatureList;
+- import org.chromium.chrome.browser.glic.GlicHelper;
++@@ -59,12 +61,14 @@ import org.chromium.chrome.browser.feedback.HelpAndFeedbackLauncherImpl;
++ import org.chromium.chrome.browser.flags.ChromeFeatureList;
+  import org.chromium.chrome.browser.init.ActivityLifecycleDispatcherImpl;
+  import org.chromium.chrome.browser.init.ChromeBrowserInitializer;
+ +import org.chromium.chrome.browser.lifetime.ApplicationLifetime;
+@@ -723,10 +688,10 @@ index 040ad923ca7a1..196095705f0aa 100644
+ +        }
+ +    }
+ +
+-     /** The current instance of SettingsActivity in the resumed state, if any. */
+-     private static @Nullable SettingsActivity sResumedInstance;
++     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
++     public static final String EXTRA_SHOW_FRAGMENT = "show_fragment";
+  
+-@@ -251,7 +289,8 @@ public class SettingsActivity extends ChromeBaseAppCompatActivity
++@@ -239,7 +277,8 @@ public class SettingsActivity extends ChromeBaseAppCompatActivity
+                          mSnackbarManagerSupplier,
+                          mBottomSheetControllerSupplier,
+                          getModalDialogManagerSupplier(),
+@@ -735,7 +700,7 @@ index 040ad923ca7a1..196095705f0aa 100644
+ +                        () -> new RequestRestartDelegate(mSnackbarManagerSupplier, this)),
+                  /* recursive= */ true);
+          fragmentManager.registerFragmentLifecycleCallbacks(
+-                 new WideDisplayPaddingApplier(
++                 new WideDisplayPaddingApplier(), /* recursive= */ true);
+ diff --git a/chrome/android/java/src/org/chromium/chrome/browser/tracing/settings/DeveloperSettings.java b/chrome/android/java/src/org/chromium/chrome/browser/tracing/settings/DeveloperSettings.java
+ index fed670c4d6fc0..e5f2032105fac 100644
+ --- a/chrome/android/java/src/org/chromium/chrome/browser/tracing/settings/DeveloperSettings.java
+@@ -760,10 +725,10 @@ index fed670c4d6fc0..e5f2032105fac 100644
+  
+          if (shouldRemoveBetaStableHint()) {
+ diff --git a/chrome/browser/about_flags.cc b/chrome/browser/about_flags.cc
+-index d93bc4f0da9d3..3639151564964 100644
++index 016ba0e25ff2b..6ebe5a5a8877c 100644
+ --- a/chrome/browser/about_flags.cc
+ +++ b/chrome/browser/about_flags.cc
+-@@ -427,6 +427,10 @@ using flags_ui::kOsLinux;
++@@ -405,6 +405,10 @@ using flags_ui::kOsLinux;
+  using flags_ui::kOsMac;
+  using flags_ui::kOsWin;
+  
+@@ -774,9 +739,9 @@ index d93bc4f0da9d3..3639151564964 100644
+  namespace about_flags {
+  
+  namespace {
+-@@ -4910,6 +4914,10 @@ const FeatureEntry::FeatureVariation kAutofillAiWalletPassBranding2026Variations
+-      nullptr},
++@@ -4800,6 +4804,10 @@ const FeatureEntry::FeatureVariation kSigninPromoOnAvatarPillVariation[] = {
+  };
++ #endif  // BUILDFLAG(ENABLE_DICE_SUPPORT)
+  
+ +#define FEATURE_PARAM_SECTION
+ +#include "cromite_flags/chrome_browser_about_flags_cc.inc"
+@@ -785,7 +750,7 @@ index d93bc4f0da9d3..3639151564964 100644
+  // RECORDING USER METRICS FOR FLAGS:
+  // -----------------------------------------------------------------------------
+  // The first line of the entry is the internal name.
+-@@ -4939,6 +4947,9 @@ constexpr char kEnterpriseIsolatedModeInternalName[] =
++@@ -4826,6 +4834,9 @@ const FeatureEntry::FeatureVariation kSigninPromoOnAvatarPillVariation[] = {
+  const FeatureEntry kFeatureEntries[] = {
+  // Include generated flags for flag unexpiry; see //docs/flag_expiry.md and
+  // //tools/flags/generate_unexpire_flags.py.
+@@ -796,20 +761,20 @@ index d93bc4f0da9d3..3639151564964 100644
+  #include "chrome/browser/unexpire_flags_gen.inc"
+      {switches::kEnableBenchmarking, flag_descriptions::kEnableBenchmarkingName,
+ diff --git a/chrome/browser/browser_features.cc b/chrome/browser/browser_features.cc
+-index fda2bec4c1002..973a01f7d0bcd 100644
++index b0e531abd06ce..c0df9ce4b7905 100644
+ --- a/chrome/browser/browser_features.cc
+ +++ b/chrome/browser/browser_features.cc
+-@@ -234,4 +234,5 @@ BASE_FEATURE(kAutoDeElevate, base::FEATURE_ENABLED_BY_DEFAULT);
++@@ -265,4 +265,5 @@ BASE_FEATURE(kReportPakFileIntegrity,
+  // show both in Chrome Tabs and Windows.
+  BASE_FEATURE(kRemovalOfIWAsFromTabCapture, base::FEATURE_ENABLED_BY_DEFAULT);
+  
+ +#include "cromite_flags/chrome_browser_browser_features_cc.inc"
+  }  // namespace features
+ diff --git a/chrome/browser/browser_features.h b/chrome/browser/browser_features.h
+-index 5a009faf7bdde..383530db02a8a 100644
++index b9a910cf9d805..8e66c311ae67e 100644
+ --- a/chrome/browser/browser_features.h
+ +++ b/chrome/browser/browser_features.h
+-@@ -112,6 +112,7 @@ BASE_DECLARE_FEATURE(kRemovalOfIWAsFromTabCapture);
++@@ -115,6 +115,7 @@ BASE_DECLARE_FEATURE(kRemovalOfIWAsFromTabCapture);
+  // module, e.g.
+  // //chrome/browser/<foo_module>/features.h
+  //
+@@ -818,7 +783,7 @@ index 5a009faf7bdde..383530db02a8a 100644
+  
+  #endif  // CHROME_BROWSER_BROWSER_FEATURES_H_
+ diff --git a/chrome/browser/flags/BUILD.gn b/chrome/browser/flags/BUILD.gn
+-index 8db73f0085e19..84cee6e7cef92 100644
++index dc4bbedae805e..ffcc7da91a30c 100644
+ --- a/chrome/browser/flags/BUILD.gn
+ +++ b/chrome/browser/flags/BUILD.gn
+ @@ -13,9 +13,14 @@ android_library("java") {
+@@ -858,10 +823,10 @@ index 8db73f0085e19..84cee6e7cef92 100644
+    sources = [ "android/java/src/org/chromium/chrome/browser/flags/CromiteNativeUtils.java" ]
+    sources += [
+ diff --git a/chrome/browser/flags/android/chrome_feature_list.cc b/chrome/browser/flags/android/chrome_feature_list.cc
+-index 719403bb92baa..64ea70c9aacc6 100644
++index 390d0c70f2c69..161f579925f30 100644
+ --- a/chrome/browser/flags/android/chrome_feature_list.cc
+ +++ b/chrome/browser/flags/android/chrome_feature_list.cc
+-@@ -955,6 +955,7 @@ BASE_FEATURE(kYourSavedInfoSettingsPageAndroid, base::FEATURE_DISABLED_BY_DEFAUL
++@@ -826,6 +826,7 @@ BASE_FEATURE(kYourSavedInfoSettingsPageAndroid, base::FEATURE_DISABLED_BY_DEFAUL
+  
+  // clang-format on
+  
+@@ -870,10 +835,10 @@ index 719403bb92baa..64ea70c9aacc6 100644
+  }  // namespace chrome
+  
+ diff --git a/chrome/browser/flags/android/chrome_feature_list.h b/chrome/browser/flags/android/chrome_feature_list.h
+-index d3061d01d355b..fe532da05c915 100644
++index a2b523d8a9cc7..83ceb49972c75 100644
+ --- a/chrome/browser/flags/android/chrome_feature_list.h
+ +++ b/chrome/browser/flags/android/chrome_feature_list.h
+-@@ -443,6 +443,7 @@ inline constexpr base::FeatureParam<bool>
++@@ -381,6 +381,7 @@ inline constexpr base::FeatureParam<bool>
+                                             "snippet_as_subtitle",
+                                             /*default_value=*/false);
+  
+@@ -882,10 +847,10 @@ index d3061d01d355b..fe532da05c915 100644
+  
+  #endif  // CHROME_BROWSER_FLAGS_ANDROID_CHROME_FEATURE_LIST_H_
+ diff --git a/chrome/browser/flags/android/java/src/org/chromium/chrome/browser/flags/ChromeFeatureList.java b/chrome/browser/flags/android/java/src/org/chromium/chrome/browser/flags/ChromeFeatureList.java
+-index c738c7ac45426..a58d14a8c4181 100644
++index 7292e452bf43f..1ff2334c1e040 100644
+ --- a/chrome/browser/flags/android/java/src/org/chromium/chrome/browser/flags/ChromeFeatureList.java
+ +++ b/chrome/browser/flags/android/java/src/org/chromium/chrome/browser/flags/ChromeFeatureList.java
+-@@ -21,6 +21,10 @@ import org.chromium.components.cached_flags.DoubleCachedFeatureParam;
++@@ -20,6 +20,10 @@ import org.chromium.components.cached_flags.DoubleCachedFeatureParam;
+  import org.chromium.components.cached_flags.IntCachedFeatureParam;
+  import org.chromium.components.cached_flags.StringCachedFeatureParam;
+  
+@@ -896,8 +861,8 @@ index c738c7ac45426..a58d14a8c4181 100644
+  import java.util.List;
+  import java.util.Map;
+  
+-@@ -1434,7 +1438,7 @@ public abstract class ChromeFeatureList {
+-             newCachedFlag(WEB_UI_ANDROID_THEMING, false);
++@@ -1138,7 +1142,7 @@ public abstract class ChromeFeatureList {
++             newCachedFlag(WEB_APK_MIN_SHELL_APK_VERSION, true);
+      // keep-sorted end
+  
+ -    public static final List<CachedFlag> sFlagsCachedFullBrowser =
+@@ -905,7 +870,7 @@ index c738c7ac45426..a58d14a8c4181 100644
+              List.of(
+                      // keep-sorted start
+                      sAccountForSuppressedKeyboardInsets,
+-@@ -1643,6 +1647,13 @@ public abstract class ChromeFeatureList {
++@@ -1304,6 +1308,13 @@ public abstract class ChromeFeatureList {
+                      // keep-sorted end
+                      );
+  
+@@ -980,18 +945,18 @@ index 0000000000000..3355066539d9f
+ +
+ +}}
+ diff --git a/chrome/browser/settings/android/java/src/org/chromium/chrome/browser/settings/ChromeBaseSettingsFragment.java b/chrome/browser/settings/android/java/src/org/chromium/chrome/browser/settings/ChromeBaseSettingsFragment.java
+-index 2d91feffa0f8b..f0ef24976cd5b 100644
++index 998460bab9559..ba5c88c833104 100644
+ --- a/chrome/browser/settings/android/java/src/org/chromium/chrome/browser/settings/ChromeBaseSettingsFragment.java
+ +++ b/chrome/browser/settings/android/java/src/org/chromium/chrome/browser/settings/ChromeBaseSettingsFragment.java
+-@@ -17,6 +17,7 @@ import androidx.preference.PreferenceFragmentCompat;
++@@ -9,6 +9,7 @@ import androidx.preference.PreferenceFragmentCompat;
+  import org.chromium.build.annotations.Initializer;
+  import org.chromium.build.annotations.NullMarked;
+  import org.chromium.build.annotations.Nullable;
+ +import java.util.function.Supplier;
+  import org.chromium.chrome.browser.feedback.HelpAndFeedbackLauncher;
+  import org.chromium.chrome.browser.feedback.HelpAndFeedbackLauncherFactory;
+- import org.chromium.chrome.browser.profiles.Profile;
+-@@ -25,6 +26,12 @@ import org.chromium.components.browser_ui.settings.EmbeddableSettingsPage;
++ import org.chromium.chrome.browser.flags.ChromeFeatureList;
++@@ -18,6 +19,12 @@ import org.chromium.components.browser_ui.settings.EmbeddableSettingsPage;
+  import org.chromium.components.browser_ui.settings.PreferenceUpdateObserver;
+  import org.chromium.components.browser_ui.settings.SettingsCustomTabLauncher;
+  
+@@ -1004,9 +969,9 @@ index 2d91feffa0f8b..f0ef24976cd5b 100644
+  /**
+   * Base class for settings in Chrome.
+   *
+-@@ -68,6 +75,49 @@ public abstract class ChromeBaseSettingsFragment extends PreferenceFragmentCompa
+-         return inflater.cloneInContext(getContext());
+-     }
++@@ -35,6 +42,49 @@ public abstract class ChromeBaseSettingsFragment extends PreferenceFragmentCompa
++     private SettingsCustomTabLauncher mCustomTabLauncher;
++     private @Nullable PreferenceUpdateObserver mPreferenceUpdateObserver;
+  
+ +    private Supplier<ChromeBaseSettingsFragment.RequireRestartDelegate> mRequireRestartDelegateSupplier;
+ +
+@@ -1055,7 +1020,7 @@ index 2d91feffa0f8b..f0ef24976cd5b 100644
+       * @return The profile associated with the current Settings screen.
+       */
+ diff --git a/chrome/browser/ui/android/strings/android_chrome_strings.grd b/chrome/browser/ui/android/strings/android_chrome_strings.grd
+-index ef4012b6e974d..ee614872eebe9 100644
++index 7bdf25d984bdb..929bf7d8c4b95 100644
+ --- a/chrome/browser/ui/android/strings/android_chrome_strings.grd
+ +++ b/chrome/browser/ui/android/strings/android_chrome_strings.grd
+ @@ -202,6 +202,7 @@ CHAR_LIMIT guidelines:
+@@ -1065,7 +1030,7 @@ index ef4012b6e974d..ee614872eebe9 100644
+ +      <part file="cromite_android_chrome_strings_grd/placeholder.txt"/>
+        <!-- NOTE: Generic strings used across multiple features belong in //components/browser_ui/strings/android. -->
+  
+-       <!-- Main Preferences -->
++        <!-- Cookie Controls -->
+ diff --git a/chrome/browser/ui/android/strings/cromite_android_chrome_strings_grd/Add-cromite-flags-support.grdp b/chrome/browser/ui/android/strings/cromite_android_chrome_strings_grd/Add-cromite-flags-support.grdp
+ new file mode 100644
+ index 0000000000000..df7c8ced94718
+@@ -1089,12 +1054,12 @@ index 0000000000000..5174b09c2273b
+ @@ -0,0 +1 @@
+ +this file is intentionally empty
+ diff --git a/chrome/browser/ui/ui_features.cc b/chrome/browser/ui/ui_features.cc
+-index 6b2e98a16cc01..accced774ac20 100644
++index 9eb4ad3f6d78e..e901390be8be1 100644
+ --- a/chrome/browser/ui/ui_features.cc
+ +++ b/chrome/browser/ui/ui_features.cc
+-@@ -534,4 +534,5 @@ BASE_FEATURE(kOSCryptAsyncAvailabilityInfoBar,
+- BASE_FEATURE(kDeferLayoutDuringBrowserStartup,
+-              base::FEATURE_DISABLED_BY_DEFAULT);
++@@ -534,4 +534,5 @@ BASE_FEATURE_PARAM(bool,
++ BASE_FEATURE(kUpdaterUI, base::FEATURE_DISABLED_BY_DEFAULT);
++ #endif
+  
+ +#include "cromite_flags/chrome_browser_ui_ui_features_cc.inc"
+  }  // namespace features
+@@ -1132,27 +1097,27 @@ index 47f3f1e95f870..6ec71706e9759 100644
+  
+  namespace testing {
+ diff --git a/chrome/common/chrome_features.cc b/chrome/common/chrome_features.cc
+-index a67210a039224..bd39f36fcdf45 100644
++index 5157f02110be7..9a2417dadbfe6 100644
+ --- a/chrome/common/chrome_features.cc
+ +++ b/chrome/common/chrome_features.cc
+-@@ -2132,4 +2132,5 @@ BASE_FEATURE(kRelaunchWaitForParentProcess, base::FEATURE_DISABLED_BY_DEFAULT);
+- BASE_FEATURE(kRecordTabWindowDiffOnRestart, base::FEATURE_ENABLED_BY_DEFAULT);
++@@ -2030,4 +2030,5 @@ BASE_FEATURE(kUnicornChromeActivityReporting,
++ BASE_FEATURE(kSmartRestartMetrics, base::FEATURE_ENABLED_BY_DEFAULT);
+  #endif  // BUILDFLAG(IS_ANDROID)
+  
+ +#include "cromite_flags/chrome_common_chrome_features_cc.inc"
+  }  // namespace features
+ diff --git a/components/browser_ui/accessibility/android/BUILD.gn b/components/browser_ui/accessibility/android/BUILD.gn
+-index e7ef9d0e7bb4e..c1b466e3a985f 100644
++index d0cfd84b05374..af286277506f0 100644
+ --- a/components/browser_ui/accessibility/android/BUILD.gn
+ +++ b/components/browser_ui/accessibility/android/BUILD.gn
+-@@ -67,6 +67,7 @@ android_library("lib_java") {
++@@ -73,6 +73,7 @@ android_library("lib_java") {
++     ":page_zoom_utils_java",
+      "//base:base_java",
+-     "//base:supplier_java",
+      "//build/android:build_java",
+ +    "//chrome/browser/settings:java",
+-     "//components/browser_ui/bottomsheet/android:java",
+      "//components/browser_ui/settings/android:java",
+      "//components/browser_ui/site_settings/android:java",
++     "//components/browser_ui/styles/android:java",
+ diff --git a/components/browser_ui/accessibility/android/java/res/xml/accessibility_preferences.xml b/components/browser_ui/accessibility/android/java/res/xml/accessibility_preferences.xml
+ index 507691c7808e2..2b9a648b48c21 100644
+ --- a/components/browser_ui/accessibility/android/java/res/xml/accessibility_preferences.xml
+@@ -1168,10 +1133,10 @@ index 507691c7808e2..2b9a648b48c21 100644
+          android:key="zoom_info"
+          android:title="@string/zoom_info_preference_title"/>
+ diff --git a/components/browser_ui/accessibility/android/java/src/org/chromium/components/browser_ui/accessibility/AccessibilitySettings.java b/components/browser_ui/accessibility/android/java/src/org/chromium/components/browser_ui/accessibility/AccessibilitySettings.java
+-index efd95615c9890..d981f75c80715 100644
++index c99e0194ad259..fabc73a77d6a4 100644
+ --- a/components/browser_ui/accessibility/android/java/src/org/chromium/components/browser_ui/accessibility/AccessibilitySettings.java
+ +++ b/components/browser_ui/accessibility/android/java/src/org/chromium/components/browser_ui/accessibility/AccessibilitySettings.java
+-@@ -45,9 +45,11 @@ import org.chromium.content_public.browser.ContentFeatureList;
++@@ -38,9 +38,11 @@ import org.chromium.content_public.browser.ContentFeatureList;
+  import org.chromium.content_public.browser.ContentFeatureMap;
+  import org.chromium.ui.base.UiAndroidFeatureList;
+  
+@@ -1184,17 +1149,17 @@ index efd95615c9890..d981f75c80715 100644
+          implements EmbeddableSettingsPage,
+                  Preference.OnPreferenceChangeListener,
+                  CustomDividerFragment {
+-@@ -112,7 +114,7 @@ public class AccessibilitySettings extends PreferenceFragmentCompat
++@@ -109,7 +111,7 @@ public class AccessibilitySettings extends PreferenceFragmentCompat
+      }
+  
+      @Override
+ -    public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
+ +    public void onCreatePreferencesCromite(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
+          SettingsUtils.addPreferencesFromResource(this, R.xml.accessibility_preferences);
+-         mPageTitle.set(getString(R.string.prefs_accessibility));
+  
++         // TODO(crbug.com/439911511): Add PageZoomPreference directly to the xml file instead.
+ diff --git a/components/browser_ui/settings/android/java/res/values/attrs.xml b/components/browser_ui/settings/android/java/res/values/attrs.xml
+-index 27f7079cae199..7229f9b4c315b 100644
++index dca8c50fb3d53..39aec206ceab3 100644
+ --- a/components/browser_ui/settings/android/java/res/values/attrs.xml
+ +++ b/components/browser_ui/settings/android/java/res/values/attrs.xml
+ @@ -12,6 +12,10 @@ found in the LICENSE file.
+@@ -1279,7 +1244,7 @@ index 78965d6c63bb2..55247fbde0150 100644
+      public static Map<String, CachedFlag> createCachedFlagMap(
+              List<List<CachedFlag>> allCachedFlagsLists) {
+ diff --git a/components/components_strings.grd b/components/components_strings.grd
+-index d383afbf0fa1e..ef84c43dc69ad 100644
++index 54790eb5683e3..0f780b2049102 100644
+ --- a/components/components_strings.grd
+ +++ b/components/components_strings.grd
+ @@ -282,6 +282,7 @@
+@@ -1291,12 +1256,12 @@ index d383afbf0fa1e..ef84c43dc69ad 100644
+        <part file="autofill_payments_strings.grdp" />
+        <part file="autofill_strings.grdp" />
+ diff --git a/components/content_settings/core/common/features.cc b/components/content_settings/core/common/features.cc
+-index 088951616f52d..c1b2c0e77fffe 100644
++index 408a7b5368129..4574f675d1e09 100644
+ --- a/components/content_settings/core/common/features.cc
+ +++ b/components/content_settings/core/common/features.cc
+-@@ -55,5 +55,6 @@ BASE_FEATURE(kLeftHandSideSensorActivityIndicators,
+- BASE_FEATURE(kStorageAccessAPIRelatedWebsiteSets,
+-              base::FEATURE_DISABLED_BY_DEFAULT);
++@@ -137,5 +137,6 @@ const base::FeatureParam<EnableForIframeTypes>
++ 
++ BASE_FEATURE(kForceAllowStorageAccess, base::FEATURE_DISABLED_BY_DEFAULT);
+  
+ +#include "cromite_flags/components_content_settings_core_common_features_cc.inc"
+  }  // namespace features
+@@ -1331,29 +1296,29 @@ index 4ba9bc80778ab..8d5198dea6d79 100644
+  
+  #endif  // COMPONENTS_OFFLINE_PAGES_CORE_OFFLINE_PAGE_FEATURE_H_
+ diff --git a/components/password_manager/core/browser/features/password_features.cc b/components/password_manager/core/browser/features/password_features.cc
+-index 95dd9d1b61506..3a3cf0eec6031 100644
++index 59a5bce11c11a..2245db00dae2a 100644
+ --- a/components/password_manager/core/browser/features/password_features.cc
+ +++ b/components/password_manager/core/browser/features/password_features.cc
+-@@ -216,4 +216,5 @@ BASE_FEATURE(kUseDetachedWidget, base::FEATURE_ENABLED_BY_DEFAULT);
++@@ -200,4 +200,5 @@ BASE_FEATURE(kWebAuthnUsePasskeyFromAnotherDeviceInContextMenu,
+  
+- BASE_FEATURE(kUseProcessBoundPasswordString, base::FEATURE_DISABLED_BY_DEFAULT);
++ #endif  // !BUILDFLAG(IS_ANDROID) && !BUILDFLAG(IS_IOS)
+  
+ +#include "cromite_flags/components_password_manager_core_browser_features_password_features_cc.inc"
+  }  // namespace password_manager::features
+ diff --git a/components/permissions/features.cc b/components/permissions/features.cc
+-index 0928e763d1ed6..7cb8ea388d74a 100644
++index 28a69fc0f0b31..a01f421532e0c 100644
+ --- a/components/permissions/features.cc
+ +++ b/components/permissions/features.cc
+-@@ -128,6 +128,7 @@ BASE_FEATURE(kPermanentNotificationSubscribeInPageInfo,
++@@ -117,6 +117,7 @@ BASE_FEATURE(kPermissionPredictionsGeolocationAccuracy,
++ BASE_FEATURE(kPermissionsGestureGatedPrompts,
+               base::FEATURE_DISABLED_BY_DEFAULT);
+- #endif  // BUILDFLAG(IS_ANDROID)
+  
+ +#include "cromite_flags/components_permissions_features_cc.inc"
+  }  // namespace features
+  
+  namespace feature_params {
+ diff --git a/components/variations/synthetic_trials_active_group_id_provider.cc b/components/variations/synthetic_trials_active_group_id_provider.cc
+-index 6d94012d58446..e899901d4087d 100644
++index bd51697297471..51de90d0e91a3 100644
+ --- a/components/variations/synthetic_trials_active_group_id_provider.cc
+ +++ b/components/variations/synthetic_trials_active_group_id_provider.cc
+ @@ -27,7 +27,7 @@ SyntheticTrialsActiveGroupIdProvider::GetActiveGroupIds() {
+@@ -1365,7 +1330,7 @@ index 6d94012d58446..e899901d4087d 100644
+  std::vector<SyntheticTrialGroup>
+  SyntheticTrialsActiveGroupIdProvider::GetGroups() {
+    base::AutoLock scoped_lock(lock_);
+-@@ -54,7 +54,7 @@ void SyntheticTrialsActiveGroupIdProvider::OnSyntheticTrialsChanged(
++@@ -53,7 +53,7 @@ void SyntheticTrialsActiveGroupIdProvider::OnSyntheticTrialsChanged(
+      for (const auto& group : groups) {
+        group_ids_.push_back(group.id());
+      }
+@@ -1397,10 +1362,10 @@ index b4a999731d996..ef17ac6669665 100644
+    // in chrome://version.
+    std::vector<SyntheticTrialGroup> groups_;  // GUARDED_BY(lock_);
+ diff --git a/components/webui/flags/flags_state.cc b/components/webui/flags/flags_state.cc
+-index 0bcbe08ce7f53..66c8a356fc0dc 100644
++index 0b5f764ee492b..d22cd06f6b0c5 100644
+ --- a/components/webui/flags/flags_state.cc
+ +++ b/components/webui/flags/flags_state.cc
+-@@ -388,6 +388,21 @@ void FlagsState::GetSwitchesAndFeaturesFromFlags(
++@@ -373,6 +373,21 @@ void FlagsState::GetSwitchesAndFeaturesFromFlags(
+  
+    for (const std::string& entry_name : enabled_entries) {
+      const auto& entry_it = name_to_switch_map.find(entry_name);
+@@ -1422,7 +1387,7 @@ index 0bcbe08ce7f53..66c8a356fc0dc 100644
+      CHECK(entry_it != name_to_switch_map.end());
+  
+      const SwitchEntry& entry = entry_it->second;
+-@@ -722,6 +737,27 @@ void FlagsState::GetFlagFeatureEntries(
++@@ -704,6 +719,27 @@ void FlagsState::GetFlagFeatureEntries(
+        data.Set("links", std::move(links));
+      }
+  
+@@ -1450,7 +1415,7 @@ index 0bcbe08ce7f53..66c8a356fc0dc 100644
+      switch (entry.type) {
+        case FeatureEntry::SINGLE_VALUE:
+        case FeatureEntry::SINGLE_DISABLE_VALUE:
+-@@ -849,6 +885,16 @@ void FlagsState::AddSwitchesToCommandLine(
++@@ -831,6 +867,16 @@ void FlagsState::AddSwitchesToCommandLine(
+    for (const std::string& entry_name : enabled_entries) {
+      const auto& entry_it = name_to_switch_map.find(entry_name);
+      if (entry_it == name_to_switch_map.end()) {
+@@ -1467,14 +1432,14 @@ index 0bcbe08ce7f53..66c8a356fc0dc 100644
+        NOTREACHED();
+      }
+  
+-@@ -1108,6 +1154,14 @@ const FeatureEntry* FlagsState::FindFeatureEntryByName(
++@@ -1102,6 +1148,14 @@ const FeatureEntry* FlagsState::FindFeatureEntryByName(
+  bool FlagsState::IsSupportedFeature(const FlagsStorage* storage,
+-                                     std::string_view name,
++                                     const std::string& name,
+                                      int platform_mask) const {
+ +  // check if is a cromite feature
+ +  std::string::size_type pos = name.find('@');
+ +  if (pos != std::string::npos) {
+-+    std::string feature_name(name.substr(0, pos));
+++    std::string feature_name = name.substr(0, pos);
+ +    if (base::FeatureList::IsCromiteFlag(feature_name)) {
+ +      return true;
+ +    }
+@@ -1482,7 +1447,7 @@ index 0bcbe08ce7f53..66c8a356fc0dc 100644
+    for (const auto& entry : feature_entries_) {
+      DCHECK(entry.IsValid());
+      if (!(entry.supported_platforms & platform_mask)) {
+-@@ -1146,6 +1200,11 @@ void FlagsState::SetFlags(
++@@ -1140,6 +1194,11 @@ void FlagsState::SetFlags(
+          FindFeatureEntryByName(feature_internal_name);
+      // Since this flag is currently enabled, we know for sure that we can find
+      // its feature entry using its internal name.
+@@ -1495,12 +1460,12 @@ index 0bcbe08ce7f53..66c8a356fc0dc 100644
+  
+      if (entry->type == FeatureEntry::FEATURE_VALUE ||
+ diff --git a/components/webui/flags/resources/app.css b/components/webui/flags/resources/app.css
+-index 9e7cfc8d38a49..8c11f739ee93f 100644
++index 51265bbe20ad6..dda86e6fa1f1a 100644
+ --- a/components/webui/flags/resources/app.css
+ +++ b/components/webui/flags/resources/app.css
+-@@ -408,3 +408,35 @@ cr-tabs {
+- .actions-container cr-icon-button {
+-   margin-inline-start: 8px;
++@@ -391,3 +391,35 @@ cr-tabs {
++     padding-top: 1.5rem;
++   }
+  }
+ +
+ +#appcontainer {
+@@ -1535,7 +1500,7 @@ index 9e7cfc8d38a49..8c11f739ee93f 100644
+ +  display: none;
+ +}
+ diff --git a/components/webui/flags/resources/app.html.ts b/components/webui/flags/resources/app.html.ts
+-index bbf3b825cac13..90a8c3ec40dea 100644
++index 1fc8aca6e7b14..d0365e0a47e3d 100644
+ --- a/components/webui/flags/resources/app.html.ts
+ +++ b/components/webui/flags/resources/app.html.ts
+ @@ -9,6 +9,7 @@ import type {AppElement} from './app.js';
+@@ -1546,7 +1511,7 @@ index bbf3b825cac13..90a8c3ec40dea 100644
+  <div id="header">
+    <div class="flex-container">
+      <div class="flex search-container">
+-@@ -141,6 +142,32 @@ export function getHtml(this: AppElement) {
++@@ -109,6 +110,32 @@ export function getHtml(this: AppElement) {
+          <div class="no-match" role="alert" hidden>$i18n{no-results}</div>
+        </div>
+  </if>
+@@ -1579,7 +1544,7 @@ index bbf3b825cac13..90a8c3ec40dea 100644
+      </div>
+      <div id="needs-restart" ?show="${this.needsRestart}"
+          role="${this.getNeedsRestartRole_()}">
+-@@ -161,6 +188,7 @@ export function getHtml(this: AppElement) {
++@@ -129,6 +156,7 @@ export function getHtml(this: AppElement) {
+      </div>
+    </div>
+  </div>
+@@ -1588,10 +1553,10 @@ index bbf3b825cac13..90a8c3ec40dea 100644
+    // clang-format on
+  }
+ diff --git a/components/webui/flags/resources/app.ts b/components/webui/flags/resources/app.ts
+-index dd28fd62774f2..1fafab8b59eb3 100644
++index 928624441e852..97e0f2382f876 100644
+ --- a/components/webui/flags/resources/app.ts
+ +++ b/components/webui/flags/resources/app.ts
+-@@ -176,6 +176,7 @@ export class FlagsAppElement extends CrLitElement {
++@@ -132,6 +132,7 @@ export class FlagsAppElement extends CrLitElement {
+      // <if expr="not is_ios">
+      loadTimeData.getString('unavailable'),
+      // </if>
+@@ -1599,7 +1564,7 @@ index dd28fd62774f2..1fafab8b59eb3 100644
+    ];
+    protected accessor selectedTabIndex_: number = 0;
+  
+-@@ -197,12 +198,15 @@ export class FlagsAppElement extends CrLitElement {
++@@ -150,9 +151,12 @@ export class FlagsAppElement extends CrLitElement {
+  
+    protected accessor defaultFeatures: Feature[] = [];
+    protected accessor nonDefaultFeatures: Feature[] = [];
+@@ -1607,15 +1572,12 @@ index dd28fd62774f2..1fafab8b59eb3 100644
+ +  protected nonDefaultCromiteFeatures: Feature[] = [];
+    protected accessor searching: boolean = false;
+    protected accessor needsRestart: boolean = false;
+-   protected accessor importError: string = '';
+-   protected accessor webuiRoundedIconsEnabled_: boolean =
+-       loadTimeData.getBoolean('webuiRoundedIconsEnabled');
+  
+ +  private onlyCromiteFlags: boolean = false;
+    private announceStatusDelayMs: number = 100;
+    private featuresResolver: PromiseResolver<void> = new PromiseResolver();
+    private flagSearch: FlagSearch|null = null;
+-@@ -231,6 +235,11 @@ export class FlagsAppElement extends CrLitElement {
++@@ -180,6 +184,11 @@ export class FlagsAppElement extends CrLitElement {
+    override connectedCallback() {
+      super.connectedCallback();
+  
+@@ -1627,7 +1589,7 @@ index dd28fd62774f2..1fafab8b59eb3 100644
+      // <if expr="not is_ios">
+      const pathname = new URL(window.location.href).pathname;
+      this.isFlagsDeprecatedUrl_ =
+-@@ -303,10 +312,25 @@ export class FlagsAppElement extends CrLitElement {
++@@ -252,10 +261,25 @@ export class FlagsAppElement extends CrLitElement {
+      if (changedPrivateProperties.has('data')) {
+        const defaultFeatures: Feature[] = [];
+        const nonDefaultFeatures: Feature[] = [];
+@@ -1654,10 +1616,10 @@ index dd28fd62774f2..1fafab8b59eb3 100644
+        this.nonDefaultFeatures = nonDefaultFeatures;
+  
+ diff --git a/components/webui/flags/resources/experiment.css b/components/webui/flags/resources/experiment.css
+-index 9021acd5243fb..7bb6656d4e212 100644
++index 4145a4d310d1c..d14380658198a 100644
+ --- a/components/webui/flags/resources/experiment.css
+ +++ b/components/webui/flags/resources/experiment.css
+-@@ -26,6 +26,7 @@
++@@ -17,6 +17,7 @@
+  }
+  
+  .experiment {
+@@ -1665,7 +1627,7 @@ index 9021acd5243fb..7bb6656d4e212 100644
+    color: var(--secondary-color);
+    line-height: 1.45;
+    width: 100%;
+-@@ -99,6 +100,11 @@
++@@ -84,6 +85,11 @@
+    resize: none;
+  }
+  
+@@ -1677,7 +1639,7 @@ index 9021acd5243fb..7bb6656d4e212 100644
+  select {
+    background: white;
+    border: 1px solid var(--link-color);
+-@@ -175,6 +181,7 @@ input {
++@@ -160,6 +166,7 @@ input {
+  @media (max-width: 480px) {
+    .experiment {
+      border-bottom: 1px solid var(--separator-color);
+@@ -1685,7 +1647,7 @@ index 9021acd5243fb..7bb6656d4e212 100644
+    }
+  
+    .experiment-name {
+-@@ -192,7 +199,6 @@ input {
++@@ -177,7 +184,6 @@ input {
+    .experiment .experiment-actions {
+      max-width: 100%;
+      padding-top: 12px;
+@@ -1693,7 +1655,7 @@ index 9021acd5243fb..7bb6656d4e212 100644
+      width: 100%;
+    }
+  
+-@@ -200,7 +206,6 @@ input {
++@@ -185,7 +191,6 @@ input {
+    .body {
+      overflow: hidden;
+      text-overflow: ellipsis;
+@@ -1758,7 +1720,7 @@ index 3d5db77737297..c0c56a573939d 100644
+  
+      return '';
+ diff --git a/components/webui/flags/resources/flags_browser_proxy.ts b/components/webui/flags/resources/flags_browser_proxy.ts
+-index d30afbd28f115..49cf16b388248 100644
++index 8e5f21b51977d..6a78fc89a29ed 100644
+ --- a/components/webui/flags/resources/flags_browser_proxy.ts
+ +++ b/components/webui/flags/resources/flags_browser_proxy.ts
+ @@ -16,6 +16,11 @@ export interface Feature {
+@@ -1774,10 +1736,10 @@ index d30afbd28f115..49cf16b388248 100644
+    origin_list_value?: string;
+    string_value?: string;
+ diff --git a/components/webui/version/version_handler_helper.cc b/components/webui/version/version_handler_helper.cc
+-index 7a02c7dde3434..944342b9db37f 100644
++index f2199b1d5e424..ed900f38efb6d 100644
+ --- a/components/webui/version/version_handler_helper.cc
+ +++ b/components/webui/version/version_handler_helper.cc
+-@@ -21,7 +21,7 @@
++@@ -20,7 +20,7 @@
+  namespace version_ui {
+  namespace {
+  
+@@ -1786,7 +1748,7 @@ index 7a02c7dde3434..944342b9db37f 100644
+  std::string GetActiveGroupNameAsString(
+      const base::FieldTrial::ActiveGroup& group) {
+    static const unsigned char kNonBreakingHyphenUTF8[] = {0xE2, 0x80, 0x91,
+-@@ -84,7 +84,7 @@ base::ListValue GetVariationsList() {
++@@ -56,7 +56,7 @@ base::ListValue GetVariationsList() {
+    base::FieldTrialListIncludingLowAnonymity::GetActiveFieldTrialGroups(
+        &active_groups);
+  
+@@ -1796,30 +1758,30 @@ index 7a02c7dde3434..944342b9db37f 100644
+      variations.push_back(GetActiveGroupNameAsString(group));
+    }
+ diff --git a/content/common/features.cc b/content/common/features.cc
+-index dd08ab6dd261f..eb9410ae39ef8 100644
++index d4e81818d098b..0f49428367b8d 100644
+ --- a/content/common/features.cc
+ +++ b/content/common/features.cc
+-@@ -904,4 +904,5 @@ bool IsEnforceSameDocumentOriginInvariantsEnabled() {
++@@ -763,4 +763,5 @@ bool IsEnforceSameDocumentOriginInvariantsEnabled() {
+               blink::features::kTreatMhtmlInitialDocumentLoadsAsCrossDocument);
+  }
+  
+ +#include "cromite_flags/content_common_features_cc.inc"
+  }  // namespace features
+ diff --git a/content/public/common/content_features.cc b/content/public/common/content_features.cc
+-index e10c1604546cd..ee92fe71b0364 100644
++index f37f5acb2803b..9de288cde9052 100644
+ --- a/content/public/common/content_features.cc
+ +++ b/content/public/common/content_features.cc
+-@@ -1599,4 +1599,5 @@ bool IsFluidResizeEnabled() {
++@@ -1494,4 +1494,5 @@ bool IsFluidResizeEnabled() {
+  }
+  #endif
+  
+ +#include "cromite_flags/content_public_common_content_features_cc.inc"
+  }  // namespace features
+ diff --git a/content/public/common/content_features.h b/content/public/common/content_features.h
+-index e65a8ee17626d..c8d5609c717f9 100644
++index 4ac047e476160..b546f34eb4819 100644
+ --- a/content/public/common/content_features.h
+ +++ b/content/public/common/content_features.h
+-@@ -468,6 +468,7 @@ CONTENT_EXPORT bool IsPushSubscriptionChangeEventEnabled();
++@@ -440,6 +440,7 @@ CONTENT_EXPORT bool IsPushSubscriptionChangeEventEnabled();
+  CONTENT_EXPORT bool IsFluidResizeEnabled();
+  #endif
+  
+@@ -2190,85 +2152,86 @@ index 0000000000000..5174b09c2273b
+ @@ -0,0 +1 @@
+ +this file is intentionally empty
+ diff --git a/media/base/media_switches.cc b/media/base/media_switches.cc
+-index 9c038651f14d8..34afc4aeb1880 100644
++index 052258ead7125..22000973a9e2a 100644
+ --- a/media/base/media_switches.cc
+ +++ b/media/base/media_switches.cc
+-@@ -2031,4 +2031,5 @@ int GetAecDelayNumFilters() {
++@@ -1850,5 +1850,5 @@ uint32_t GetPassthroughAudioFormats() {
++   return 0;
++ #endif  // BUILDFLAG(ENABLE_PASSTHROUGH_AUDIO_CODECS)
+  }
+- 
+- #endif  // BUILDFLAG(SYSTEM_LOOPBACK_AS_AEC_REFERENCE)
++-
+ +#include "cromite_flags/media_base_media_switches_cc.inc"
+  }  // namespace media
+ diff --git a/media/base/media_switches.h b/media/base/media_switches.h
+-index bbbffd6f0c681..8671d2fa1fffd 100644
++index 9f74c21e3255e..dee07c5886662 100644
+ --- a/media/base/media_switches.h
+ +++ b/media/base/media_switches.h
+-@@ -618,5 +618,5 @@ MEDIA_EXPORT base::TimeDelta GetAecAddedDelay();
+- MEDIA_EXPORT int GetAecDelayNumFilters();
+- #endif  // BUILDFLAG(SYSTEM_LOOPBACK_AS_AEC_REFERENCE)
++@@ -590,5 +590,5 @@ MEDIA_EXPORT bool IsOutOfProcessVideoDecodingEnabled();
++ MEDIA_EXPORT uint32_t GetPassthroughAudioFormats();
++ 
+  }  // namespace media
+ -
+ +#include "cromite_flags/media_base_media_switches_h.inc"
+  #endif  // MEDIA_BASE_MEDIA_SWITCHES_H_
+ diff --git a/net/base/features.cc b/net/base/features.cc
+-index cddde1a63726d..3293bb565fa23 100644
++index 44a1513d0cfce..fb50512b6b657 100644
+ --- a/net/base/features.cc
+ +++ b/net/base/features.cc
+-@@ -1041,4 +1041,5 @@ BASE_FEATURE(kEnableWindowsTcpLoopbackFastFail,
+-              base::FEATURE_ENABLED_BY_DEFAULT);
+- #endif
++@@ -777,4 +777,5 @@ BASE_FEATURE(kDrainSpdySessionSynchronouslyOnRemoteEndpointDisconnect,
++ 
++ BASE_FEATURE(kLogicalClearHttpCache, base::FEATURE_DISABLED_BY_DEFAULT);
+  
+ +#include "cromite_flags/net_base_features_cc.inc"
+  }  // namespace net::features
+ diff --git a/net/base/features.h b/net/base/features.h
+-index 5728db258dbc2..4b54ad5ddb205 100644
++index ea893a644bc3c..1b65ab02e5a89 100644
+ --- a/net/base/features.h
+ +++ b/net/base/features.h
+-@@ -1052,6 +1052,7 @@ NET_EXPORT BASE_DECLARE_FEATURE_PARAM(
+- NET_EXPORT BASE_DECLARE_FEATURE(kEnableWindowsTcpLoopbackFastFail);
+- #endif
++@@ -807,6 +807,7 @@ NET_EXPORT BASE_DECLARE_FEATURE(kLogicalClearHttpCache);
++ NET_EXPORT BASE_DECLARE_FEATURE(
++     kDrainSpdySessionSynchronouslyOnRemoteEndpointDisconnect);
+  
+ +#include "cromite_flags/net_base_features_h.inc"
+  }  // namespace net::features
+  
+  #endif  // NET_BASE_FEATURES_H_
+ diff --git a/services/network/public/cpp/features.cc b/services/network/public/cpp/features.cc
+-index 56689dab5a3c9..7ad9b9f7e4d1c 100644
++index 382416fa6faf8..c0b5dfb596741 100644
+ --- a/services/network/public/cpp/features.cc
+ +++ b/services/network/public/cpp/features.cc
+-@@ -555,4 +555,5 @@ BASE_FEATURE(kBrowserInitiatedFileUploadValidation,
+- 
+- BASE_FEATURE(kSafeRevalidation, base::FEATURE_ENABLED_BY_DEFAULT);
++@@ -662,4 +662,5 @@ BASE_FEATURE_PARAM(int,
++                    /*name=*/"max_global_buffer_size",
++                    /*default_value=*/0);
+  
+ +#include "cromite_flags/services_network_public_cpp_features_cc.inc"
+  }  // namespace network::features
+ diff --git a/services/network/public/cpp/features.h b/services/network/public/cpp/features.h
+-index c376342f135bd..b64a186647dbf 100644
++index 61f7e36b4b688..323934683b847 100644
+ --- a/services/network/public/cpp/features.h
+ +++ b/services/network/public/cpp/features.h
+-@@ -368,6 +368,7 @@ BASE_DECLARE_FEATURE(kBrowserInitiatedFileUploadValidation);
++@@ -434,6 +434,7 @@ BASE_DECLARE_FEATURE_PARAM(int, kDurableMessagesGlobalBufferSize);
+  COMPONENT_EXPORT(NETWORK_CPP_FLAGS_AND_SWITCHES)
+- BASE_DECLARE_FEATURE(kSafeRevalidation);
++ BASE_DECLARE_FEATURE(kBypassRequestForbiddenHeadersCheck);
+  
+ +#include "cromite_flags/services_network_public_cpp_features_h.inc"
+  }  // namespace network::features
+  
+  #endif  // SERVICES_NETWORK_PUBLIC_CPP_FEATURES_H_
+ diff --git a/third_party/blink/common/features.cc b/third_party/blink/common/features.cc
+-index b8d0c2fb46fe6..0e3803ed6b580 100644
++index af16a78ff9ef5..19d23c53dfb0a 100644
+ --- a/third_party/blink/common/features.cc
+ +++ b/third_party/blink/common/features.cc
+-@@ -2556,4 +2556,5 @@ bool IsXrDevice() {
++@@ -2773,4 +2773,5 @@ bool IsXrDevice() {
+  //
+  // DO NOT ADD NEW FEATURES HERE.
+  
+ +#include "cromite_flags/third_party_blink_common_features_cc.inc"
+  }  // namespace blink::features
+ diff --git a/third_party/blink/public/common/features.h b/third_party/blink/public/common/features.h
+-index 91b099ef635f6..07fab7821cd7f 100644
++index 74d50ac3fa91d..db2322e4219b9 100644
+ --- a/third_party/blink/public/common/features.h
+ +++ b/third_party/blink/public/common/features.h
+-@@ -1902,6 +1902,7 @@ BLINK_COMMON_EXPORT bool IsXrDevice();
++@@ -2018,6 +2018,7 @@ BLINK_COMMON_EXPORT bool IsXrDevice();
+  //
+  // DO NOT ADD NEW FEATURES HERE.
+  
+@@ -2277,27 +2240,27 @@ index 91b099ef635f6..07fab7821cd7f 100644
+  }  // namespace blink
+  
+ diff --git a/ui/base/ui_base_features.cc b/ui/base/ui_base_features.cc
+-index d03a2d6990a71..a6aa8b0ca0104 100644
++index 94b0a25bbea55..4e83d2e7d8677 100644
+ --- a/ui/base/ui_base_features.cc
+ +++ b/ui/base/ui_base_features.cc
+-@@ -553,4 +553,5 @@ bool IsWebUIRoundedIconsEnabled() {
+-   return base::FeatureList::IsEnabled(kWebUIRoundedIcons);
+- }
++@@ -456,4 +456,5 @@ BASE_FEATURE_PARAM(int,
++                    "acceptable_latency_ms",
++                    50);
+  
+ +#include "cromite_flags/ui_base_features_cc.inc"
+  }  // namespace features
+ diff --git a/ui/base/ui_base_features.h b/ui/base/ui_base_features.h
+-index 19ee92d3e3393..d32e86f61b918 100644
++index 603652e10a17b..5275f0cc86cc4 100644
+ --- a/ui/base/ui_base_features.h
+ +++ b/ui/base/ui_base_features.h
+-@@ -377,6 +377,7 @@ bool IsRoundedIconsEnabled();
++@@ -294,6 +294,7 @@ BASE_DECLARE_FEATURE_PARAM(int, kCompensationExpectedLatencyMs);
+  COMPONENT_EXPORT(UI_BASE_FEATURES)
+- bool IsWebUIRoundedIconsEnabled();
++ BASE_DECLARE_FEATURE_PARAM(int, kCompensationAcceptableLatencyMs);
+  
+ +#include "cromite_flags/ui_base_features_h.inc"
+  }  // namespace features
+  
+  #endif  // UI_BASE_UI_BASE_FEATURES_H_
+ -- 
+-2.53.0
++2.43.0
+ 
+diff --git a/0011-Add-flag-to-disable-external-intent-requests.patch b/0011-Add-flag-to-disable-external-intent-requests.patch
+index e316e64e1bee726770eb09b371027378a256fecd..477ca2a87c0871d16b50820ac70dc9ec206336ea 100644
+--- a/0011-Add-flag-to-disable-external-intent-requests.patch
++++ b/0011-Add-flag-to-disable-external-intent-requests.patch
+@@ -1,7 +1,7 @@
+-From 5cab1b9ae1de3aa0f888e32350333cc1a9c7791c Mon Sep 17 00:00:00 2001
++From 2e31997700a4cde056744857f3952e084e06d028 Mon Sep 17 00:00:00 2001
+ From: csagan5 <32685696+csagan5@users.noreply.github.com>
+ Date: Tue, 25 May 2021 19:46:14 +0200
+-Subject: [PATCH 11/13] Add flag to disable external intent requests
++Subject: [PATCH 11/12] Add flag to disable external intent requests
+ 
+ Adds a new flag that allows to control the switch with same name;
+ when flag is disabled no external intent will ever be allowed,
+@@ -31,10 +31,10 @@ License: GPL-3.0-only - https://spdx.org/licenses/GPL-3.0-only.html
+  create mode 100644 cromite_flags/chrome/browser/flags/android/chrome_feature_list_cc/Add-flag-to-disable-external-intent-requests.inc
+ 
+ diff --git a/chrome/android/java/res/xml/privacy_preferences.xml b/chrome/android/java/res/xml/privacy_preferences.xml
+-index 68be69cdbdc2d..0c698b9f924ea 100644
++index 1cf95117e63cc..5807c713ce334 100644
+ --- a/chrome/android/java/res/xml/privacy_preferences.xml
+ +++ b/chrome/android/java/res/xml/privacy_preferences.xml
+-@@ -42,7 +42,12 @@ found in the LICENSE file.
++@@ -46,7 +46,12 @@ found in the LICENSE file.
+          android:title="@string/settings_incognito_tab_lock_title"
+          android:summary="@string/settings_incognito_tab_lock_summary_android_setting_off"
+          android:persistent="false" />
+@@ -49,10 +49,10 @@ index 68be69cdbdc2d..0c698b9f924ea 100644
+          android:key="security_section"
+        android:title="@string/security_section_title" />
+ diff --git a/chrome/android/java/src/org/chromium/chrome/browser/customtabs/CustomTabDelegateFactory.java b/chrome/android/java/src/org/chromium/chrome/browser/customtabs/CustomTabDelegateFactory.java
+-index 42b5fdc085369..73df41f29b3b3 100644
++index 4bde7f26f19cc..10b32f9b76505 100644
+ --- a/chrome/android/java/src/org/chromium/chrome/browser/customtabs/CustomTabDelegateFactory.java
+ +++ b/chrome/android/java/src/org/chromium/chrome/browser/customtabs/CustomTabDelegateFactory.java
+-@@ -42,6 +42,7 @@ import org.chromium.chrome.browser.ephemeraltab.EphemeralTabCoordinator;
++@@ -39,6 +39,7 @@ import org.chromium.chrome.browser.ephemeraltab.EphemeralTabCoordinator;
+  import org.chromium.chrome.browser.externalnav.ExternalNavigationDelegateImpl;
+  import org.chromium.chrome.browser.flags.ActivityType;
+  import org.chromium.chrome.browser.flags.ChromeFeatureList;
+@@ -60,16 +60,16 @@ index 42b5fdc085369..73df41f29b3b3 100644
+  import org.chromium.chrome.browser.fullscreen.BrowserControlsManager;
+  import org.chromium.chrome.browser.fullscreen.FullscreenManager;
+  import org.chromium.chrome.browser.init.ChromeActivityNativeDelegate;
+-@@ -171,6 +172,7 @@ public class CustomTabDelegateFactory implements TabDelegateFactory {
++@@ -167,6 +168,7 @@ public class CustomTabDelegateFactory implements TabDelegateFactory {
+  
+          @Override
+          public boolean shouldDisableAllExternalIntents() {
+ +            if (!sAllowExternalIntentRequests.getInstance().isEnabled()) return true;
+-             return false;
++             return mActivityType == ActivityType.AUTH_TAB
++                     && ChromeFeatureList.sCctAuthTabDisableAllExternalIntents.isEnabled();
+          }
+- 
+ diff --git a/chrome/android/java/src/org/chromium/chrome/browser/externalnav/ExternalNavigationDelegateImpl.java b/chrome/android/java/src/org/chromium/chrome/browser/externalnav/ExternalNavigationDelegateImpl.java
+-index 5e2b27f2375dc..9061cc4659952 100644
++index 73211c05ba152..8bee086058f2d 100644
+ --- a/chrome/android/java/src/org/chromium/chrome/browser/externalnav/ExternalNavigationDelegateImpl.java
+ +++ b/chrome/android/java/src/org/chromium/chrome/browser/externalnav/ExternalNavigationDelegateImpl.java
+ @@ -27,6 +27,7 @@ import org.chromium.base.ResettersForTesting;
+@@ -78,9 +78,9 @@ index 5e2b27f2375dc..9061cc4659952 100644
+  import org.chromium.chrome.browser.ChromeTabbedActivity2;
+ +import org.chromium.chrome.browser.flags.cromite.sAllowExternalIntentRequests;
+  import org.chromium.chrome.browser.IntentHandler;
+- import org.chromium.chrome.browser.actor.ActorKeyedServiceFactory;
+  import org.chromium.chrome.browser.browserservices.intents.WebappConstants;
+-@@ -142,7 +143,8 @@ public class ExternalNavigationDelegateImpl implements ExternalNavigationDelegat
++ import org.chromium.chrome.browser.document.ChromeLauncherActivity;
++@@ -139,7 +140,8 @@ public class ExternalNavigationDelegateImpl implements ExternalNavigationDelegat
+      @Override
+      public boolean shouldDisableExternalIntentRequestsForUrl(
+              ExternalNavigationParams params, Intent intent) {
+@@ -90,7 +90,7 @@ index 5e2b27f2375dc..9061cc4659952 100644
+      }
+  
+      @Override
+-@@ -331,7 +333,7 @@ public class ExternalNavigationDelegateImpl implements ExternalNavigationDelegat
++@@ -320,7 +322,7 @@ public class ExternalNavigationDelegateImpl implements ExternalNavigationDelegat
+                  && params.isInitialNavigationInFrame()
+                  // TODO(crbug.com/452537438): Figure out a better way to check whether we are in
+                  // desktop windowing mode or if the device can enter desktop windowing mode.
+@@ -154,12 +154,12 @@ index 0000000000000..02a3d03423d8b
+ +    </message>
+ +</grit-part>
+ diff --git a/components/external_intents/android/external_intents_features.cc b/components/external_intents/android/external_intents_features.cc
+-index e7da4a5038097..ec6cea0a28700 100644
++index 65b9aa618b596..4d19721d4d444 100644
+ --- a/components/external_intents/android/external_intents_features.cc
+ +++ b/components/external_intents/android/external_intents_features.cc
+-@@ -30,8 +30,14 @@ const base::Feature* const kFeaturesExposedToJava[] = {
+- BASE_FEATURE(kExternalNavigationDebugLogs, base::FEATURE_DISABLED_BY_DEFAULT);
+- BASE_FEATURE(kDontClobberTabsWithChromeAppId, base::FEATURE_ENABLED_BY_DEFAULT);
++@@ -32,8 +32,14 @@ BASE_FEATURE(kExternalNavigationDebugLogs, base::FEATURE_DISABLED_BY_DEFAULT);
++ BASE_FEATURE(kNavigationCaptureRefactorAndroid,
++              base::FEATURE_DISABLED_BY_DEFAULT);
+  
+ +CROMITE_FEATURE(kIntentBlockExternalFormRedirectsNoGesture,
+ +                "IntentBlockExternalFormRedirectsNoGesture",
+@@ -173,7 +173,7 @@ index e7da4a5038097..ec6cea0a28700 100644
+        UNSAFE_TODO(kFeaturesExposedToJava[ordinal]));
+  }
+ diff --git a/components/external_intents/android/external_intents_features.h b/components/external_intents/android/external_intents_features.h
+-index 0f68eba5388f8..fa24a23f9b209 100644
++index 6b38f79470b2a..53621103c5056 100644
+ --- a/components/external_intents/android/external_intents_features.h
+ +++ b/components/external_intents/android/external_intents_features.h
+ @@ -9,6 +9,7 @@
+@@ -182,10 +182,10 @@ index 0f68eba5388f8..fa24a23f9b209 100644
+  
+ +BASE_DECLARE_FEATURE(kIntentBlockExternalFormRedirectsNoGesture);
+  BASE_DECLARE_FEATURE(kExternalNavigationDebugLogs);
+- BASE_DECLARE_FEATURE(kDontClobberTabsWithChromeAppId);
+- 
++ BASE_DECLARE_FEATURE(kBlockFrameRenavigations);
++ BASE_DECLARE_FEATURE(kNavigationCaptureRefactorAndroid);
+ diff --git a/components/external_intents/android/java/src/org/chromium/components/external_intents/ExternalIntentsFeatures.java b/components/external_intents/android/java/src/org/chromium/components/external_intents/ExternalIntentsFeatures.java
+-index 907b22137951e..02f61ef249266 100644
++index bc6757766ed09..bb62f049c634c 100644
+ --- a/components/external_intents/android/java/src/org/chromium/components/external_intents/ExternalIntentsFeatures.java
+ +++ b/components/external_intents/android/java/src/org/chromium/components/external_intents/ExternalIntentsFeatures.java
+ @@ -19,6 +19,12 @@ import org.chromium.build.annotations.NullMarked;
+@@ -199,13 +199,13 @@ index 907b22137951e..02f61ef249266 100644
+ +            new ExternalIntentsFeature(-1, INTENT_BLOCK_EXTERNAL_FORM_REDIRECT_NO_GESTURE_NAME);
+ +
+      public static final String EXTERNAL_NAVIGATION_DEBUG_LOGS_NAME = "ExternalNavigationDebugLogs";
+-     public static final String DONT_CLOBBER_TABS_WITH_CHROME_APP_ID_NAME =
+-             "DontClobberTabsWithChromeAppId";
++     public static final String NAVIGATION_CAPTURE_REFACTOR_ANDROID_NAME =
++             "NavigationCaptureRefactorAndroid";
+ diff --git a/components/external_intents/android/java/src/org/chromium/components/external_intents/ExternalNavigationHandler.java b/components/external_intents/android/java/src/org/chromium/components/external_intents/ExternalNavigationHandler.java
+-index 654a498e50bed..ec170e3d0ee05 100644
++index 5378c88e11093..3837ec25f0636 100644
+ --- a/components/external_intents/android/java/src/org/chromium/components/external_intents/ExternalNavigationHandler.java
+ +++ b/components/external_intents/android/java/src/org/chromium/components/external_intents/ExternalNavigationHandler.java
+-@@ -1790,6 +1790,12 @@ public class ExternalNavigationHandler implements ExternalNavigationHelper {
++@@ -1796,6 +1796,12 @@ public class ExternalNavigationHandler implements ExternalNavigationHelper {
+          return false;
+      }
+  
+@@ -218,7 +218,7 @@ index 654a498e50bed..ec170e3d0ee05 100644
+      private OverrideUrlLoadingResult shouldOverrideUrlLoadingInternal(
+              ExternalNavigationParams params,
+              Intent targetIntent,
+-@@ -1877,6 +1883,21 @@ public class ExternalNavigationHandler implements ExternalNavigationHelper {
++@@ -1883,6 +1889,21 @@ public class ExternalNavigationHandler implements ExternalNavigationHelper {
+              return OverrideUrlLoadingResult.forNoOverride();
+          }
+  
+@@ -290,5 +290,5 @@ index 0000000000000..c4015ad7de119
+ +                "AllowExternalIntentRequests",
+ +                base::FEATURE_DISABLED_BY_DEFAULT);
+ -- 
+-2.53.0
++2.43.0
+ 
+diff --git a/0012-Basic-py3.14-compat-for-jinja_template.patch b/0012-Basic-py3.14-compat-for-jinja_template.patch
+deleted file mode 100644
+index 294dbc6b113ecc2404b050d6c3959c2046ca3a05..0000000000000000000000000000000000000000
+--- a/0012-Basic-py3.14-compat-for-jinja_template.patch
++++ /dev/null
+@@ -1,47 +0,0 @@
+-From d2ed7a136074f5b142730652d1abef9c47763d3d Mon Sep 17 00:00:00 2001
+-From: "Kevin F. Haggerty" <haggertk@lineageos.org>
+-Date: Sat, 6 Jun 2026 10:22:21 -0600
+-Subject: [PATCH 12/13] Basic py3.14 compat for jinja_template
+-
+----
+- build/android/gyp/jinja_template.py | 7 +++----
+- 1 file changed, 3 insertions(+), 4 deletions(-)
+-
+-diff --git a/build/android/gyp/jinja_template.py b/build/android/gyp/jinja_template.py
+-index 2b717db4241c2..f4a14a64a1b0a 100755
+---- a/build/android/gyp/jinja_template.py
+-+++ b/build/android/gyp/jinja_template.py
+-@@ -6,7 +6,6 @@
+- 
+- """Renders one or more template files using the Jinja template engine."""
+- 
+--import codecs
+- import argparse
+- import os
+- import sys
+-@@ -69,11 +68,11 @@ def _ProcessFile(processor, input_filename, output_filename):
+-     # If |output| is same with the file content, we skip update and
+-     # ninja's restat will avoid rebuilding things that depend on it.
+-     if os.path.isfile(output_filename):
+--        with codecs.open(output_filename, 'r', 'utf-8') as f:
+-+        with open(output_filename, 'r', encoding='utf-8') as f:
+-             if f.read() == output:
+-                 return
+- 
+--    with codecs.open(output_filename, 'w', 'utf-8') as output_file:
+-+    with open(output_filename, 'w', encoding='utf-8') as output_file:
+-         output_file.write(output)
+- 
+- 
+-@@ -120,7 +119,7 @@ def main():
+-     parser.add_argument(
+-         '--includes',
+-         default='',
+--        help="GN-list of files that get {% include %}'ed.",
+-+        help="GN-list of files that get {%% include %%}'ed."
+-     )
+-     parser.add_argument(
+-         '--output',
+--- 
+-2.53.0
+-
+diff --git a/0012-Disable-conversion-measurement-api.patch b/0012-Disable-conversion-measurement-api.patch
+new file mode 100644
+index 0000000000000000000000000000000000000000..d139c6392a2cec2fdfed16ac4687165739cbe21e
+--- /dev/null
++++ b/0012-Disable-conversion-measurement-api.patch
+@@ -0,0 +1,1207 @@
++From 2ffa6a64ac7e55b0a5e002c1cff07e7b8a0aa1d6 Mon Sep 17 00:00:00 2001
++From: uazo <uazo@users.noreply.github.com>
++Date: Mon, 15 Nov 2021 09:43:29 +0000
++Subject: [PATCH 12/12] Disable conversion measurement api
++
++Disable Conversion Measurement API by disabling the flag and removing
++support for the AttributionReporting provider. it also removes
++the handling of attributions via intents between apps.
++This patch enforces the deactivation by preventing the report from
++being sent and being saved to disk, although it is currently in uncalled code.
++
++Original License: GPL-2.0-or-later - https://spdx.org/licenses/GPL-2.0-or-later.html
++License: GPL-3.0-only - https://spdx.org/licenses/GPL-3.0-only.html
++---
++ .../browser/aw_content_browser_client.cc      |   3 +
++ .../chromium/android_webview/AwSettings.java  |   4 +-
++ .../apk/AndroidManifest.xml                   |   3 -
++ chrome/android/java/AndroidManifest.xml       |   4 -
++ .../ChromeSiteSettingsDelegate.java           |   2 +
++ .../privacy_page/privacy_page_index.html      |   9 -
++ chrome/browser/resources/settings/route.ts    |   2 +-
++ .../site_settings/site_settings_page.ts       |   1 +
++ .../aggregatable_trigger_config.cc            |   2 +-
++ components/attribution_reporting/features.cc  |   1 +
++ .../core/browser/content_settings_registry.cc |   2 +-
++ .../origin_trials/features.cc                 |   1 +
++ .../render_view_context_menu_base.cc          |   3 -
++ .../aggregatable_report_sender.cc             |  15 +-
++ .../attribution_data_host_manager_impl.cc     |   8 +-
++ .../attribution_reporting/attribution_host.cc |   3 +-
++ .../attribution_manager_impl.cc               |   4 -
++ .../attribution_os_level_manager.cc           |   3 +-
++ .../attribution_report_network_sender.cc      |   9 +
++ .../attribution_storage_sql.cc                |   8 +-
++ .../renderer_host/render_frame_host_impl.cc   |  11 +
++ content/browser/storage_partition_impl.cc     |  12 -
++ content/public/android/BUILD.gn               |   2 -
++ .../browser/AttributionOsLevelManager.java    | 349 +-----------------
++ .../public/browser/content_browser_client.cc  |   7 +-
++ .../public/browser/navigation_controller.cc   |   1 -
++ .../Disable-conversion-measurement-api.inc    |   2 +
++ .../Disable-conversion-measurement-api.inc    |   8 +
++ .../attribution/request_headers_internal.cc   |   1 +
++ services/network/network_context.cc           |  24 +-
++ .../network/public/cpp/attribution_utils.cc   |   2 +
++ .../core/frame/attribution_src_loader.cc      |   2 -
++ third_party/blink/renderer/core/page/page.cc  |   2 +-
++ .../platform/runtime_enabled_features.json5   |  20 +-
++ ui/events/android/motion_event_android.cc     |   8 +-
++ 35 files changed, 102 insertions(+), 436 deletions(-)
++ create mode 100644 cromite_flags/services/network/public/cpp/features_cc/Disable-conversion-measurement-api.inc
++ create mode 100644 cromite_flags/third_party/blink/common/features_cc/Disable-conversion-measurement-api.inc
++
++diff --git a/android_webview/browser/aw_content_browser_client.cc b/android_webview/browser/aw_content_browser_client.cc
++index df85e830cb9c1..2675cf54bbaa5 100644
++--- a/android_webview/browser/aw_content_browser_client.cc
+++++ b/android_webview/browser/aw_content_browser_client.cc
++@@ -1371,6 +1371,7 @@ network::mojom::AttributionSupport
++ AwContentBrowserClient::GetAttributionSupport(
++     AttributionReportingOsApiState state,
++     bool client_os_disabled) {
+++  if ((true)) return network::mojom::AttributionSupport::kNone;
++   // WebView only supports OS-level attribution and not web-attribution.
++   switch (state) {
++     case AttributionReportingOsApiState::kDisabled:
++@@ -1389,6 +1390,8 @@ bool AwContentBrowserClient::IsAttributionReportingOperationAllowed(
++     const url::Origin* destination_origin,
++     const url::Origin* reporting_origin,
++     bool* can_bypass) {
+++  if ((true))
+++    return false;
++   AwBrowserContext* aw_context =
++       static_cast<AwBrowserContext*>(browser_context);
++   // WebView only supports OS-level attribution and not web-attribution.
++diff --git a/android_webview/java/src/org/chromium/android_webview/AwSettings.java b/android_webview/java/src/org/chromium/android_webview/AwSettings.java
++index bf1093b16ce3c..5de1acf1f4d47 100644
++--- a/android_webview/java/src/org/chromium/android_webview/AwSettings.java
+++++ b/android_webview/java/src/org/chromium/android_webview/AwSettings.java
++@@ -201,7 +201,7 @@ public class AwSettings {
++     private boolean mSpatialNavigationEnabled; // Default depends on device features.
++     private boolean mEnableSupportedHardwareAcceleratedFeatures;
++     private int mMixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW;
++-    private int mAttributionBehavior = AttributionBehavior.APP_SOURCE_AND_WEB_TRIGGER;
+++    private int mAttributionBehavior = AttributionBehavior.DISABLED;
++ 
++     @SpeculativeLoadingAllowedFlags
++     private int mSpeculativeLoadingAllowedFlags =
++@@ -1820,7 +1820,7 @@ public class AwSettings {
++     public void setAttributionBehavior(@AttributionBehavior int behavior) {
++         synchronized (mAwSettingsLock) {
++             if (mAttributionBehavior != behavior) {
++-                mAttributionBehavior = behavior;
+++                mAttributionBehavior = AttributionBehavior.DISABLED;
++                 mEventHandler.updateWebkitPreferencesLocked();
++             }
++         }
++diff --git a/android_webview/tools/system_webview_shell/apk/AndroidManifest.xml b/android_webview/tools/system_webview_shell/apk/AndroidManifest.xml
++index 527e87e50476e..85c9cec19e576 100644
++--- a/android_webview/tools/system_webview_shell/apk/AndroidManifest.xml
+++++ b/android_webview/tools/system_webview_shell/apk/AndroidManifest.xml
++@@ -191,9 +191,6 @@
++             android:exported="true">
++         </activity>
++ 
++-        <property android:name="android.adservices.AD_SERVICES_CONFIG"
++-            android:resource="@xml/ad_services_config" />
++-
++         <service android:name="android.webkit.MetaDataHolderService"
++                  android:enabled="false"
++                  android:exported="false">
++diff --git a/chrome/android/java/AndroidManifest.xml b/chrome/android/java/AndroidManifest.xml
++index 5270a95ee7b87..dee4cdd42dffb 100644
++--- a/chrome/android/java/AndroidManifest.xml
+++++ b/chrome/android/java/AndroidManifest.xml
++@@ -39,7 +39,6 @@ by a child template that "extends" this file.
++     <uses-permission-sdk-23 android:name="android.permission.ACCESS_WIFI_STATE" />
++     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
++ 
++-    <uses-permission-sdk-23 android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION" />
++     <uses-permission-sdk-23 android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30"/>
++     <uses-permission-sdk-23 android:name="android.permission.BLUETOOTH_CONNECT"/>
++     <!--
++@@ -1253,9 +1252,6 @@ by a child template that "extends" this file.
++             android:name="com.google.android.gms.cast.framework.ReconnectionService"
++             tools:node="remove" />
++ 
++-        <property android:name="android.adservices.AD_SERVICES_CONFIG"
++-            android:resource="@xml/ad_services_config" />
++-
++         {% set enable_openxr = enable_openxr|default(0) %}
++         {% if enable_openxr == "true" %}
++           <!-- launchMode is set to singleTask because there should never be multiple copies of the app running. -->
++diff --git a/chrome/android/java/src/org/chromium/chrome/browser/site_settings/ChromeSiteSettingsDelegate.java b/chrome/android/java/src/org/chromium/chrome/browser/site_settings/ChromeSiteSettingsDelegate.java
++index d6e01c0bc9e52..ee27fe7625956 100644
++--- a/chrome/android/java/src/org/chromium/chrome/browser/site_settings/ChromeSiteSettingsDelegate.java
+++++ b/chrome/android/java/src/org/chromium/chrome/browser/site_settings/ChromeSiteSettingsDelegate.java
++@@ -152,6 +152,8 @@ public class ChromeSiteSettingsDelegate implements SiteSettingsDelegate {
++                 // not great to dynamically remove the preference in this way.
++             case SiteSettingsCategory.Type.ADS:
++                 return SiteSettingsCategory.adsCategoryEnabled();
+++            case SiteSettingsCategory.Type.ANTI_ABUSE:
+++                return false;
++             case SiteSettingsCategory.Type.AUTO_DARK_WEB_CONTENT:
++                 return ChromeFeatureList.isEnabled(
++                         ChromeFeatureList.DARKEN_WEBSITES_CHECKBOX_IN_THEMES_SETTING);
++diff --git a/chrome/browser/resources/settings/privacy_page/privacy_page_index.html b/chrome/browser/resources/settings/privacy_page/privacy_page_index.html
++index 90ddcb0cba4eb..a29af6d708be4 100644
++--- a/chrome/browser/resources/settings/privacy_page/privacy_page_index.html
+++++ b/chrome/browser/resources/settings/privacy_page/privacy_page_index.html
++@@ -179,15 +179,6 @@
++     </settings-ar-page>
++   </template>
++ 
++-  <template is="dom-if" if="[[renderView_(
++-      routes_.SITE_SETTINGS_AUTO_VERIFY, currentRoute, inSearchMode)]]"
++-      update-when-false>
++-    <settings-anti-abuse-page slot="view" id="siteSettingsAutoVerify"
++-        data-parent-view-id="privacy"
++-        route-path$="[[routes_.SITE_SETTINGS_AUTO_VERIFY.path]]">
++-    </settings-anti-abuse-page>
++-  </template>
++-
++   <template is="dom-if" if="[[renderView_(
++       routes_.SITE_SETTINGS_AUTO_PICTURE_IN_PICTURE, currentRoute,
++       inSearchMode)]]" update-when-false>
++diff --git a/chrome/browser/resources/settings/route.ts b/chrome/browser/resources/settings/route.ts
++index 687bc78abc1c7..18a7247f8ba3d 100644
++--- a/chrome/browser/resources/settings/route.ts
+++++ b/chrome/browser/resources/settings/route.ts
++@@ -82,7 +82,7 @@ function addPrivacyChildRoutes(r: Partial<SettingsRoutes>) {
++     r.SITE_SETTINGS_WEB_PRINTING = r.SITE_SETTINGS.createChild('webPrinting');
++   }
++   // </if>
++-  r.SITE_SETTINGS_AUTO_VERIFY = r.SITE_SETTINGS.createChild('autoVerify');
+++  // r.SITE_SETTINGS_AUTO_VERIFY = r.SITE_SETTINGS.createChild('autoVerify');
++   r.SITE_SETTINGS_BACKGROUND_SYNC =
++       r.SITE_SETTINGS.createChild('backgroundSync');
++   r.SITE_SETTINGS_CAMERA = r.SITE_SETTINGS.createChild('camera');
++diff --git a/chrome/browser/resources/settings/site_settings/site_settings_page.ts b/chrome/browser/resources/settings/site_settings/site_settings_page.ts
++index 0ae371bd02646..1460b2f8b1771 100644
++--- a/chrome/browser/resources/settings/site_settings/site_settings_page.ts
+++++ b/chrome/browser/resources/settings/site_settings/site_settings_page.ts
++@@ -67,6 +67,7 @@ function getCategoryItemMap(): Map<ContentSettingsTypes, CategoryListItem> {
++       route: routes.SITE_SETTINGS_AUTO_VERIFY,
++       id: Id.ANTI_ABUSE,
++       label: 'siteSettingsAntiAbuse',
+++      shouldShow: () => false,
++       icon: 'privacy20:person-check',
++       enabledLabel: 'siteSettingsAntiAbuseEnabledSubLabel',
++       disabledLabel: 'siteSettingsAntiAbuseDisabledSubLabel',
++diff --git a/components/attribution_reporting/aggregatable_trigger_config.cc b/components/attribution_reporting/aggregatable_trigger_config.cc
++index 512a652a2f8dc..f68bfbc08b4c1 100644
++--- a/components/attribution_reporting/aggregatable_trigger_config.cc
+++++ b/components/attribution_reporting/aggregatable_trigger_config.cc
++@@ -102,7 +102,7 @@ bool IsValid(SourceRegistrationTimeConfig source_registration_time_config,
++ 
++ base::expected<std::optional<std::string>, TriggerRegistrationError>
++ ParseTriggerContextId(base::Value* value) {
++-  if (!value) {
+++  if ((true)) {
++     return std::nullopt;
++   }
++ 
++diff --git a/components/attribution_reporting/features.cc b/components/attribution_reporting/features.cc
++index b199e7682ad33..a5929da4e4ba1 100644
++--- a/components/attribution_reporting/features.cc
+++++ b/components/attribution_reporting/features.cc
++@@ -11,4 +11,5 @@ namespace attribution_reporting::features {
++ // Controls whether the Conversion Measurement API infrastructure is enabled.
++ BASE_FEATURE(kConversionMeasurement, base::FEATURE_ENABLED_BY_DEFAULT);
++ 
+++SET_CROMITE_FEATURE_DISABLED(kConversionMeasurement);
++ }  // namespace attribution_reporting::features
++diff --git a/components/content_settings/core/browser/content_settings_registry.cc b/components/content_settings/core/browser/content_settings_registry.cc
++index 8adb55497b971..73dadfdd99cc4 100644
++--- a/components/content_settings/core/browser/content_settings_registry.cc
+++++ b/components/content_settings/core/browser/content_settings_registry.cc
++@@ -649,7 +649,7 @@ void ContentSettingsRegistry::Init() {
++            ContentSettingsInfo::INHERIT_IN_INCOGNITO,
++            PermissionSettingsInfo::EXCEPTIONS_ON_SECURE_ORIGINS_ONLY);
++ 
++-  Register(ContentSettingsType::ANTI_ABUSE, "anti-abuse", CONTENT_SETTING_ALLOW,
+++  Register(ContentSettingsType::ANTI_ABUSE, "anti-abuse", CONTENT_SETTING_BLOCK,
++            WebsiteSettingsInfo::SYNCABLE,
++            /*allowlisted_primary_schemes=*/{},
++            /*valid_settings=*/{CONTENT_SETTING_ALLOW, CONTENT_SETTING_BLOCK},
++diff --git a/components/embedder_support/origin_trials/features.cc b/components/embedder_support/origin_trials/features.cc
++index df26d9e881731..89237d70dcf4b 100644
++--- a/components/embedder_support/origin_trials/features.cc
+++++ b/components/embedder_support/origin_trials/features.cc
++@@ -15,4 +15,5 @@ namespace embedder_support {
++ // from the origin trial.
++ BASE_FEATURE(kOriginTrialsSampleAPIThirdPartyAlternativeUsage,
++              base::FEATURE_ENABLED_BY_DEFAULT);
+++SET_CROMITE_FEATURE_DISABLED(kOriginTrialsSampleAPIThirdPartyAlternativeUsage);
++ }  // namespace embedder_support
++diff --git a/components/renderer_context_menu/render_view_context_menu_base.cc b/components/renderer_context_menu/render_view_context_menu_base.cc
++index ad4a62e7b5296..87d4ac9560279 100644
++--- a/components/renderer_context_menu/render_view_context_menu_base.cc
+++++ b/components/renderer_context_menu/render_view_context_menu_base.cc
++@@ -541,9 +541,6 @@ RenderViewContextMenuBase::GetOpenURLParamsWithExtraHeaders(
++ 
++   open_url_params.source_site_instance = site_instance_;
++ 
++-  if (disposition != WindowOpenDisposition::OFF_THE_RECORD)
++-    open_url_params.impression = params_.impression;
++-
++   return open_url_params;
++ }
++ 
++diff --git a/content/browser/aggregation_service/aggregatable_report_sender.cc b/content/browser/aggregation_service/aggregatable_report_sender.cc
++index bdec3320a8416..062360fc938ca 100644
++--- a/content/browser/aggregation_service/aggregatable_report_sender.cc
+++++ b/content/browser/aggregation_service/aggregatable_report_sender.cc
++@@ -192,13 +192,8 @@ void AggregatableReportSender::SendReport(GURL url,
++   // Allow bodies of non-2xx responses to be returned.
++   simple_url_loader_ptr->SetAllowHttpErrorResults(true);
++ 
++-  // Unretained is safe because the URLLoader is owned by `this` and will be
++-  // deleted before `this`.
++-  simple_url_loader_ptr->DownloadHeadersOnly(
++-      url_loader_factory_.get(),
++-      base::BindOnce(&AggregatableReportSender::OnReportSent,
++-                     base::Unretained(this), std::move(it), std::move(callback),
++-                     delay_type, std::move(serialized_url)));
+++  // this is never called on Bromite but nothing would be sent if it were
+++  OnReportSent(std::move(it), std::move(callback), delay_type, std::move(serialized_url), nullptr);
++ }
++ 
++ void AggregatableReportSender::OnReportSent(
++@@ -206,7 +201,11 @@ void AggregatableReportSender::OnReportSent(
++     ReportSentCallback callback,
++     std::optional<DelayType> delay_type,
++     std::string serialized_url,
++-    scoped_refptr<net::HttpResponseHeaders> headers) {
+++    scoped_refptr<net::HttpResponseHeaders> headers) { // disable in Bromite
+++  if ((true)) {
+++    std::move(callback).Run(RequestStatus::kOk);
+++    return;
+++  }
++   std::optional<int> http_response_code;
++   if (headers) {
++     http_response_code = headers->response_code();
++diff --git a/content/browser/attribution_reporting/attribution_data_host_manager_impl.cc b/content/browser/attribution_reporting/attribution_data_host_manager_impl.cc
++index 22ab0c5753cd1..05c3871701542 100644
++--- a/content/browser/attribution_reporting/attribution_data_host_manager_impl.cc
+++++ b/content/browser/attribution_reporting/attribution_data_host_manager_impl.cc
++@@ -787,11 +787,9 @@ class AttributionDataHostManagerImpl::PendingRegistrationData {
++         headers->GetNormalizedHeader(
++             attribution_reporting::kAttributionReportingRegisterTriggerHeader);
++ 
++-    std::optional<std::string> os_source_header = headers->GetNormalizedHeader(
++-        attribution_reporting::kAttributionReportingRegisterOsSourceHeader);
+++    std::optional<std::string> os_source_header;
++ 
++-    std::optional<std::string> os_trigger_header = headers->GetNormalizedHeader(
++-        attribution_reporting::kAttributionReportingRegisterOsTriggerHeader);
+++    std::optional<std::string> os_trigger_header;
++ 
++     const bool has_source =
++         web_source_header.has_value() || os_source_header.has_value();
++@@ -1143,6 +1141,8 @@ void AttributionDataHostManagerImpl::ParseHeader(
++     Registrations& registrations,
++     HeaderPendingDecode pending_decode,
++     Registrar registrar) {
+++  if ((true)) return;
+++
++   switch (registrations.eligibility()) {
++     case RegistrationEligibility::kSourceOrTrigger:
++       break;
++diff --git a/content/browser/attribution_reporting/attribution_host.cc b/content/browser/attribution_reporting/attribution_host.cc
++index b5b953c589e6b..22fc404a8993e 100644
++--- a/content/browser/attribution_reporting/attribution_host.cc
+++++ b/content/browser/attribution_reporting/attribution_host.cc
++@@ -136,8 +136,6 @@ AttributionHost::AttributionHost(WebContents* web_contents)
++   // AttributionInputEventTrackerAndroid without a native view will crash. For
++   // now, just disable this code if the view is null.
++   if (web_contents->GetNativeView()) {
++-    input_event_tracker_android_ =
++-        std::make_unique<AttributionInputEventTrackerAndroid>(web_contents);
++   }
++ #endif
++ }
++@@ -347,6 +345,7 @@ void AttributionHost::NotifyNavigationRegistrationData(
++     return;
++   }
++ 
+++  if ((true)) return;
++   auto* attribution_manager =
++       AttributionManager::FromWebContents(web_contents());
++   CHECK(attribution_manager);
++diff --git a/content/browser/attribution_reporting/attribution_manager_impl.cc b/content/browser/attribution_reporting/attribution_manager_impl.cc
++index d44b4603f36dc..402ee1b966c96 100644
++--- a/content/browser/attribution_reporting/attribution_manager_impl.cc
+++++ b/content/browser/attribution_reporting/attribution_manager_impl.cc
++@@ -523,11 +523,7 @@ bool IsOperationAllowed(
++ }
++ 
++ std::unique_ptr<AttributionOsLevelManager> CreateOsLevelManager() {
++-#if BUILDFLAG(IS_ANDROID)
++-  return std::make_unique<AttributionOsLevelManagerAndroid>();
++-#else
++   return std::make_unique<NoOpAttributionOsLevelManager>();
++-#endif
++ }
++ 
++ base::Time GetReportExpiryTime(const AttributionReport& report) {
++diff --git a/content/browser/attribution_reporting/attribution_os_level_manager.cc b/content/browser/attribution_reporting/attribution_os_level_manager.cc
++index 21787d459d6dd..2d21801d7876f 100644
++--- a/content/browser/attribution_reporting/attribution_os_level_manager.cc
+++++ b/content/browser/attribution_reporting/attribution_os_level_manager.cc
++@@ -46,6 +46,7 @@ std::optional<ApiState> g_state GUARDED_BY_CONTEXT(GetSequenceChecker());
++ 
++ // static
++ bool AttributionOsLevelManager::ShouldInitializeApiState() {
+++  if ((true)) return false;
++   DCHECK_CALLED_ON_VALID_SEQUENCE(GetSequenceChecker());
++   if (g_state.has_value()) {
++     return false;
++@@ -57,7 +58,7 @@ bool AttributionOsLevelManager::ShouldInitializeApiState() {
++ // static
++ ApiState AttributionOsLevelManager::GetApiState() {
++   DCHECK_CALLED_ON_VALID_SEQUENCE(GetSequenceChecker());
++-  return g_state.value_or(ApiState::kDisabled);
+++  return ApiState::kDisabled;
++ }
++ 
++ // static
++diff --git a/content/browser/attribution_reporting/attribution_report_network_sender.cc b/content/browser/attribution_reporting/attribution_report_network_sender.cc
++index 90de9f69bf11c..b9da1d0291ab1 100644
++--- a/content/browser/attribution_reporting/attribution_report_network_sender.cc
+++++ b/content/browser/attribution_reporting/attribution_report_network_sender.cc
++@@ -117,6 +117,9 @@ void AttributionReportNetworkSender::SendReport(GURL url,
++                                                 url::Origin origin,
++                                                 std::string body,
++                                                 UrlLoaderCallback callback) {
+++  // this is never called on Bromite but nothing would be sent if it were
+++  if ((true)) return;
+++
++   auto resource_request = std::make_unique<network::ResourceRequest>();
++   resource_request->url = std::move(url);
++   resource_request->method = net::HttpRequestHeaders::kPostMethod;
++@@ -192,6 +195,12 @@ void AttributionReportNetworkSender::OnReportSent(
++     ReportSentCallback sent_callback,
++     UrlLoaderList::iterator it,
++     scoped_refptr<net::HttpResponseHeaders> headers) {
+++  if ((true)) {
+++    std::move(sent_callback)
+++        .Run(report,
+++             SendResult::Sent(SendResult::Sent::Result::kSent, 200));
+++    return;
+++  }
++   network::SimpleURLLoader* loader = it->get();
++ 
++   const int net_error = loader->NetError();
++diff --git a/content/browser/attribution_reporting/attribution_storage_sql.cc b/content/browser/attribution_reporting/attribution_storage_sql.cc
++index 6bb9cb3997a04..80688b77f79bd 100644
++--- a/content/browser/attribution_reporting/attribution_storage_sql.cc
+++++ b/content/browser/attribution_reporting/attribution_storage_sql.cc
++@@ -534,6 +534,8 @@ void AssignSourceForDeactivationOrDeletion(
++   }
++ }
++ 
+++bool g_run_in_memory = true;
+++
++ }  // namespace
++ 
++ // static
++@@ -556,9 +558,9 @@ bool AttributionStorageSql::Transaction::Commit() {
++ AttributionStorageSql::AttributionStorageSql(
++     const base::FilePath& user_data_directory,
++     AttributionResolverDelegate* delegate)
++-    : path_to_database_(user_data_directory.empty()
++-                            ? base::FilePath()
++-                            : DatabasePath(user_data_directory)),
+++    : path_to_database_(user_data_directory.empty() || g_run_in_memory
+++                             ? base::FilePath()
+++                             : DatabasePath(user_data_directory)),
++       db_(sql::DatabaseOptions().set_cache_size(32),
++           /*tag=*/"Conversions"),
++       delegate_(delegate),
++diff --git a/content/browser/renderer_host/render_frame_host_impl.cc b/content/browser/renderer_host/render_frame_host_impl.cc
++index a7baf0c88fbfc..41e8a4c29498c 100644
++--- a/content/browser/renderer_host/render_frame_host_impl.cc
+++++ b/content/browser/renderer_host/render_frame_host_impl.cc
++@@ -10794,6 +10794,7 @@ bool RenderFrameHostImpl::IsFencedFrameReportingFromRendererAllowed(
++     return false;
++   }
++ 
+++  if ((true)) return false;
++   if (!IsActive()) {
++     // reportEvent is not allowed when this RenderFrameHost or one of its
++     // ancestors is not active.
++@@ -14951,6 +14952,16 @@ void RenderFrameHostImpl::BindTrustTokenQueryAnswerer(
++     return;
++   }
++ 
+++  // flags are enforced in benign renderers by the
+++  // RuntimeEnabled=PrivateStateTokens IDL attribute (the base::Feature's value
+++  // is tied to the RuntimeEnabledFeature's).
+++  if ((true)) {
+++    mojo::ReportBadMessage(
+++        "Attempted to get a TrustTokenQueryAnswerer with Private State Tokens "
+++        "disabled.");
+++    return;
+++  }
+++
++   // TODO(crbug.com/40729410): Document.hasPrivateToken is restricted to
++   // secure contexts, so we could additionally add a check verifying that the
++   // bind request "is coming from a secure context"---but there's currently no
++diff --git a/content/browser/storage_partition_impl.cc b/content/browser/storage_partition_impl.cc
++index 7f3228a5e5148..dc5556802380b 100644
++--- a/content/browser/storage_partition_impl.cc
+++++ b/content/browser/storage_partition_impl.cc
++@@ -1460,15 +1460,6 @@ void StoragePartitionImpl::Initialize(
++ 
++   bucket_manager_ = std::make_unique<BucketManager>(this);
++ 
++-  if (base::FeatureList::IsEnabled(
++-          attribution_reporting::features::kConversionMeasurement)) {
++-    // The Conversion Measurement API is not available in Incognito mode, but
++-    // this is enforced by the `AttributionManagerImpl` itself for better error
++-    // reporting and metrics.
++-    attribution_manager_ = std::make_unique<AttributionManagerImpl>(
++-        this, path, special_storage_policy_);
++-  }
++-
++   if (base::FeatureList::IsEnabled(network::features::kInterestGroupStorage)) {
++     // Auction worklets on non-Android use dedicated processes; on Android due
++     // to high cost of process launch they try to reuse renderers.
++@@ -1520,9 +1511,6 @@ void StoragePartitionImpl::Initialize(
++ 
++   font_access_manager_ = FontAccessManager::Create();
++ 
++-  aggregation_service_ =
++-      std::make_unique<AggregationServiceImpl>(is_in_memory(), path, this);
++-
++ #if BUILDFLAG(ENABLE_LIBRARY_CDMS)
++   if (is_in_memory()) {
++     // Pass an empty path if in_memory so that CdmStorage.db is not stored on
++diff --git a/content/public/android/BUILD.gn b/content/public/android/BUILD.gn
++index dfd08d8eb463a..4f73bc1128c78 100644
++--- a/content/public/android/BUILD.gn
+++++ b/content/public/android/BUILD.gn
++@@ -208,8 +208,6 @@ android_library("content_full_java") {
++     "//third_party/androidx:androidx_appcompat_appcompat_resources_java",
++     "//third_party/androidx:androidx_collection_collection_java",
++     "//third_party/androidx:androidx_core_core_java",
++-    "//third_party/androidx:androidx_privacysandbox_ads_ads_adservices_java",
++-    "//third_party/androidx:androidx_privacysandbox_ads_ads_adservices_java_java",
++     "//third_party/androidx/local_modifications/window:window_util_java",
++     "//third_party/blink/public:blink_headers_java",
++     "//third_party/blink/public/common:common_java",
++diff --git a/content/public/android/java/src/org/chromium/content/browser/AttributionOsLevelManager.java b/content/public/android/java/src/org/chromium/content/browser/AttributionOsLevelManager.java
++index 85cabdbd730a0..4e2dc6dc1b3bd 100644
++--- a/content/public/android/java/src/org/chromium/content/browser/AttributionOsLevelManager.java
+++++ b/content/public/android/java/src/org/chromium/content/browser/AttributionOsLevelManager.java
++@@ -15,18 +15,6 @@ import android.view.MotionEvent;
++ 
++ import androidx.annotation.IntDef;
++ import androidx.annotation.OptIn;
++-import androidx.privacysandbox.ads.adservices.java.measurement.MeasurementManagerFutures;
++-import androidx.privacysandbox.ads.adservices.measurement.DeletionRequest;
++-import androidx.privacysandbox.ads.adservices.measurement.SourceRegistrationRequest;
++-import androidx.privacysandbox.ads.adservices.measurement.WebSourceParams;
++-import androidx.privacysandbox.ads.adservices.measurement.WebSourceRegistrationRequest;
++-import androidx.privacysandbox.ads.adservices.measurement.WebTriggerParams;
++-import androidx.privacysandbox.ads.adservices.measurement.WebTriggerRegistrationRequest;
++-
++-import com.google.common.collect.ImmutableList;
++-import com.google.common.util.concurrent.FutureCallback;
++-import com.google.common.util.concurrent.Futures;
++-import com.google.common.util.concurrent.ListenableFuture;
++ 
++ import org.jni_zero.CalledByNative;
++ import org.jni_zero.JNINamespace;
++@@ -61,6 +49,10 @@ import java.util.concurrent.TimeoutException;
++ @JNINamespace("content")
++ @NullMarked
++ public class AttributionOsLevelManager {
+++    private class MeasurementManagerFutures {}
+++    private class WebTriggerParams {}
+++    private class WebSourceParams {}
+++
++     private static final String TAG = "AttributionManager";
++     // TODO: replace with constant in android.Manifest.permission once it becomes available in U.
++     private static final String PERMISSION_ACCESS_ADSERVICES_ATTRIBUTION =
++@@ -145,100 +137,11 @@ public class AttributionOsLevelManager {
++     }
++ 
++     private static boolean supportsAttribution() {
++-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R;
++-    }
++-
++-    private static @OperationResult int getOperationResultFromMessage(@Nullable String message) {
++-        if (message == null) {
++-            return OperationResult.ERROR_UNKNOWN;
++-        } else {
++-            String lowerMessage = message.toLowerCase(Locale.US);
++-            if (lowerMessage.contains("background")) {
++-                return OperationResult.ERROR_BACKGROUND_CALLER;
++-            } else if (lowerMessage.contains("unable to find the service")) {
++-                return OperationResult.ERROR_SERVICE_NOT_FOUND;
++-            } else if (lowerMessage.contains("service is not available")) {
++-                return OperationResult.ERROR_SERVICE_UNAVAILABLE;
++-            } else if (lowerMessage.contains("api rate limit exceeded")) {
++-                return OperationResult.ERROR_API_RATE_LIMIT_EXCEEDED;
++-            } else if (lowerMessage.contains("server rate limit exceeded")) {
++-                return OperationResult.ERROR_SERVER_RATE_LIMIT_EXCEEDED;
++-            } else if (lowerMessage.contains(
++-                    "caller is not authorized to access information from another user")) {
++-                return OperationResult.ERROR_CALLER_NOT_ALLOWED_TO_CROSS_USER_BOUNDARIES;
++-            } else if (lowerMessage.contains(
++-                    "caller is not allowed to perform this operation on behalf of the given"
++-                            + " package")) {
++-                return OperationResult.ERROR_CALLER_NOT_ALLOWED_ON_BEHALF;
++-            } else if (lowerMessage.contains("permission was not requested")) {
++-                return OperationResult.ERROR_PERMISSION_NOT_REQUESTED;
++-            } else if (lowerMessage.contains("caller is not allowed")) {
++-                return OperationResult.ERROR_CALLER_NOT_ALLOWED;
++-            } else if (lowerMessage.contains("api time out")) {
++-                return OperationResult.ERROR_TIMEOUT;
++-            } else if (lowerMessage.contains("failed to encrypt responses")) {
++-                return OperationResult.ERROR_ENCRYPTION_FAILURE;
++-            } else if (lowerMessage.contains(
++-                    "service received an invalid object from the server")) {
++-                return OperationResult.ERROR_INVALID_OBJECT;
++-            } else {
++-                return OperationResult.ERROR_UNKNOWN;
++-            }
++-        }
++-    }
++-
++-    private static @OperationResult int convertToOperationResult(Throwable thrown) {
++-        @OperationResult int result = getOperationResultFromMessage(thrown.getMessage());
++-        if (result != OperationResult.ERROR_UNKNOWN) {
++-            return result;
++-        } else if (thrown instanceof IllegalArgumentException) {
++-            return OperationResult.ERROR_ILLEGAL_ARGUMENT;
++-        } else if (thrown instanceof IOException) {
++-            return OperationResult.ERROR_IO;
++-        } else if (thrown instanceof IllegalStateException) {
++-            return OperationResult.ERROR_ILLEGAL_STATE;
++-        } else if (thrown instanceof SecurityException) {
++-            return OperationResult.ERROR_SECURITY;
++-        } else if (thrown instanceof TimeoutException) {
++-            return OperationResult.ERROR_TIMEOUT;
++-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
++-                && thrown instanceof LimitExceededException) {
++-            return OperationResult.ERROR_LIMIT_EXCEEDED;
++-        } else if (thrown instanceof InvalidObjectException) {
++-            return OperationResult.ERROR_INVALID_OBJECT;
++-        } else {
++-            return OperationResult.ERROR_UNKNOWN;
++-        }
+++        return false;
++     }
++ 
++     private static void recordOperationResult(
++             @OperationType int type, @OperationResult int result) {
++-        String suffix = "";
++-        switch (type) {
++-            case OperationType.REGISTER_SOURCE:
++-                suffix = "RegisterSource";
++-                break;
++-            case OperationType.REGISTER_WEB_SOURCE:
++-                suffix = "RegisterWebSource";
++-                break;
++-            case OperationType.REGISTER_TRIGGER:
++-                suffix = "RegisterTrigger";
++-                break;
++-            case OperationType.REGISTER_WEB_TRIGGER:
++-                suffix = "RegisterWebTrigger";
++-                break;
++-            case OperationType.GET_MEASUREMENT_API_STATUS:
++-                suffix = "GetMeasurementApiStatus";
++-                break;
++-            case OperationType.DELETE_REGISTRATIONS:
++-                suffix = "DeleteRegistrations";
++-                break;
++-        }
++-
++-        assert suffix.length() > 0;
++-
++-        RecordHistogram.recordEnumeratedHistogram(
++-                "Conversions.AndroidOperationResult2." + suffix, result, OperationResult.COUNT);
++     }
++ 
++     @CalledByNative
++@@ -247,22 +150,7 @@ public class AttributionOsLevelManager {
++     }
++ 
++     private @Nullable MeasurementManagerFutures getManager() {
++-        if (!supportsAttribution()) {
++-            return null;
++-        }
++-        if (sManagerForTesting != null) {
++-            return sManagerForTesting;
++-        }
++-        if (mManager != null) {
++-            return mManager;
++-        }
++-        try {
++-            mManager = MeasurementManagerFutures.from(ContextUtils.getApplicationContext());
++-        } catch (Throwable t) {
++-            // An error may be thrown if android.ext.adservices is not loaded.
++-            Log.i(TAG, "Failed to get measurement manager", t);
++-        }
++-        return mManager;
+++        return null;
++     }
++ 
++     private void onRegistrationCompleted(
++@@ -276,28 +164,6 @@ public class AttributionOsLevelManager {
++         }
++     }
++ 
++-    private void addRegistrationFutureCallback(
++-            int requestId, @OperationType int type, ListenableFuture<?> future) {
++-        if (!supportsAttribution()) {
++-            return;
++-        }
++-        Futures.addCallback(
++-                future,
++-                new FutureCallback<Object>() {
++-                    @Override
++-                    public void onSuccess(@Nullable Object result) {
++-                        onRegistrationCompleted(requestId, type, OperationResult.SUCCESS);
++-                    }
++-
++-                    @Override
++-                    public void onFailure(Throwable thrown) {
++-                        Log.w(TAG, "Failed to register", thrown);
++-                        onRegistrationCompleted(requestId, type, convertToOperationResult(thrown));
++-                    }
++-                },
++-                PostTask.getUiBestEffortExecutor());
++-    }
++-
++     @CalledByNative
++     private static @Nullable List<WebSourceParams> createWebSourceParamsList(int size) {
++         if (!supportsAttribution()) {
++@@ -312,7 +178,6 @@ public class AttributionOsLevelManager {
++         if (!supportsAttribution()) {
++             return;
++         }
++-        list.add(new WebSourceParams(Uri.parse(registrationUrl.getSpec()), isDebugKeyAllowed));
++     }
++ 
++     /**
++@@ -329,32 +194,12 @@ public class AttributionOsLevelManager {
++                     OperationResult.ERROR_VERSION_UNSUPPORTED);
++             return;
++         }
++-        MeasurementManagerFutures mm = getManager();
++-        if (mm == null) {
++-            onRegistrationCompleted(
++-                    requestId, OperationType.REGISTER_WEB_SOURCE, OperationResult.ERROR_INTERNAL);
++-            return;
++-        }
++-        ListenableFuture<?> future =
++-                mm.registerWebSourceAsync(
++-                        new WebSourceRegistrationRequest(
++-                                sources,
++-                                Uri.parse(topLevelOrigin.getSpec()),
++-                                /* inputEvent= */ event,
++-                                /* appDestination= */ null,
++-                                /* webDestination= */ null,
++-                                /* verifiedDestination= */ null));
++-        addRegistrationFutureCallback(requestId, OperationType.REGISTER_WEB_SOURCE, future);
++     }
++ 
++     /**
++      * Registers an attribution source with native, see `registerSourceAsync()`:
++      * https://developer.android.com/reference/androidx/privacysandbox/ads/adservices/java/measurement/MeasurementManagerFutures.
++      */
++-    @OptIn(
++-            markerClass =
++-                    androidx.privacysandbox.ads.adservices.common.ExperimentalFeatures
++-                            .RegisterSourceOptIn.class)
++     @CalledByNative
++     private void registerAttributionSource(
++             int requestId, @JniType("std::vector") GURL[] registrationUrls, MotionEvent event) {
++@@ -365,37 +210,16 @@ public class AttributionOsLevelManager {
++                     OperationResult.ERROR_VERSION_UNSUPPORTED);
++             return;
++         }
++-        MeasurementManagerFutures mm = getManager();
++-        if (mm == null) {
++-            onRegistrationCompleted(
++-                    requestId, OperationType.REGISTER_SOURCE, OperationResult.ERROR_INTERNAL);
++-            return;
++-        }
++-
++-        ArrayList<Uri> registrationUris = new ArrayList<Uri>(registrationUrls.length);
++-        for (GURL registrationUrl : registrationUrls) {
++-            registrationUris.add(Uri.parse(registrationUrl.getSpec()));
++-        }
++-        ListenableFuture<?> future =
++-                mm.registerSourceAsync(new SourceRegistrationRequest(registrationUris, event));
++-        addRegistrationFutureCallback(requestId, OperationType.REGISTER_SOURCE, future);
++     }
++ 
++     @CalledByNative
++     private static @Nullable List<WebTriggerParams> createWebTriggerParamsList(int size) {
++-        if (!supportsAttribution()) {
++-            return null;
++-        }
++-        return new ArrayList<WebTriggerParams>(size);
+++        return null;
++     }
++ 
++     @CalledByNative
++     private static void addWebTriggerParams(
++             List<WebTriggerParams> list, GURL registrationUrl, boolean isDebugKeyAllowed) {
++-        if (!supportsAttribution()) {
++-            return;
++-        }
++-        list.add(new WebTriggerParams(Uri.parse(registrationUrl.getSpec()), isDebugKeyAllowed));
++     }
++ 
++     /**
++@@ -412,18 +236,6 @@ public class AttributionOsLevelManager {
++                     OperationResult.ERROR_VERSION_UNSUPPORTED);
++             return;
++         }
++-
++-        MeasurementManagerFutures mm = getManager();
++-        if (mm == null) {
++-            onRegistrationCompleted(
++-                    requestId, OperationType.REGISTER_WEB_TRIGGER, OperationResult.ERROR_INTERNAL);
++-            return;
++-        }
++-        ListenableFuture<?> future =
++-                mm.registerWebTriggerAsync(
++-                        new WebTriggerRegistrationRequest(
++-                                triggers, Uri.parse(topLevelOrigin.getSpec())));
++-        addRegistrationFutureCallback(requestId, OperationType.REGISTER_WEB_TRIGGER, future);
++     }
++ 
++     /**
++@@ -439,15 +251,6 @@ public class AttributionOsLevelManager {
++                     OperationResult.ERROR_VERSION_UNSUPPORTED);
++             return;
++         }
++-
++-        MeasurementManagerFutures mm = getManager();
++-        if (mm == null) {
++-            onRegistrationCompleted(
++-                    requestId, OperationType.REGISTER_TRIGGER, OperationResult.ERROR_INTERNAL);
++-            return;
++-        }
++-        ListenableFuture<?> future = mm.registerTriggerAsync(Uri.parse(registrationUrl.getSpec()));
++-        addRegistrationFutureCallback(requestId, OperationType.REGISTER_TRIGGER, future);
++     }
++ 
++     private void onDataDeletionCompleted(int requestId) {
++@@ -482,96 +285,7 @@ public class AttributionOsLevelManager {
++             onDataDeletionCompleted(requestId);
++             return;
++         }
++-
++-        // Currently Android and Chromium have different matching behaviors when both
++-        // `origins` and `domains` are empty.
++-        // Chromium: Delete -> Delete nothing; Preserve -> Delete all.
++-        // Android: Delete -> Delete all; Preserve -> Delete nothing.
++-        // Android may fix the behavior in the future. As a workaround, Chromium will
++-        // not call Android if it's to delete nothing (no-op), and call Android with
++-        // both Delete and Preserve modes if it's to delete all. These two modes will
++-        // be one no-op and one delete all in Android releases with and without the
++-        // fix. See crbug.com/1442967.
++-
++-        ImmutableList<Integer> matchBehaviors = null;
++-
++-        if (origins.length == 0 && domains.length == 0) {
++-            switch (matchBehavior) {
++-                case DeletionRequest.MATCH_BEHAVIOR_DELETE:
++-                    recordOperationResult(
++-                            OperationType.DELETE_REGISTRATIONS, OperationResult.SUCCESS);
++-                    onDataDeletionCompleted(requestId);
++-                    return;
++-                case DeletionRequest.MATCH_BEHAVIOR_PRESERVE:
++-                    matchBehaviors =
++-                            ImmutableList.of(
++-                                    DeletionRequest.MATCH_BEHAVIOR_DELETE,
++-                                    DeletionRequest.MATCH_BEHAVIOR_PRESERVE);
++-                    break;
++-                default:
++-                    Log.e(TAG, "Received invalid match behavior: ", matchBehavior);
++-                    recordOperationResult(
++-                            OperationType.DELETE_REGISTRATIONS, OperationResult.ERROR_UNKNOWN);
++-                    onDataDeletionCompleted(requestId);
++-                    return;
++-            }
++-        } else {
++-            matchBehaviors = ImmutableList.of(matchBehavior);
++-        }
++-
++-        ArrayList<Uri> originUris = new ArrayList<Uri>(origins.length);
++-        for (GURL origin : origins) {
++-            originUris.add(Uri.parse(origin.getSpec()));
++-        }
++-
++-        ArrayList<Uri> domainUris = new ArrayList<Uri>(domains.length);
++-        for (String domain : domains) {
++-            domainUris.add(Uri.parse(domain));
++-        }
++-
++-        int numCalls = matchBehaviors.size();
++-
++-        FutureCallback<Object> callback =
++-                new FutureCallback<Object>() {
++-                    private int mNumPendingCalls = numCalls;
++-
++-                    private void onCall() {
++-                        if (--mNumPendingCalls == 0) {
++-                            onDataDeletionCompleted(requestId);
++-                        }
++-                    }
++-
++-                    @Override
++-                    public void onSuccess(@Nullable Object result) {
++-                        recordOperationResult(
++-                                OperationType.DELETE_REGISTRATIONS, OperationResult.SUCCESS);
++-                        onCall();
++-                    }
++-
++-                    @Override
++-                    public void onFailure(Throwable thrown) {
++-                        Log.w(TAG, "Failed to delete measurement API data", thrown);
++-                        recordOperationResult(
++-                                OperationType.DELETE_REGISTRATIONS,
++-                                convertToOperationResult(thrown));
++-                        onCall();
++-                    }
++-                };
++-
++-        for (int currMatchBehavior : matchBehaviors) {
++-            ListenableFuture<?> future =
++-                    mm.deleteRegistrationsAsync(
++-                            new DeletionRequest(
++-                                    deletionMode,
++-                                    currMatchBehavior,
++-                                    Instant.ofEpochMilli(startMs),
++-                                    Instant.ofEpochMilli(endMs),
++-                                    domainUris,
++-                                    originUris));
++-
++-            Futures.addCallback(
++-                    future, callback, PostTask.getUiUserVisibleExecutor());
++-        }
+++        onDataDeletionCompleted(requestId);
++     }
++ 
++     private static void onMeasurementStateReturned(int status, @OperationResult int result) {
++@@ -587,6 +301,10 @@ public class AttributionOsLevelManager {
++     private static void getMeasurementApiStatus() {
++         ThreadUtils.assertOnBackgroundThread();
++ 
+++        if ((true)) {
+++            AttributionOsLevelManagerJni.get().onMeasurementStateReturned(0);
+++            return;
+++        }
++         if (sManagerForTesting != null) {
++             AttributionOsLevelManagerJni.get().onMeasurementStateReturned(1);
++             return;
++@@ -606,49 +324,6 @@ public class AttributionOsLevelManager {
++             onMeasurementStateReturned(/* status= */ 0, OperationResult.ERROR_PERMISSION_UNGRANTED);
++             return;
++         }
++-        MeasurementManagerFutures mm = null;
++-        try {
++-            mm = MeasurementManagerFutures.from(ContextUtils.getApplicationContext());
++-        } catch (Throwable t) {
++-            // An error may be thrown if android.ext.adservices is not loaded.
++-            Log.i(TAG, "Failed to get measurement manager", t);
++-        }
++-
++-        if (mm == null) {
++-            onMeasurementStateReturned(/* status= */ 0, OperationResult.ERROR_INTERNAL);
++-            return;
++-        }
++-
++-        ListenableFuture<Integer> future = null;
++-        try {
++-            future = mm.getMeasurementApiStatusAsync();
++-        } catch (IllegalStateException ex) {
++-            // An illegal state exception may be thrown for some versions of the underlying
++-            // Privacy Sandbox SDK.
++-            Log.i(TAG, "Failed to get measurement API status", ex);
++-        }
++-
++-        if (future == null) {
++-            onMeasurementStateReturned(/* status= */ 0, OperationResult.ERROR_INTERNAL);
++-            return;
++-        }
++-
++-        Futures.addCallback(
++-                future,
++-                new FutureCallback<Integer>() {
++-                    @Override
++-                    public void onSuccess(@Nullable Integer status) {
++-                        onMeasurementStateReturned(assumeNonNull(status), OperationResult.SUCCESS);
++-                    }
++-
++-                    @Override
++-                    public void onFailure(Throwable thrown) {
++-                        Log.w(TAG, "Failed to get measurement API status", thrown);
++-                        onMeasurementStateReturned(
++-                                /* status= */ 0, convertToOperationResult(thrown));
++-                    }
++-                },
++-                PostTask.getUiUserBlockingExecutor());
++     }
++ 
++     @CalledByNative
++diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
++index d2dccc29b0e13..b3a1f71778f1a 100644
++--- a/content/public/browser/content_browser_client.cc
+++++ b/content/public/browser/content_browser_client.cc
++@@ -653,6 +653,7 @@ void ContentBrowserClient::OnAuctionComplete(
++ network::mojom::AttributionSupport ContentBrowserClient::GetAttributionSupport(
++     AttributionReportingOsApiState state,
++     bool client_os_disabled) {
+++  if ((true)) return network::mojom::AttributionSupport::kNone;
++   switch (state) {
++     case AttributionReportingOsApiState::kDisabled:
++       return network::mojom::AttributionSupport::kWeb;
++@@ -670,13 +671,13 @@ bool ContentBrowserClient::IsAttributionReportingOperationAllowed(
++     const url::Origin* destination_origin,
++     const url::Origin* reporting_origin,
++     bool* can_bypass) {
++-  return true;
+++  return false;
++ }
++ 
++ ContentBrowserClient::AttributionReportingOsRegistrars
++ ContentBrowserClient::GetAttributionReportingOsRegistrars(
++     WebContents* web_contents) {
++-  return {AttributionReportType::kWeb, AttributionReportType::kWeb};
+++  return {AttributionReportType::kDisabled, AttributionReportType::kDisabled};
++ }
++ 
++ bool ContentBrowserClient::IsAttributionReportingAllowedForContext(
++@@ -684,7 +685,7 @@ bool ContentBrowserClient::IsAttributionReportingAllowedForContext(
++     content::RenderFrameHost* rfh,
++     const url::Origin& context_origin,
++     const url::Origin& reporting_origin) {
++-  return true;
+++  return false;
++ }
++ 
++ bool ContentBrowserClient::IsSharedStorageAllowed(
++diff --git a/content/public/browser/navigation_controller.cc b/content/public/browser/navigation_controller.cc
++index 4ef54807744e9..ff359411de028 100644
++--- a/content/public/browser/navigation_controller.cc
+++++ b/content/public/browser/navigation_controller.cc
++@@ -40,7 +40,6 @@ NavigationController::LoadURLParams::LoadURLParams(const OpenURLParams& input)
++       blob_url_loader_factory(input.blob_url_loader_factory),
++       href_translate(input.href_translate),
++       reload_type(input.reload_type),
++-      impression(input.impression),
++       is_pdf(input.is_pdf),
++       has_rel_opener(input.has_rel_opener) {
++ #if DCHECK_IS_ON()
++diff --git a/cromite_flags/services/network/public/cpp/features_cc/Disable-conversion-measurement-api.inc b/cromite_flags/services/network/public/cpp/features_cc/Disable-conversion-measurement-api.inc
++new file mode 100644
++index 0000000000000..3487672196460
++--- /dev/null
+++++ b/cromite_flags/services/network/public/cpp/features_cc/Disable-conversion-measurement-api.inc
++@@ -0,0 +1,2 @@
+++SET_CROMITE_FEATURE_DISABLED(kBrowsingTopics);
+++SET_CROMITE_FEATURE_DISABLED(kInterestGroupStorage);
++diff --git a/cromite_flags/third_party/blink/common/features_cc/Disable-conversion-measurement-api.inc b/cromite_flags/third_party/blink/common/features_cc/Disable-conversion-measurement-api.inc
++new file mode 100644
++index 0000000000000..08338bef3c5a2
++--- /dev/null
+++++ b/cromite_flags/third_party/blink/common/features_cc/Disable-conversion-measurement-api.inc
++@@ -0,0 +1,8 @@
+++SET_CROMITE_FEATURE_DISABLED(kAdAuctionSignals);
+++SET_CROMITE_FEATURE_DISABLED(kBrowsingTopicsDocumentAPI);
+++SET_CROMITE_FEATURE_DISABLED(kBrowsingTopicsParameters);
+++SET_CROMITE_FEATURE_DISABLED(kFledge);
+++SET_CROMITE_FEATURE_DISABLED(kFledgeBiddingAndAuctionServer);
+++SET_CROMITE_FEATURE_DISABLED(kPrivateAggregationApi);
+++SET_CROMITE_FEATURE_DISABLED(kAllowURNsInIframes);
+++SET_CROMITE_FEATURE_DISABLED(kFledgeSampleDebugReports);
++diff --git a/services/network/attribution/request_headers_internal.cc b/services/network/attribution/request_headers_internal.cc
++index c4f75aefbcb89..d5773ec6a993a 100644
++--- a/services/network/attribution/request_headers_internal.cc
+++++ b/services/network/attribution/request_headers_internal.cc
++@@ -188,6 +188,7 @@ std::string SerializeAttributionReportingEligibleHeader(
++ std::string GetAttributionSupportHeader(
++     mojom::AttributionSupport attribution_support,
++     const AttributionReportingHeaderGreaseOptions& options) {
+++  if ((true)) return "";
++   std::vector<net::structured_headers::DictionaryMember> registrars;
++ 
++   const char* grease1;
++diff --git a/services/network/network_context.cc b/services/network/network_context.cc
++index 3b928d610abb8..b6fae5950696f 100644
++--- a/services/network/network_context.cc
+++++ b/services/network/network_context.cc
++@@ -1323,6 +1323,10 @@ void NetworkContext::ClearTrustTokenData(mojom::ClearDataFilterPtr filter,
++ 
++ void NetworkContext::ClearTrustTokenSessionOnlyData(
++     ClearTrustTokenSessionOnlyDataCallback callback) {
+++  if (!trust_token_store_) {
+++    std::move(callback).Run(false);
+++    return;
+++  }
++   // Only called when Private State Tokens is enabled, i.e.,
++   // `trust_token_store_` is non-null.
++   DCHECK(trust_token_store_);
++@@ -2766,26 +2770,6 @@ URLRequestContextOwner NetworkContext::MakeURLRequestContext(
++     builder.set_network_quality_estimator(
++         network_service_->network_quality_estimator());
++   }
++-  trust_token_store_ = std::make_unique<PendingTrustTokenStore>();
++-
++-  base::FilePath trust_token_path;
++-  if (GetFullDataFilePath(
++-          params_->file_paths,
++-          &network::mojom::NetworkContextFilePaths::trust_token_database_name,
++-          trust_token_path)) {
++-    SQLiteTrustTokenPersister::CreateForFilePath(
++-        base::ThreadPool::CreateSequencedTaskRunner(
++-            {base::MayBlock(), kTrustTokenDatabaseTaskPriority,
++-             base::TaskShutdownBehavior::BLOCK_SHUTDOWN}),
++-        trust_token_path, kTrustTokenWriteBufferingWindow,
++-        base::BindOnce(&NetworkContext::FinishConstructingTrustTokenStore,
++-                       weak_factory_.GetWeakPtr()));
++-  } else {
++-    trust_token_store_->OnStoreReady(std::make_unique<TrustTokenStore>(
++-        std::make_unique<InMemoryTrustTokenPersister>(),
++-        std::make_unique<ExpiryInspectingRecordExpiryDelegate>(
++-            network_service()->trust_token_key_commitments())));
++-  }
++ 
++   std::unique_ptr<net::StaticHttpUserAgentSettings> user_agent_settings =
++       std::make_unique<net::StaticHttpUserAgentSettings>(
++diff --git a/services/network/public/cpp/attribution_utils.cc b/services/network/public/cpp/attribution_utils.cc
++index 17ba678f15681..540b02540358d 100644
++--- a/services/network/public/cpp/attribution_utils.cc
+++++ b/services/network/public/cpp/attribution_utils.cc
++@@ -9,6 +9,7 @@
++ namespace network {
++ 
++ bool HasAttributionOsSupport(mojom::AttributionSupport attribution_support) {
+++  if ((true)) return false;
++   switch (attribution_support) {
++     case mojom::AttributionSupport::kOs:
++     case mojom::AttributionSupport::kWebAndOs:
++@@ -21,6 +22,7 @@ bool HasAttributionOsSupport(mojom::AttributionSupport attribution_support) {
++ }
++ 
++ bool HasAttributionWebSupport(mojom::AttributionSupport attribution_support) {
+++  if ((true)) return false;
++   switch (attribution_support) {
++     case mojom::AttributionSupport::kWeb:
++     case mojom::AttributionSupport::kWebAndOs:
++diff --git a/third_party/blink/renderer/core/frame/attribution_src_loader.cc b/third_party/blink/renderer/core/frame/attribution_src_loader.cc
++index 6bbeb9aa27b1a..1f69f81320a2e 100644
++--- a/third_party/blink/renderer/core/frame/attribution_src_loader.cc
+++++ b/third_party/blink/renderer/core/frame/attribution_src_loader.cc
++@@ -220,8 +220,6 @@ struct AttributionSrcLoader::AttributionHeaders {
++                      uint64_t request_id)
++       : web_source(map.Get(http_names::kAttributionReportingRegisterSource)),
++         web_trigger(map.Get(http_names::kAttributionReportingRegisterTrigger)),
++-        os_source(map.Get(http_names::kAttributionReportingRegisterOSSource)),
++-        os_trigger(map.Get(http_names::kAttributionReportingRegisterOSTrigger)),
++         request_url(request_url),
++         request_id(request_id) {}
++ 
++diff --git a/third_party/blink/renderer/core/page/page.cc b/third_party/blink/renderer/core/page/page.cc
++index 09b4fe3f101fc..f3e898505d278 100644
++--- a/third_party/blink/renderer/core/page/page.cc
+++++ b/third_party/blink/renderer/core/page/page.cc
++@@ -1590,7 +1590,7 @@ void Page::UpdateBrowsingContextGroup(
++ 
++ void Page::SetAttributionSupport(
++     network::mojom::AttributionSupport attribution_support) {
++-  attribution_support_ = attribution_support;
+++  attribution_support_ = network::mojom::AttributionSupport::kNone;
++ }
++ 
++ template class CORE_TEMPLATE_EXPORT Supplement<Page>;
++diff --git a/third_party/blink/renderer/platform/runtime_enabled_features.json5 b/third_party/blink/renderer/platform/runtime_enabled_features.json5
++index 986b174d396a8..3f2ac8e1af521 100644
++--- a/third_party/blink/renderer/platform/runtime_enabled_features.json5
+++++ b/third_party/blink/renderer/platform/runtime_enabled_features.json5
++@@ -296,8 +296,8 @@
++     },
++     {
++       // Interest Group JS API/runtimeflag.
++-      name: "AdInterestGroupAPI",
++-      status: "stable",
+++      name: "AdInterestGroupAPI", // keep disabled
+++      status: "experimental",     // keep disabled
++       origin_trial_feature_name: "AdInterestGroupAPI",
++       implied_by: ["Fledge", "Parakeet"],
++       public: true,
++@@ -658,8 +658,8 @@
++       status: "stable",
++     },
++     {
++-      name: "AttributionReporting",
++-      status: "stable",
+++      name: "AttributionReporting", // keep disabled
+++      status: "experimental",       // keep disabled
++       base_feature: "none",
++       public: true,
++     },
++@@ -4364,8 +4364,8 @@
++       base_feature: "none",
++     },
++     {
++-      name: "PrivateStateTokens",
++-      status: "stable",
+++      name: "PrivateStateTokens", // disabled
+++      status: "experimental",     // by default
++       base_feature: "none",
++       public: true,
++     },
++@@ -5705,16 +5705,16 @@
++       status: "experimental",
++     },
++     {
++-      name: "TopicsAPI",
+++      name: "TopicsAPI",       // keep disabled
+++      status: "experimental",  // keep disabled
++       base_feature: "none",
++       public: true,
++-      status: "stable",
++     },
++     {
++-      name: "TopicsDocumentAPI",
+++      name: "TopicsDocumentAPI", // keep disabled
+++      status: "experimental",    // keep disabled
++       base_feature: "none",
++       public: true,
++-      status: "stable",
++     },
++     {
++       // This feature allows calling the Topics API via an image
++diff --git a/ui/events/android/motion_event_android.cc b/ui/events/android/motion_event_android.cc
++index 1577654163eb1..21414052cf8a5 100644
++--- a/ui/events/android/motion_event_android.cc
+++++ b/ui/events/android/motion_event_android.cc
++@@ -30,8 +30,12 @@ namespace ui {
++ namespace {
++ 
++ base::TimeTicks FromAndroidTime(base::TimeTicks time) {
++-  ValidateEventTimeClock(&time);
++-  return time;
+++  base::TimeTicks timestamp;
+++  // Rounding down to milliseconds (from nanoseconds)
+++  // see https://bugs.chromium.org/p/chromium/issues/detail?id=1378615
+++  timestamp = base::TimeTicks::FromUptimeMillis(time.ToUptimeMillis());
+++  ValidateEventTimeClock(&timestamp);
+++  return timestamp;
++ }
++ 
++ float ToValidFloat(float x) {
++-- 
++2.43.0
++
+diff --git a/0013-android-Don-t-unconditionally-include-dev_ui-in-chro.patch b/0013-android-Don-t-unconditionally-include-dev_ui-in-chro.patch
+deleted file mode 100644
+index 63230155ccadcce463143f47ca4e05bee09575b9..0000000000000000000000000000000000000000
+--- a/0013-android-Don-t-unconditionally-include-dev_ui-in-chro.patch
++++ /dev/null
+@@ -1,38 +0,0 @@
+-From 51ac18f051fef86c692e927a48d6773e837b1865 Mon Sep 17 00:00:00 2001
+-From: "Kevin F. Haggerty" <haggertk@lineageos.org>
+-Date: Sat, 27 Jun 2026 10:56:53 -0600
+-Subject: [PATCH 13/13] android: Don't unconditionally include dev_ui in
+- chrome/browser:core
+-
+----
+- chrome/browser/BUILD.gn | 7 ++++++-
+- 1 file changed, 6 insertions(+), 1 deletion(-)
+-
+-diff --git a/chrome/browser/BUILD.gn b/chrome/browser/BUILD.gn
+-index eaa7929a31667..a5abc7d19b212 100644
+---- a/chrome/browser/BUILD.gn
+-+++ b/chrome/browser/BUILD.gn
+-@@ -1655,7 +1655,6 @@ source_set("core") {
+-       "//chrome/browser/commerce",
+-       "//chrome/browser/commerce/android:shopping_service_jni",
+-       "//chrome/browser/composeplate/android:jni_headers",
+--      "//chrome/browser/dev_ui",
+-       "//chrome/browser/facilitated_payments",
+-       "//chrome/browser/feed",
+-       "//chrome/browser/flags:flags_android",
+-@@ -1692,6 +1691,12 @@ source_set("core") {
+-       "//services/webnn/public/mojom:features",
+-       "//ui/compositor",
+-     ]
+-+
+-+    if (dfmify_dev_ui) {
+-+      deps += [
+-+        "//chrome/browser/dev_ui",
+-+      ]
+-+    }
+-   }
+- 
+-   if (enable_offline_pages) {
+--- 
+-2.53.0
+-
+diff --git a/README b/README
+index 2677dfd7ebbbe9337b2b4d458ba77b34f3af1bb1..6bec6e22223e8d12903462b5ce20b23e3a39e973 100644
+--- a/README
++++ b/README
+@@ -7,7 +7,7 @@ https://www.chromium.org/developers/how-tos/build-instructions-android-webview
+ ------
+ 
+ The prebuilt libwebviewchromium.so included in these APKs is built from Chromium
+-release tag 153.0.8010.36, using the GN build tool. To match our build settings, set:
++release tag 147.0.7727.101, using the GN build tool. To match our build settings, set:
+ 
+ target_os = "android"
+ is_debug = false
+@@ -25,8 +25,8 @@ blink_symbol_level = 0
+ webview_devui_show_icon = false
+ dfmify_dev_ui = false
+ disable_fieldtrial_testing_config = true
+-android_default_version_name = "153.0.8010.36"
+-android_default_version_code = "8010036$$"
++android_default_version_name = "147.0.7727.101"
++android_default_version_code = "7727101$$"
+ 
+ $$ depends on device ARCH
+ (00=arm, 50=arm64, 10=x86, 60=x64)

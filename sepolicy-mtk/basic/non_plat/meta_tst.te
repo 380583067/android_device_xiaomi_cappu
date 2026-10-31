@@ -1,3 +1,4 @@
+# Android 12 Treble forbids system coredomains from executing arbitrary vendor files; vendor services are started by init in their own domains.
 # ==============================================
 # Policy File of /system/bin/meta_tst Executable File
 
@@ -176,8 +177,9 @@ allow meta_tst self:process execmem;
 
 # Date: WK15.13
 # Purpose: for nand project
-allow meta_tst mtd_device:dir search;
-allow meta_tst mtd_device:chr_file rw_file_perms;
+# cappu Android 12: the old MTK mtd_device type was removed; use the exported board type for legacy rules and labels.
+allow meta_tst cappu_mtd_device:dir search;
+allow meta_tst cappu_mtd_device:chr_file rw_file_perms;
 
 
 # Date: WK15.38
@@ -198,7 +200,8 @@ allow meta_tst sysfs_ccci:file r_file_perms;
 # detail avc log: [   11.751803] <1>.(1)[227:logd.auditd]type=1400 audit(1262304016.560:10):
 #avc: denied { read } for pid=203 comm="meta_tst" name="meta_com_type_info" dev=
 #"sysfs" ino=11073 scontext=u:r:meta_tst:s0 tcontext=u:object_r:sysfs:s0 tclass=file permissive=0
-allow meta_tst sysfs:file rw_file_perms;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow meta_tst sysfs:file rw_file_perms;
 
 #Date: W16.17
 # Purpose:  N Migration For meta_tst load MD NVRAM database
@@ -214,7 +217,9 @@ allow meta_tst gsm0710muxd_device:chr_file rw_file_perms;
 
 # Date: WK16.20
 # Purpose: meta_tst set sys.usb.config
-set_prop(meta_tst, system_radio_prop);
+# Android 12 labels sys.usb.config as usb_control_prop; use that precise
+# property class instead of the removed, unrelated system_radio_prop type.
+set_prop(meta_tst, usb_control_prop);
 
 #Date: W16.33
 # Purpose:  N Migration For CCT
@@ -293,11 +298,13 @@ allow meta_tst system_data_file:lnk_file read;
 allow meta_tst st21nfc_device:chr_file { open read write ioctl };
 allow meta_tst factory_data_file:sock_file { write unlink };
 allow meta_tst nfc_socket:dir search;
-allow meta_tst vendor_file:file { getattr execute execute_no_trans read open };
 set_prop(meta_tst,hwservicemanager_prop);
 hwbinder_use(meta_tst);
 hal_client_domain(meta_tst, hal_nfc);
-allow meta_tst debugfs_tracing:file { open write };
+# MTK engineering audio tests use the supported audio HAL client role.
+hal_client_domain(meta_tst, hal_audio)
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow meta_tst debugfs_tracing:file { open write };
 
 # Date: W17.29
 # Purpose : Allow meta_tst to call vendor.mediatek.hardware.keymaster_attestation@1.0-service.
@@ -307,7 +314,8 @@ hal_client_domain(meta_tst, mtk_hal_keyattestation)
 # Operation : Android O migration
 # Purpose : add sepolicy for accessing sysfs_leds
 allow meta_tst sysfs_leds:lnk_file read;
-allow meta_tst sysfs_leds:file rw_file_perms;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:32; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow meta_tst sysfs_leds:file rw_file_perms;
 allow meta_tst sysfs_leds:dir r_dir_perms;
 
 # Date: WK17.43
@@ -342,9 +350,11 @@ allow meta_tst system_data_file:dir { create_dir_perms relabelfrom};
 # Purpose : Allow meta_tst to call android.hardware.audio@2.0-service-mediatek
 binder_call(meta_tst, mtk_hal_audio)
 allow meta_tst mtk_hal_audio:binder call;
-allow meta_tst hal_audio_hwservice:hwservice_manager find;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/public/hal_audio.te:5; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow meta_tst hal_audio_hwservice:hwservice_manager find;
 allow meta_tst mtk_audiohal_data_file:dir {read search open};
-allow meta_tst proc:file {read open};
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow meta_tst proc:file {read open};
 allow meta_tst audio_device:chr_file rw_file_perms;
 allow meta_tst audio_device:dir w_dir_perms;
 allow meta_tst audiohal_prop:property_service set;

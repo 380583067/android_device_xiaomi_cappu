@@ -5,15 +5,16 @@
 # ==============================================
 # Type Declaration
 # ==============================================
-type atcid_exec, exec_type, file_type;
+# Android 12 Treble: matching file_contexts labels a /system path; mark this executable as system_file_type so coredomain entrypoints remain in the system partition.
+type atcid_exec, system_file_type, exec_type, file_type;
 typeattribute atcid coredomain;
 
 # ==============================================
 # MTK Policy Rule
 # ==============================================
 init_daemon_domain(atcid)
-allow atcid sysfs:file { read open };
-allow atcid self:capability dac_override;
+# Android 12 blocks generic coredomain sysfs access and DAC override; ATCI has
+# no board-specific sysfs label to justify these legacy grants.
 allow atcid init:unix_stream_socket connectto;
 allow atcid property_socket:sock_file write;
 allow atcid atci_service:unix_stream_socket connectto;

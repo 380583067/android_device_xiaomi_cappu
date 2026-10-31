@@ -1,3 +1,5 @@
+# Android 12 Treble keeps vendor GPU helpers in their own partition and service domain.
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 # ==============================================================================
 # Policy File of /vendor/bin/ged_srv Executable File
 # ==============================================================================
@@ -7,7 +9,8 @@
 # ==============================================================================
 type ged_srv, domain;
 
-type ged_srv_exec, exec_type, file_type;
+# Android 12 Treble: file_contexts labels this daemon at /system/bin/ged_srv.
+type ged_srv_exec, system_file_type, exec_type, file_type;
 init_daemon_domain(ged_srv)
 
 typeattribute ged_srv coredomain;
@@ -29,7 +32,7 @@ allow ged_srv gas_srv_service:service_manager {add find};
 allow ged_srv audioserver_service:service_manager find;
 allow ged_srv surfaceflinger_service:service_manager find;
 allow ged_srv input_service:service_manager find;
-allow ged_srv hwservicemanager_prop:file { read getattr open };
+get_prop(ged_srv, hwservicemanager_prop)
 allow ged_srv mtk_hal_power_hwservice:hwservice_manager find;
 
 # GpuAppSpectator
@@ -44,7 +47,7 @@ allow ged_srv init:unix_stream_socket connectto;
 allow ged_srv proc_ged:file {open read write ioctl};
 
 r_dir_file(ged_srv, domain)
-r_dir_file(ged_srv, proc)
+# Android 12 Treble: GED uses its dedicated proc_ged label below; do not expose unrelated /proc files.
 r_dir_file(ged_srv, shell)
 r_dir_file(ged_srv, platform_app)
 r_dir_file(ged_srv, priv_app)
@@ -54,7 +57,6 @@ r_dir_file(ged_srv, untrusted_app_25)
 r_dir_file(ged_srv, mediaserver)
 
 allow ged_srv shell_exec:file { read execute open getattr execute_no_trans };
-allow ged_srv system_file:file execute_no_trans;
 allow ged_srv input_service:service_manager find;
 allow ged_srv proc_net:file { read getattr open };
 allow ged_srv rootfs:lnk_file getattr;

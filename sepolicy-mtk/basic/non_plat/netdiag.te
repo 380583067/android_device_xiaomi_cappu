@@ -1,3 +1,4 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 # Purpose : for access storage file
 allow netdiag sdcard_type:dir create_dir_perms;
 allow netdiag sdcard_type:file create_file_perms;
@@ -20,12 +21,12 @@ set_prop(netdiag, persist_mtklog_prop)
 set_prop(netdiag, debug_mtklog_prop)
 
 # Purpose : for acess /system/bin/toybox, mmc_prop,proc_net and safemode_prop
-allow netdiag device_logging_prop:file { getattr open };
-allow netdiag mmc_prop:file { getattr open };
+get_prop(netdiag, device_logging_prop)
+get_prop(netdiag, mmc_prop)
 
 # purpose: allow netdiag to access storage in new version
 allow netdiag media_rw_data_file:file  { create_file_perms };
 allow netdiag media_rw_data_file:dir { create_dir_perms };
 
 # Fix boot up SELinux violation
-allow netdiag mtk_em_ril_apnchange_prop:file open;
+get_prop(netdiag, mtk_em_ril_apnchange_prop)

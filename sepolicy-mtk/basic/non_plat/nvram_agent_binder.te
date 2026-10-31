@@ -1,3 +1,4 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
 # ==============================================
 # Policy File of /vendor/bin/nvram_agent_binder Executable File
 
@@ -41,7 +42,8 @@ allow nvram_agent_binder gyroscope_device:chr_file r_file_perms;
 allow nvram_agent_binder init:unix_stream_socket connectto;
 allow nvram_agent_binder property_socket:sock_file write;
 allow nvram_agent_binder sysfs:file write;
-allow nvram_agent_binder self:capability { fowner chown dac_override fsetid };
+# Android 12 forbids DAC-bypass capabilities for these legacy device domains; keep access controlled by the specific SELinux file and device labels.
+allow nvram_agent_binder self:capability { fowner chown fsetid };
 allow nvram_agent_binder system_data_file:dir create_file_perms;
 
 # Purpose: for backup
@@ -51,11 +53,12 @@ allow nvram_agent_binder block_device:dir search;
 
 allow nvram_agent_binder app_data_file:file write;
 # for MLC device
-allow nvram_agent_binder mtd_device:dir search;
-allow nvram_agent_binder mtd_device:chr_file rw_file_perms;
+# cappu Android 12: AOSP removed the generic mtd_device type; use this exported board type for legacy rules and labels.
+allow nvram_agent_binder cappu_mtd_device:dir search;
+allow nvram_agent_binder cappu_mtd_device:chr_file rw_file_perms;
 
 #for nvram agent hidl
-allow nvram_agent_binder hwservicemanager_prop:file r_file_perms;
+get_prop(nvram_agent_binder, hwservicemanager_prop)
 
 
 #for nvram hidl client support

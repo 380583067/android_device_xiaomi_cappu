@@ -1,0 +1,19 @@
+--- a/audio/core/all-versions/default/Device.cpp
++++ b/audio/core/all-versions/default/Device.cpp
+@@ -487,7 +487,15 @@
+             write(fd0, s.c_str(), s.size());
+         }
+ 
+-        analyzeStatus("dump", mDevice->dump(mDevice, fd0));
++        // The legacy MT8173 audio HAL does not implement the optional device
++        // dump callback. Android's HIDL debug transaction still reaches this
++        // method (including from dumpsys), so guard the function pointer rather
++        // than dereferencing address zero and taking the whole audio service down.
++        if (mDevice != nullptr && mDevice->dump != nullptr) {
++            analyzeStatus("dump", mDevice->dump(mDevice, fd0));
++        } else {
++            dprintf(fd0, "Legacy audio HAL does not implement dump()\n");
++        }
+     }
+     return Void();
+ }

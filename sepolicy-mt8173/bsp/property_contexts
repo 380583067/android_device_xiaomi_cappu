@@ -1,4 +1,5 @@
 # ==============================================
 # MTK Policy Rule
 # ==============================================
-sys.rpmb.ready u:object_r:sys_rpmb_ready_prop:s0
+# The canonical sys.rpmb.ready label remains in basic/property_contexts;
+# duplicating this property prefix makes host_init_verifier reject init.rc.

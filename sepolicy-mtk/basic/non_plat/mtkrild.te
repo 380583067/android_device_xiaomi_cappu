@@ -14,23 +14,25 @@ init_daemon_domain(mtkrild)
 net_domain(mtkrild)
 
 # Trigger module auto-load.
+# Android 12 removed system_radio_prop and maps supported RIL properties to
+# radio_prop/net_radio_prop. Keep only those explicit current labels rather
+# than restoring a generic grant to a property class that no longer exists.
 allow mtkrild kernel:system module_request;
 
 # Capabilities assigned for mtkrild
 allow mtkrild self:capability { setuid net_admin net_raw };
-allow mtkrild self:capability dac_override;
-
+# Android 12 forbids DAC-bypass capabilities for these legacy device domains; keep access controlled by the specific SELinux file and device labels.
 # Control cgroups
 allow mtkrild cgroup:dir create_dir_perms;
 
 # Property service
 # allow set RIL related properties (radio./net./system./etc)
-set_prop(mtkrild, radio_prop)
-set_prop(mtkrild, net_radio_prop)
-set_prop(mtkrild, system_radio_prop)
+# Android 12 keeps net_radio_prop system-owned. The RIL HAL reports current
+# radio state through its HIDL interface; the AOSP rild HAL domain remains the
+# sole owner of Android's core radio_prop namespace.
+# Android 12 reserves radio_prop writes for the HAL server; mtkrild retains
+# only its vendor-owned RIL properties and communicates through the HAL/socket.
 set_prop(mtkrild, persist_ril_prop)
-auditallow mtkrild net_radio_prop:property_service set;
-auditallow mtkrild system_radio_prop:property_service set;
 set_prop(mtkrild, ril_active_md_prop)
 # allow set muxreport control properties
 set_prop(mtkrild, ril_cdma_report_prop)
@@ -57,7 +59,8 @@ allow mtkrild radio_data_file:file create_file_perms;
 allow mtkrild sdcard_type:dir r_dir_perms;
 allow mtkrild system_data_file:dir r_dir_perms;
 allow mtkrild system_data_file:file r_file_perms;
-allow mtkrild system_file:file x_file_perms;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/public/domain.te:1007, system/sepolicy/public/domain.te:939; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow mtkrild system_file:file x_file_perms;
 allow mtkrild proc:file rw_file_perms;
 allow mtkrild proc_net:file w_file_perms;
 
@@ -73,10 +76,11 @@ allow mtkrild self:netlink_route_socket nlmsg_write;
 #allow mtkrild self:socket create_socket_perms;
 
 # Allow read/write to devices/files
-allow mtkrild alarm_device:chr_file rw_file_perms;
+# Android 12's cappu kernel has no legacy /dev/alarm character device.
 allow mtkrild radio_device:chr_file rw_file_perms;
 allow mtkrild radio_device:blk_file r_file_perms;
-allow mtkrild mtd_device:dir search;
+# cappu Android 12: AOSP removed the generic mtd_device type; use this exported board type for legacy rules and labels.
+allow mtkrild cappu_mtd_device:dir search;
 # Allow read/write to uart driver (for GPS)
 #allow mtkrild gps_device:chr_file rw_file_perms;
 # Allow read/write to tty devices

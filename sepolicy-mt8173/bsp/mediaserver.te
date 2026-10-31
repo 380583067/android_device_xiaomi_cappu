@@ -6,7 +6,8 @@
 # Date : WK15.35
 # Operation : Migration
 # Purpose: for secure video path feature, allow mediaserver use mtee exported function
-allow mediaserver tee_device:chr_file { read write open ioctl };
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:244; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow mediaserver tee_device:chr_file { read write open ioctl };
 
 #Purpose: hdcp for kisd(mtk94109)
 #allow mediaserver kisd:unix_stream_socket {connectto};
@@ -14,4 +15,5 @@ allow mediaserver tee_device:chr_file { read write open ioctl };
 allow mediaserver dri_device:chr_file  { open read write ioctl };
 allow mediaserver render_device:chr_file  { open read write ioctl };
 
-allow mediaserver debugfs_tracing:file write;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow mediaserver debugfs_tracing:file write;

@@ -1,3 +1,4 @@
+# Android 12 forbids this broad executable-type scan; the named init/zygote labels above are the only retained entrypoint reads.
 # ==============================================
 # Policy File of /system/bin/aee_aed Executable File
 
@@ -15,8 +16,9 @@ allow aee_aed bootdevice_block_device:blk_file rw_file_perms;
 allow aee_aed etb_device:chr_file rw_file_perms;
 
 # open/dev/mtd/mtd12 failed(expdb)
-allow aee_aed mtd_device:dir create_dir_perms;
-allow aee_aed mtd_device:chr_file rw_file_perms;
+# cappu Android 12: AOSP removed the generic mtd_device type; use this exported board type for legacy rules and labels.
+allow aee_aed cappu_mtd_device:dir create_dir_perms;
+allow aee_aed cappu_mtd_device:chr_file rw_file_perms;
 
 # NE flow: /dev/RT_Monitor
 allow aee_aed RT_Monitor_device:chr_file r_file_perms;
@@ -46,4 +48,3 @@ set_prop(aee_aed, debug_mtk_aee_prop);
 allow aee_aed proc_lk_env:file rw_file_perms;
 
 # Purpose: Allow aee_aedv to read /proc/pid/exe
-allow aee_aed exec_type:file r_file_perms;

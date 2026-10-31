@@ -61,8 +61,10 @@ allow drmserver mediaserver:fifo_file write;
 # Date : WK15.15
 # Operation : GMS APP SQC
 # Purpose : Let Drive app can work
-allow drmserver app_data_file:dir search;
-allow drmserver app_data_file:file open;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/domain.te:171, system/sepolicy/private/mlstrustedsubject.te:34; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow drmserver app_data_file:dir search;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/domain.te:189, system/sepolicy/private/mlstrustedsubject.te:14; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow drmserver app_data_file:file open;
 
 # Date : WK15.30
 # Operation : Migration
@@ -149,7 +151,8 @@ allow drmserver media_rw_data_file:file write;
 allow drmserver ringtone_file:file read;
 
 # Fix boot violation
-allow drmserver proc:file r_file_perms;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow drmserver proc:file r_file_perms;
 
 # Add by : sheetal.garg
 # Operation : Migration issue
@@ -160,5 +163,6 @@ allow drmserver untrusted_app_25:dir search;
 allow drmserver untrusted_app_25:file { getattr open read };
 
 #============= drmserver ==============
-allow drmserver proc:file read;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow drmserver proc:file read;
 allow drmserver sdcardfs:file open;

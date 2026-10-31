@@ -1,0 +1,20 @@
+diff --git a/libs/input/Android.bp b/libs/input/Android.bp
+index e73c3b8..0422c72 100644
+--- a/libs/input/Android.bp
++++ b/libs/input/Android.bp
+@@ -33,6 +33,15 @@ filegroup {
+     ],
+ }
+ 
++// Share the platform PropertyMap implementation with the vendor libutils
++// compatibility variant used by pre-Android-12 MTK blobs. Keeping the source
++// here avoids a second, diverging copy of this parser implementation.
++filegroup {
++    name: "input_propertymap_compat_srcs",
++    srcs: ["PropertyMap.cpp"],
++    visibility: ["//system/core/libutils"],
++}
++
+ cc_library {
+     name: "libinput",
+     host_supported: true,

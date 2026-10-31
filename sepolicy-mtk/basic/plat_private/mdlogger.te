@@ -3,7 +3,8 @@
 # ==============================================
 
 # New added for move to /system
-type mdlogger_exec , exec_type, file_type;
+# Android 12 Treble: matching file_contexts labels a /system path; mark this executable as system_file_type so coredomain entrypoints remain in the system partition.
+type mdlogger_exec , system_file_type, exec_type, file_type;
 typeattribute mdlogger coredomain;
 
 init_daemon_domain(mdlogger)
@@ -48,7 +49,8 @@ allow mdlogger file_contexts_file:file { read getattr open };
 
 #permission for read boot mode
 #avc: denied { open }  path="/sys/devices/virtual/BOOT/BOOT/boot/boot_mode" dev="sysfs"
-allow mdlogger sysfs:file { read open };
+# Android 12 forbids generic sysfs reads from coredomains; logging should use
+# logd and explicitly labelled diagnostic nodes.
 
 # Allow read avc: denied { read } for name="mddb" dev="mmcblk0p25" ino=681 
 # scontext=u:r:mdlogger:s0 tcontext=u:object_r:system_file:s0 tclass=dir permissive=0

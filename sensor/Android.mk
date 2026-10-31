@@ -1,3 +1,5 @@
+# cappu Android 12：传感器源码链接 vendor 的唯一 libksensor 模块；
+# 模块名有 cappu_blob_ 前缀，安装文件名仍是 libksensor.so。
 #Copyright Statement:
 #
 # This software/firmware and related documentation ("MediaTek Software") are
@@ -46,7 +48,7 @@ LOCAL_SHARED_LIBRARIES := \
     libutils \
     libhardware \
     libstagefright_foundation \
-    libksensor
+    cappu_blob_lib_libksensor
 
 LOCAL_HEADER_LIBRARIES := libutils_headers libhardware_headers
 LOCAL_SRC_FILES := \

@@ -33,8 +33,7 @@ allow surfaceflinger MTK_SMI_device:chr_file { read write open ioctl };
 # for bootanimation
 allow surfaceflinger bootanim:dir search;
 allow surfaceflinger bootanim:file { read getattr open };
-allow surfaceflinger self:capability dac_override;
-
+# Android 12 forbids DAC-bypass capabilities for these legacy device domains; keep access controlled by the specific SELinux file and device labels.
 # for MTK Emulator HW GPU
 allow surfaceflinger qemu_pipe_device:chr_file rw_file_perms;
 
@@ -65,7 +64,8 @@ allow surfaceflinger mobicore_user_device:chr_file { read write ioctl open };
 allow surfaceflinger mobicore_data_file:dir search;
 
 # take down the boot time for bootprof
-allow surfaceflinger proc:file write;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow surfaceflinger proc:file write;
 
 # notify perf service of SF information for performance
 allow surfaceflinger mtk_perf_service:service_manager find;
@@ -111,7 +111,7 @@ hal_client_domain(surfaceflinger, hal_allocator)
 hal_client_domain(surfaceflinger, hal_dfps)
 
 #TODO:: MTK need to remove later
-not_full_treble(`
-    allow {domain -init -isolated_app -webview_zygote -hal_configstore_server} fpspolicy-server_service:service_manager find;
-')
+# Android 12 Treble: FpsPolicy is a SurfaceFlinger system service exposed to
+# regular app clients; exclude isolated/vendor apps and privileged vendor init.
+allow {appdomain -isolated_app -app_zygote surfaceflinger system_server} fpspolicy-server_service:service_manager find;
 allow surfaceflinger mtk_dfrc_device:chr_file rw_file_perms;

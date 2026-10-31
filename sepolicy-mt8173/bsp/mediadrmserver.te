@@ -1,6 +1,7 @@
 #Date:WK25.04
 #Purpse:mediadrmserver access mtee
-allow mediadrmserver tee_device:chr_file { read write open ioctl };
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:244; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow mediadrmserver tee_device:chr_file { read write open ioctl };
 
 #Purpose: allow mediadrmserver access kisd
 #allow mediadrmserver kisd:unix_stream_socket {connectto};

@@ -1,0 +1,22 @@
+diff --git a/proprietary/vendor/etc/init/android.hardware.audio@2.0-service-mediatek.rc b/proprietary/vendor/etc/init/android.hardware.audio@2.0-service-mediatek.rc
+index 07abb88..fb900e5 100644
+--- a/proprietary/vendor/etc/init/android.hardware.audio@2.0-service-mediatek.rc
++++ b/proprietary/vendor/etc/init/android.hardware.audio@2.0-service-mediatek.rc
+@@ -1,9 +1,16 @@
+ on post-fs-data
+     mkdir /data/vendor/audiohal 0771 system audio
+ 
+-service audio-hal-2-0 /vendor/bin/hw/android.hardware.audio@2.0-service-mediatek
++# Android 12 audioserver.rc starts and restarts this service by the vendor-
++# prefixed name. Keep the init registration aligned with those lifecycle hooks;
++# the HIDL interface name remains IDevicesFactory/default.
++service vendor.audio-hal-2-0 /vendor/bin/hw/android.hardware.audio@2.0-service-mediatek
+     class hal
+     user audioserver
++    # The Android 8 MT8173 audio.primary module has DT_NEEDED entries for the
++    # private system libmedia and i18n APEX libraries. Scope the lookup to this
++    # legacy service; never widen linker access for unrelated vendor processes.
++    setenv LD_LIBRARY_PATH /system/lib:/apex/com.android.i18n/lib
+     # media gid needed for /dev/fm (radio) and for /data/misc/media (tee)
+     # group audio camera drmrpc inet media mediadrm net_bt net_bt_admin net_bw_acct system net_bt_stack sdcard_rw
+     # audio-hal-2-0 cannot run if adding net_bt_stack

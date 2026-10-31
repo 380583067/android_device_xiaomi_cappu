@@ -3,8 +3,10 @@
 # ============
 
 # mtee support
-allow drmserver tee_device:chr_file { read write open ioctl };
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:244; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow drmserver tee_device:chr_file { read write open ioctl };
 
 # 20170608 for mt8176 bringup
-allow drmserver proc:file { read getattr open };
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow drmserver proc:file { read getattr open };
 

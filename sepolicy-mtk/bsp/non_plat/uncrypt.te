@@ -2,9 +2,10 @@
 # MTK Policy Rule
 # ============
 # uncrypt for mtd
-allow uncrypt mtd_device:chr_file { read write open ioctl };
-allow uncrypt mtd_device:dir search;
-allow uncrypt mtd_device:blk_file { write open };
+# cappu Android 12: the old MTK mtd_device type was removed; use the exported board type for legacy rules and labels.
+allow uncrypt cappu_mtd_device:chr_file { read write open ioctl };
+allow uncrypt cappu_mtd_device:dir search;
+allow uncrypt cappu_mtd_device:blk_file { write open };
 
 allow uncrypt misc_device:chr_file ~rename;
 allow uncrypt system_data_file:file { open read };

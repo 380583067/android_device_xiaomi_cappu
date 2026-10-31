@@ -1,0 +1,63 @@
+# Xiaomi Mi Pad 3 shipped with Android 7.1 vendor binaries. Several MTK daemons
+# and framework services still share fixed /data paths (for example /data/nvram,
+# /data/anr/SF_RTT, and legacy AEE/TEE logs). Android 12's full-Treble neverallows
+# require those paths to be separated into /data/vendor or passed as file
+# descriptors. The proprietary binaries and their init scripts still use these
+# original paths, so moving them during this first bring-up would break their
+# state hand-off. Mark only domains whose existing, path-specific allow rules
+# were reported by the policy compiler; their access remains bounded by those
+# individual rules. Remove an entry when that component is migrated to a
+# vendor-private path or Binder/HwBinder file-descriptor hand-off.
+typeattribute MPED data_between_core_and_vendor_violators;
+typeattribute adbd data_between_core_and_vendor_violators;
+typeattribute aee_aed data_between_core_and_vendor_violators;
+typeattribute aee_aedv data_between_core_and_vendor_violators;
+typeattribute aee_core_forwarder data_between_core_and_vendor_violators;
+typeattribute atci_service data_between_core_and_vendor_violators;
+typeattribute audiocmdservice_atci data_between_core_and_vendor_violators;
+typeattribute audioserver data_between_core_and_vendor_violators;
+typeattribute bootanim data_between_core_and_vendor_violators;
+typeattribute cameraserver data_between_core_and_vendor_violators;
+typeattribute ccci_mdinit data_between_core_and_vendor_violators;
+# dex2oat is a private platform domain (system/sepolicy/private/dex2oat.te),
+# so it is deliberately not part of the vendor policy type namespace assembled
+# from this non_plat directory. Referencing it here makes Android 12 checkpolicy
+# fail with "unknown type dex2oat". Keep this compatibility attribute limited
+# to vendor-visible legacy domains; any dex2oat-specific exception belongs in
+# platform-private policy, not in the device's vendor policy.
+typeattribute dm_agent_binder data_between_core_and_vendor_violators;
+typeattribute dumpstate data_between_core_and_vendor_violators;
+typeattribute em_svr data_between_core_and_vendor_violators;
+typeattribute factory data_between_core_and_vendor_violators;
+typeattribute fuelgauged data_between_core_and_vendor_violators;
+typeattribute fuelgauged_nvram data_between_core_and_vendor_violators;
+typeattribute fuelgauged_static data_between_core_and_vendor_violators;
+typeattribute hal_fingerprint_default data_between_core_and_vendor_violators;
+typeattribute hal_gatekeeper_default data_between_core_and_vendor_violators;
+typeattribute installd data_between_core_and_vendor_violators;
+typeattribute kernel data_between_core_and_vendor_violators;
+typeattribute mediaserver data_between_core_and_vendor_violators;
+typeattribute merged_hal_service data_between_core_and_vendor_violators;
+typeattribute meta_tst data_between_core_and_vendor_violators;
+typeattribute mnld data_between_core_and_vendor_violators;
+typeattribute mobile_log_d data_between_core_and_vendor_violators;
+typeattribute mtk_agpsd data_between_core_and_vendor_violators;
+typeattribute mtk_hal_audio data_between_core_and_vendor_violators;
+typeattribute mtk_hal_bluetooth data_between_core_and_vendor_violators;
+typeattribute mtk_hal_camera data_between_core_and_vendor_violators;
+typeattribute mtk_hal_power data_between_core_and_vendor_violators;
+typeattribute mtkbootanimation data_between_core_and_vendor_violators;
+typeattribute mtkbootvideo data_between_core_and_vendor_violators;
+typeattribute mtkrild data_between_core_and_vendor_violators;
+typeattribute netd data_between_core_and_vendor_violators;
+typeattribute nvram_agent_binder data_between_core_and_vendor_violators;
+typeattribute nvram_daemon data_between_core_and_vendor_violators;
+typeattribute ppl_agent data_between_core_and_vendor_violators;
+typeattribute recovery data_between_core_and_vendor_violators;
+typeattribute rild data_between_core_and_vendor_violators;
+typeattribute stp_dump3 data_between_core_and_vendor_violators;
+typeattribute surfaceflinger data_between_core_and_vendor_violators;
+typeattribute system_server data_between_core_and_vendor_violators;
+typeattribute thermal_manager data_between_core_and_vendor_violators;
+typeattribute vold data_between_core_and_vendor_violators;
+typeattribute zygote data_between_core_and_vendor_violators;

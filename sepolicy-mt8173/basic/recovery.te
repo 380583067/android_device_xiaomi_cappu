@@ -1,6 +1,6 @@
 # Purpose : Nand device policy
-allow recovery mtd_device:dir search;
-allow recovery mtd_device:chr_file { read write open ioctl getattr };
+# Android 12 migration: the equivalent board-specific rules use
+# cappu_mtd_device in sepolicy-mtk/basic/plat_private/recovery.te.
 allow recovery self:capability sys_resource;
 
 allow recovery system_app_data_file:dir {search };

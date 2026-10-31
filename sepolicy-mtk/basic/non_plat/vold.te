@@ -26,4 +26,5 @@ dontaudit vold proc_mtkcooler:dir { read open };
 dontaudit vold proc_mtktz:dir { read open };
 dontaudit vold proc_thermal:dir { read open };
 
-allow vold mtd_device:blk_file rw_file_perms;
+# cappu Android 12: AOSP removed the generic mtd_device type; use this exported board type for legacy rules and labels.
+allow vold cappu_mtd_device:blk_file rw_file_perms;

@@ -45,7 +45,7 @@ allow bootanim gpu_device:dir search;
 
 
 #============= bootanim ==============
-allow bootanim debugfs_tracing:file write;
+# Android 12 keeps tracefs/debugfs private to approved tracing services; bootanim
+# does not need direct kernel tracing access during normal animation playback.
 
 #============= bootanim ==============
-allow bootanim debugfs_tracing:file open;

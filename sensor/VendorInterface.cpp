@@ -33,6 +33,8 @@
  * applicable license agreements with MediaTek Inc.
  */
 
+// cappu Android 12：open/O_RDWR 由 fcntl.h 声明，不再依赖旧平台头的间接包含。
+#include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>

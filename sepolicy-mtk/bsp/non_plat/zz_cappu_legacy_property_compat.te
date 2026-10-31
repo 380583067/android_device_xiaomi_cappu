@@ -1,0 +1,7 @@
+# Android 12 neverallows restrict legacy system-domain writes to vendor
+# properties. ril-3gddaemon is declared in this vendor policy tree but runs as
+# a legacy system-side service, so keep its existing compatibility exception
+# beside the type after all basic/BSP domain declarations have been parsed.
+# This attribute does not grant property access; its existing property rules
+# remain the only grants and Treble restrictions on vendor domains stay active.
+typeattribute ril-3gddaemon system_writes_vendor_properties_violators;

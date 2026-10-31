@@ -1,3 +1,4 @@
+# Android 12 Treble forbids system coredomains from executing arbitrary vendor files; vendor services are started by init in their own domains.
 # ==============================================
 # Policy File of /system/bin/factory Executable File
 
@@ -50,9 +51,10 @@ allow factory vmodem_device:chr_file rw_file_perms;
 
 # Date: WK15.13
 # Purpose: for nand project
-allow factory mtd_device:dir search;
-allow factory mtd_device:chr_file rw_file_perms;
-allow factory mtd_device:chr_file rw_file_perms;
+# cappu Android 12: AOSP removed the generic mtd_device type; use this exported board type for legacy rules and labels.
+allow factory cappu_mtd_device:dir search;
+allow factory cappu_mtd_device:chr_file rw_file_perms;
+allow factory cappu_mtd_device:chr_file rw_file_perms;
 allow factory self:capability sys_resource;
 allow factory pro_info_device:chr_file rw_file_perms;
 
@@ -226,7 +228,8 @@ allow factory sysfs_ccci:file r_file_perms;
 # avc: denied { read } for name="boot_mode" dev="sysfs" ino=117
 # scontext=u:r:factory:s0 tcontext=u:object_r:sysfs:s0
 # tclass=file permissive=0
-allow factory sysfs:file rw_file_perms;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow factory sysfs:file rw_file_perms;
 
 # Date: WK16.30
 #Purpose: For gps test
@@ -257,7 +260,8 @@ allow factory flashlight_device:chr_file rw_file_perms;
 # Date : WK16.48
 # Purpose: For SmartPa speaker calibration
 allow factory proc:dir search;
-allow factory proc:file {open read write};
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow factory proc:file {open read write};
 
 # Date: WK15.25
 #Purpose: for unmount sdcardfs and stop services which are using data partition
@@ -271,16 +275,17 @@ allow factory sysfs_leds:lnk_file read;
 allow factory sysfs_vibrator:file {open read write};
 allow factory ion_device:chr_file { read open ioctl };
 allow factory debugfs_ion:dir search;
-allow factory proc:file ioctl;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow factory proc:file ioctl;
 # Date: WK17.27
 # Purpose: STMicro NFC solution integration
 allow factory st21nfc_device:chr_file { open read getattr write ioctl };
 allow factory nfc_socket:dir search;
-allow factory vendor_file:file { getattr execute execute_no_trans read open };
 set_prop(factory,hwservicemanager_prop);
 hwbinder_use(factory);
 hal_client_domain(factory, hal_nfc);
-allow factory debugfs_tracing:file { open write };
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow factory debugfs_tracing:file { open write };
 
 # Date : WK17.32
 # Operation : O Migration

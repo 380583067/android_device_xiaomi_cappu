@@ -6,7 +6,11 @@
 # ==============================================
 
 #============= factory ==============
-allow factory mnld_exec:file rx_file_perms;
+# Factory audio diagnostics use the supported HAL client role instead of a
+# direct lookup of the protected audio HIDL service.
+hal_client_domain(factory, hal_audio)
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/domain.te:457, system/sepolicy/public/domain.te:977, system/sepolicy/public/domain.te:996; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow factory mnld_exec:file rx_file_perms;
 
 #Date: WK15.31
 #Purpose: define factory_data_file instead of system_data_file
@@ -17,7 +21,8 @@ allow resize block_device:dir search;
 allow factory e2fs_exec:file { read open execute getattr execute_no_trans };
 allow factory fsck_exec:file { read open execute getattr execute_no_trans };
 allow factory kmsg_device:chr_file { write open };
-allow factory proc:file getattr;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow factory proc:file getattr;
 allow factory dm_device:blk_file { read open write ioctl read getattr };
 allow factory sysfs_fs_ext4_features:dir search;
 allow factory sysfs_fs_ext4_features:file read;
@@ -32,9 +37,11 @@ allow factory protect2_block_device:blk_file getattr;
 # Purpose : Allow factory to call android.hardware.audio@2.0-service-mediatek
 binder_call(factory, mtk_hal_audio)
 allow factory mtk_hal_audio:binder call;
-allow factory hal_audio_hwservice:hwservice_manager find;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/public/hal_audio.te:5; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow factory hal_audio_hwservice:hwservice_manager find;
 allow factory mtk_audiohal_data_file:dir {read search open};
-allow factory proc:file {read open};
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow factory proc:file {read open};
 allow factory audio_device:chr_file rw_file_perms;
 allow factory audio_device:dir w_dir_perms;
 allow factory audiohal_prop:property_service set;

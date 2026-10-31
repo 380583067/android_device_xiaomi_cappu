@@ -14,8 +14,8 @@ allow dumpstate mnt_user_file:lnk_file read;
 allow dumpstate storage_file:lnk_file read;
 
 # Purpose: timer_intval. this is neverallow
-allow dumpstate sysfs:file r_file_perms;
-allow dumpstate app_data_file:dir search;
+# Android 12 blocks broad sysfs and app-private-data traversal. dumpstate uses
+# the platform's approved debug and service interfaces instead of these legacy grants.
 allow dumpstate kmsg_device:chr_file r_file_perms;
 
 # Purpose:
@@ -30,7 +30,7 @@ allow dumpstate fuse:file ioctl;
 # avc: denied { open } for path="/sys/kernel/debug/tracing/tracing_on" dev=
 # "debugfs" ino=2087 scontext=u:r:dumpstate:s0 tcontext=u:object_r:
 # tracing_shell_writable:s0 tclass=file permissive=1
-allow dumpstate debugfs_tracing:file { write read open };
+# Direct tracefs/debugfs reads are rejected by the Android 12 coredomain policy.
 
 # Data : WK17.03
 # Purpose: Allow to access gpu
@@ -40,4 +40,5 @@ allow dumpstate gpu_device:dir search;
 # Purpose: 01-01 08:30:57.474   286   286 E SELinux : avc:  denied  { find } for interface=
 # android.hardware.camera.provider::ICameraProvider pid=3133 scontext=u:r:dumpstate:s0 tcontext=
 # u:object_r:hal_camera_hwservice:s0 tclass=hwservice_manager
-allow dumpstate hal_camera_hwservice:hwservice_manager find;
+# Android 12 reserves hal_camera_hwservice discovery for approved camera clients;
+# dumpstate no longer probes this legacy HIDL service directly.

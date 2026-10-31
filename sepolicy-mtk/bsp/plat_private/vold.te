@@ -10,12 +10,14 @@ allow vold platform_app:fd use;
 allow vold block_device:file create;
 
 #Date : WK15.11
-allow vold mtd_device:dir search;
-allow vold mtd_device:chr_file { read write open };
+# cappu Android 12: the old MTK mtd_device type was removed; use the exported board type for legacy rules and labels.
+allow vold cappu_mtd_device:dir search;
+allow vold cappu_mtd_device:chr_file { read write open };
 
 # Date : WK17.28
 # Purpose : write bootprof
-allow vold proc:file write;
+# Android 12 forbids unrestricted /proc writes from coredomains; retain only
+# device-specific storage labels and platform interfaces for vold.
 
 # Date : WK17.28
 # Purpose : encrypt phone

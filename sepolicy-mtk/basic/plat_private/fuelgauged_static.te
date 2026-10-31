@@ -4,7 +4,9 @@
 # ==============================================
 # Type Declaration
 # ==============================================
-type fuelgauged_static_exec , exec_type, file_type;
+# Android 12 Treble: this legacy service is declared as /system/bin; mark its
+# init entrypoint as a system file so it remains in the core partition.
+type fuelgauged_static_exec , system_file_type, exec_type, file_type;
 type fuelgauged_static_file, file_type, data_file_type, core_data_file_type;
 typeattribute fuelgauged_static coredomain;
 # ==============================================
@@ -47,4 +49,6 @@ allow fuelgauged_static system_data_file:dir rw_dir_perms;
 allow fuelgauged_static rootfs:file entrypoint;
 
 # Data : WK16.39
-allow fuelgauged_static self:capability { chown fsetid dac_override };
+# Android 12 neverallows DAC override; filesystem ownership is granted through
+# the labelled fuel gauge data directory instead.
+allow fuelgauged_static self:capability { chown fsetid };

@@ -32,11 +32,13 @@ domain_auto_trans(wo_epdg_client, netutils_wrapper_exec, netutils_wrapper)
 # Date: WK14.52
 # Operation : Feature for ePDG
 # Purpose :  handle tunnel interface
-allow wo_epdg_client system_file:file { lock read getattr open execute execute_no_trans };
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/public/domain.te:1007, system/sepolicy/public/domain.te:939; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow wo_epdg_client system_file:file { lock read getattr open execute execute_no_trans };
 allow wo_epdg_client self:tun_socket { relabelfrom relabelto create };
 allow wo_epdg_client tun_device:chr_file { read write ioctl open getattr };
 allow wo_epdg_client self:netlink_route_socket { setopt nlmsg_write read bind create nlmsg_read write getattr };
-allow wo_epdg_client self:capability { net_admin dac_override kill setuid setgid };
+# Android 12 forbids DAC-bypass capabilities for these legacy device domains; keep access controlled by the specific SELinux file and device labels.
+allow wo_epdg_client self:capability { net_admin kill setuid setgid };
 
 # Purpose :  update ipsec deamon
 allow wo_epdg_client wo_ipsec_exec:file { read getattr open execute execute_no_trans };
@@ -53,7 +55,8 @@ allow wo_epdg_client persist_epdg_prop:property_service set;
 # Purpose :  Query ePDG IP address
 allow wo_epdg_client dnsproxyd_socket:sock_file write;
 allow wo_epdg_client netd:unix_stream_socket connectto;
-allow wo_epdg_client netd_socket:sock_file write;
+# cappu Android 12: the old ePDG client used the removed /dev/socket/netd
+# endpoint; current netd control is Binder-based.
 
 
 # Purpose :  create strongswan config file for IKEv2 Tunnel,  removal old charon/starter PID file

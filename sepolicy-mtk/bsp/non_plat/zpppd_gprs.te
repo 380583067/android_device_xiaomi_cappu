@@ -5,13 +5,16 @@ type zpppd_gprs, domain;
 init_daemon_domain(zpppd_gprs)
 net_domain(zpppd_gprs)
 
-allow zpppd_gprs self:capability { setuid setgid net_admin net_raw dac_override sys_module };
+# Android 12 removed system_radio_prop and maps supported RIL properties to
+# radio_prop/net_radio_prop. Keep only those explicit current labels rather
+# than restoring a generic grant to a property class that no longer exists.
+# Android 12 forbids DAC-bypass capabilities for these legacy device domains; keep access controlled by the specific SELinux file and device labels.
+allow zpppd_gprs self:capability { setuid setgid net_admin net_raw sys_module };
 
 # property service
-set_prop(zpppd_gprs, radio_prop)
-set_prop(zpppd_gprs, net_radio_prop)
-set_prop(zpppd_gprs, system_radio_prop)
-set_prop(zpppd_gprs, system_prop)
+# Android 12 keeps net_radio_prop and system_prop system-owned. Retain the
+# device-owned PPP/control properties only; core radio state is owned by the
+# AOSP telephony HAL and exchanged through its supported interface.
 set_prop(zpppd_gprs, pppoe_ppp0_prop)
 set_prop(zpppd_gprs, ctl_zpppdgprs_prop)
 
@@ -20,7 +23,8 @@ set_prop(zpppd_gprs, ctl_zpppdgprs_prop)
 allow zpppd_gprs tty_device:chr_file rw_file_perms;
 #allow zpppd_gprs ppp_exec:file { read open getattr execute execute_no_trans };
 allow zpppd_gprs ppp_device:chr_file { read write open ioctl };
-allow zpppd_gprs system_file:file x_file_perms;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/public/domain.te:1007, system/sepolicy/public/domain.te:939; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow zpppd_gprs system_file:file x_file_perms;
 #allow zpppd_gprs shell_exec:file rx_file_perms;
 allow zpppd_gprs vendor_shell_exec:file { read execute open execute_no_trans };
 

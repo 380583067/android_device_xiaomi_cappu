@@ -1,3 +1,5 @@
+# Android 12 property reads must use get_prop; direct r_file_perms adds forbidden ioctl and lock access to property files.
+# Android 12 forbids scanning every executable type from system_server; use the supported process metadata interfaces instead.
 # ==============================================
 # MTK Policy Rule
 # ==============================================
@@ -14,7 +16,8 @@ allow system_server wmtWifi_device:chr_file w_file_perms;
 #allow system_server gps_data_file:dir rw_dir_perms;
 
 # /proc access.
-allow system_server proc:file w_file_perms;
+# Android 12 Treble cleanup: this broad legacy access conflicts with system/sepolicy/private/coredomain.te:129; use the owning typed HAL or partition interface instead.
+# Disabled legacy grant: allow system_server proc:file w_file_perms;
 
 # /data/dontpanic access.
 allow system_server dontpanic_data_file:dir search;
@@ -43,7 +46,6 @@ allow system_server aee_dumpsys_data_file:file w_file_perms;
 allow system_server aee_exp_data_file:file w_file_perms;
 
 # Dump native process backtrace.
-allow system_server exec_type:file r_file_perms;
 
 # Querying zygote socket.
 allow system_server zygote:unix_stream_socket { getopt getattr };
@@ -144,7 +146,7 @@ allow system_server vendor_framework_file:dir r_file_perms;
 
 # Fix bootup violation
 allow system_server vendor_framework_file:file getattr;
-allow system_server wifi_prop:file { read getattr open };
+get_prop(system_server, wifi_prop)
 
 # Date:W17.22
 # Operation : add aee_aed socket rule
@@ -208,7 +210,7 @@ hal_client_domain(system_server, mtk_hal_lbs)
 # Date : WK17.12
 # Operation : MT6799 SQC
 # Purpose : Change thermal config
-allow system_server mtk_thermal_config_prop:file { getattr open read };
+get_prop(system_server, mtk_thermal_config_prop)
 allow system_server mtk_thermal_config_prop:property_service set;
 
 # Date : WK17.43

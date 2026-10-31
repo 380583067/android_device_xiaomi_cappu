@@ -1,0 +1,1 @@
+These kernel requirements are copied unchanged from the official Android kernel/configs repository at tag `android-11.0.0_r46`, path `o-mr1/android-3.18/`. The module name is prefixed with `cappu_` to avoid colliding with platform modules. Android 12 no longer ships O-MR1 kernel configs, while cappu's 3.18 kernel still needs this FCM 2 metadata.

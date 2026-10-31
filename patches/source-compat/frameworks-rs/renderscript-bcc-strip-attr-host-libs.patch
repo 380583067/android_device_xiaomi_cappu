@@ -1,0 +1,25 @@
+diff --git a/driver/runtime/build_bc_lib_internal.mk b/driver/runtime/build_bc_lib_internal.mk
+index 7162e50..cadb549 100644
+--- a/driver/runtime/build_bc_lib_internal.mk
++++ b/driver/runtime/build_bc_lib_internal.mk
+@@ -25,6 +25,12 @@ include $(BUILD_SYSTEM)/base_rules.mk
+ 
+ BCC_STRIP_ATTR := $(BUILD_OUT_EXECUTABLES)/bcc_strip_attr$(BUILD_EXECUTABLE_SUFFIX)
+ 
++# Android 12 的 bcc_strip_attr 会加载 libLLVM_android.so；该共享库依赖
++# ncurses/tinfo ABI 5。先搜索本次输出的 host 库以保留匹配的 libc++，再
++# 搜索源码自带的旧 Clang 运行库目录；不要直接加入 GCC sysroot，否则它的
++# 旧 libc.so.6 会覆盖主机 glibc。此路径只作用于 strip 命令，无需每次手动设置。
++rs_host_runtime_libs := $(abspath $(dir $(BUILD_OUT_EXECUTABLES))/lib64):$(abspath prebuilts/clang/host/linux-x86/clang-3289846/lib64)
++
+ bc_clang := $(RS_CLANG)
+ ifdef RS_DRIVER_CLANG_EXE
+ bc_clang := $(RS_DRIVER_CLANG_EXE)
+@@ -93,6 +99,6 @@ $(LOCAL_BUILT_MODULE): $(RS_LLVM_AS) $(BCC_STRIP_ATTR)
+ 	# Strip useless known warning about combining mismatched modules, as well as
+ 	# any blank lines that llvm-link inserts.
+ 	$(hide) $(RELATIVE_PWD) $(RS_LLVM_LINK) $(PRIVATE_BC_FILES) -o $@.unstripped 2> >(grep -v "\(modules of different\)\|^$$" >&2)
+-	$(hide) $(RELATIVE_PWD) $(BCC_STRIP_ATTR) -o $@ $@.unstripped
++	$(hide) LD_LIBRARY_PATH="$(rs_host_runtime_libs)$${LD_LIBRARY_PATH:+:$${LD_LIBRARY_PATH}}" $(RELATIVE_PWD) $(BCC_STRIP_ATTR) -o $@ $@.unstripped
+ 
+ BCC_RS_TRIPLE :=

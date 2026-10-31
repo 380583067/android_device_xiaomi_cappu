@@ -38,12 +38,9 @@ allow init odm_block_device:blk_file rw_file_perms;
 allow init oem_block_device:blk_file rw_file_perms;
 allow init para_block_device:blk_file w_file_perms;
 
-# Date : WK15.32
-# Operation : Migration
-# Purpose : disable AT_SECURE for LD_PRELOAD
-userdebug_or_eng(`
-  allow init { domain -lmkd -crash_dump }:process noatsecure;
-')
+# Android 12 forbids init from clearing AT_SECURE for any child process.
+# The old eng-only LD_PRELOAD workaround violated init.te's global neverallow
+# and is unnecessary for a debuggable build; keep secure exec transitions.
 
 # Date : WK16.26
 # Operation : Access dynamic_debug control file

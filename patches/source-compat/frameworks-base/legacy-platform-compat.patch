@@ -1,0 +1,13 @@
+diff --git a/services/core/java/com/android/server/power/Notifier.java b/services/core/java/com/android/server/power/Notifier.java
+index f62bea945f5155057335cd875c95f64d1fbb6a89..a9d8fe5d779f216b41f69b793bdb57becfe58413 100644
+--- a/services/core/java/com/android/server/power/Notifier.java
++++ b/services/core/java/com/android/server/power/Notifier.java
+@@ -840,7 +840,7 @@ public class Notifier {
+         final String soundPath = Settings.Global.getString(mContext.getContentResolver(),
+                 wireless ? Settings.Global.WIRELESS_CHARGING_STARTED_SOUND
+                         : Settings.Global.CHARGING_STARTED_SOUND);
+-        if ("silent".equals(soundPath)) {
++        if (soundPath == null || "silent".equals(soundPath)) {
+             return;
+         }
+ 

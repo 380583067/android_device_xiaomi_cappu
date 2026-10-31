@@ -1,0 +1,30 @@
+diff --git a/cc/rs.go b/cc/rs.go
+index ba69f23..78e2b54 100644
+--- a/cc/rs.go
++++ b/cc/rs.go
+@@ -32,10 +32,24 @@ func init() {
+ 			return ctx.Config().HostToolPath(ctx, "llvm-rs-cc").String()
+ 		}
+ 	})
++	pctx.VariableFunc("rsEnv", func(ctx android.PackageVarContext) string {
++		if ctx.Config().AlwaysUsePrebuiltSdks() || runtime.GOOS != "linux" {
++			return ""
++		}
++
++		// Bundled llvm-rs-cc loads libLLVM_android.so, which needs ncurses/tinfo
++		// ABI 5. Search Soong's output libraries first to keep its matching
++		// libc++, then the source-provided ABI 5 libraries. This is scoped to the
++		// RenderScript action and avoids depending on host packages or shell setup.
++		rsCc := ctx.Config().HostToolPath(ctx, "llvm-rs-cc").String()
++		soongHostLibDir := filepath.Clean(filepath.Join(filepath.Dir(rsCc), "..", "lib64"))
++		legacyToolLibDir := filepath.Join("prebuilts", "clang", "host", "linux-x86", "clang-3289846", "lib64")
++		return "LD_LIBRARY_PATH=" + soongHostLibDir + ":" + legacyToolLibDir
++	})
+ }
+ 
+ var rsCppCmdLine = strings.Replace(`
+-${rsCmd} -o ${outDir} -d ${outDir} -a ${out} -MD -reflect-c++ ${rsFlags} $in &&
++${rsEnv} ${rsCmd} -o ${outDir} -d ${outDir} -a ${out} -MD -reflect-c++ ${rsFlags} $in &&
+ (echo '${out}: \' && cat ${depFiles} | awk 'start { sub(/( \\)?$$/, " \\"); print } /:/ { start=1 }') > ${out}.d &&
+ touch $out
+ `, "\n", "", -1)
